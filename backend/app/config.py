@@ -3,7 +3,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql://postgres:postgres@localhost:5432/compounder_screener"
+    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/compounder_screener"
     environment: str = "development"
     cors_origins: str = "http://localhost:5173"
     fx_api_url: str = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/latest/currencies/usd.json"
