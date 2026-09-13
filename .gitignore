@@ -1,0 +1,10 @@
+# Dependencies
+node_modules/
+
+# Vite production output
+dist/
+
+# Local environment files
+.env
+.env.*
+!.env.example
