@@ -9,9 +9,10 @@ Buffett quality + Lynch GARP stock screener for US and India markets, with Benei
 - Auto-detects display units based on stock's home market
 
 ## Structure
-- `src/utils/unitConversion.js` - core number formatting + FX fetch
-- `src/components/UnitToggle.jsx` - toggle bar UI
-- `src/pages/Dashboard.jsx` - ranked watchlist view
+- `frontend/src/components/` - shared React components
+- `frontend/src/pages/` - dashboard and research workflow pages
+- `frontend/src/utils/` - number formatting, FX, and local-time utilities
+- `frontend/src/main.jsx` - React application entry point
 
 ## Pipeline (in progress)
 1. Universe filter (SQL screener)
