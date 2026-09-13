@@ -13,10 +13,10 @@ const links = [
 export default function Layout({ children }) {
   return (
     <div className="min-h-screen flex bg-base">
-      <aside className="w-64 border-r border-border/60 flex flex-col shrink-0">
-        <div className="px-6 py-6 border-b border-border/60">
+      <aside className="w-60 border-r border-border/60 flex flex-col shrink-0">
+        <div className="px-5 py-5 border-b border-border/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent2 flex items-center justify-center font-bold text-white text-sm">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent to-accent2 flex items-center justify-center font-bold text-white text-sm shrink-0">
               C
             </div>
             <div>
@@ -39,8 +39,8 @@ export default function Layout({ children }) {
                 }`
               }
             >
-              <Icon name={link.icon} className="w-4.5 h-4.5" />
-              {link.label}
+              <Icon name={link.icon} size={17} />
+              <span>{link.label}</span>
             </NavLink>
           ))}
         </nav>

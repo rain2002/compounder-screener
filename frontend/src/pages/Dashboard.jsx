@@ -27,7 +27,7 @@ export default function Dashboard() {
           label="Backend Status"
           value={health ? "Online" : error ? "Offline" : "Checking…"}
           tone={health ? "good" : error ? "bad" : "neutral"}
-          icon={<Icon name="check" className={`w-4 h-4 ${health ? "text-buy" : "text-slate-600"}`} />}
+          icon={<Icon name="check" size={16} className={health ? "text-buy" : "text-slate-600"} />}
         />
         <StatCard
           label="Database"
@@ -40,7 +40,7 @@ export default function Dashboard() {
 
       {error && (
         <div className="card border-avoid/30 bg-avoid/5 p-4 mb-6 flex items-start gap-3">
-          <Icon name="warn" className="w-5 h-5 text-avoid shrink-0 mt-0.5" />
+          <Icon name="warn" size={20} className="text-avoid shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-avoid">Can't reach backend</p>
             <p className="text-slate-400 text-sm mt-0.5">

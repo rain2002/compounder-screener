@@ -15,7 +15,7 @@ export default function Sentiment() {
 
       <label className="card p-10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-accent/40 transition-colors mb-6 border-dashed">
         <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-4">
-          <Icon name="upload" className="w-6 h-6 text-accent2" />
+          <Icon name="upload" size={22} className="text-accent2" />
         </div>
         <p className="text-slate-300 text-sm font-medium mb-1">
           {file ? file.name : "Drop a 10-K or click to browse"}

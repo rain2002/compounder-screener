@@ -32,7 +32,7 @@ export default function Technical() {
 
       <div className="card p-16 flex flex-col items-center justify-center text-center">
         <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-4">
-          <Icon name="technical" className="w-6 h-6 text-accent2" />
+          <Icon name="technical" size={22} className="text-accent2" />
         </div>
         <p className="text-slate-400 text-sm mb-1">
           Price chart + forecast band for <span className="font-semibold text-slate-200">{ticker}</span>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import EditableField from "../components/EditableField.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
+import WaccCalculator from "../components/WaccCalculator.jsx";
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
 
@@ -47,8 +48,10 @@ export default function DCF() {
         description="Rule-based v1 — three scenarios computed live from your inputs. ML forecasting and Monte Carlo bands arrive in a later phase."
       />
 
+      <WaccCalculator market={market} onWaccChange={setWacc} />
+
       <div className="card p-6 mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">Inputs</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">DCF Inputs</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <label className="flex flex-col gap-1.5">
             <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market</span>
@@ -65,7 +68,7 @@ export default function DCF() {
             </select>
           </label>
           <EditableField label="Current FCF" value={fcf} onChange={setFcf} step="10" suffix="$M" />
-          <EditableField label="WACC" value={wacc} onChange={setWacc} suffix="%" />
+          <EditableField label="WACC (from calculator above, or edit manually)" value={wacc} onChange={setWacc} suffix="%" />
           <EditableField label="Shares Outstanding" value={shares} onChange={setShares} step="1" suffix="M" />
         </div>
       </div>
@@ -100,7 +103,7 @@ export default function DCF() {
         />
         {exceedsCap && (
           <div className="flex items-center gap-2 mt-2.5">
-            <Icon name="warn" className="w-4 h-4 text-caution" />
+            <Icon name="warn" size={16} className="text-caution" />
             <p className="text-caution text-xs font-medium">
               Exceeds the {market} long-term GDP growth cap of {cap}%
             </p>

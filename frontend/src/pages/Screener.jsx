@@ -51,7 +51,7 @@ export default function Screener() {
 
       {error && (
         <div className="card border-avoid/30 bg-avoid/5 p-4 mb-6 flex items-start gap-3">
-          <Icon name="warn" className="w-5 h-5 text-avoid shrink-0 mt-0.5" />
+          <Icon name="warn" size={20} className="text-avoid shrink-0 mt-0.5" />
           <p className="text-sm text-slate-300">
             {error}. Is the backend running on port 8000?
           </p>
