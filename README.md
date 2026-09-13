@@ -9,10 +9,23 @@ Buffett quality + Lynch GARP stock screener for US and India markets, with Benei
 - Auto-detects display units based on stock's home market
 
 ## Structure
+- `frontend/index.html` - Vite HTML entry document
+- `frontend/package.json` - frontend scripts and dependencies
+- `frontend/package-lock.json` - locked dependency versions
+- `frontend/vite.config.js` - Vite and port 5500 configuration
 - `frontend/src/components/` - shared React components
 - `frontend/src/pages/` - dashboard and research workflow pages
 - `frontend/src/utils/` - number formatting, FX, and local-time utilities
 - `frontend/src/main.jsx` - React application entry point
+
+## Run the frontend
+```powershell
+cd frontend
+npm install
+npm run dev
+```
+
+Open `http://127.0.0.1:5500/` in your browser.
 
 ## Pipeline (in progress)
 1. Universe filter (SQL screener)
