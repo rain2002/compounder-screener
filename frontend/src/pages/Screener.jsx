@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import RatingBadge from "../components/RatingBadge.jsx";
+import PageHeader from "../components/PageHeader.jsx";
+import Icon from "../components/Icon.jsx";
 
 const RATING_FILTERS = ["", "Buy", "Watch", "Caution", "Avoid"];
 
@@ -29,64 +31,81 @@ export default function Screener() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Screener</h2>
-        <select
-          value={rating}
-          onChange={(e) => setRating(e.target.value)}
-          className="bg-slate-800 border border-slate-700 rounded px-3 py-1 text-sm"
-        >
-          {RATING_FILTERS.map((r) => (
-            <option key={r} value={r}>
-              {r || "All ratings"}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PageHeader
+        title="Screener"
+        description="Full US + India universe, filtered and ranked through the Buffett quality + Lynch GARP pipeline. Auto-refreshes every 24h on weekdays once the sync job is live."
+        action={
+          <select
+            value={rating}
+            onChange={(e) => setRating(e.target.value)}
+            className="bg-surface border border-border rounded-lg px-4 py-2 text-sm font-medium text-slate-200 focus:outline-none focus:ring-2 focus:ring-accent/50"
+          >
+            {RATING_FILTERS.map((r) => (
+              <option key={r} value={r}>
+                {r || "All ratings"}
+              </option>
+            ))}
+          </select>
+        }
+      />
 
       {error && (
-        <div className="bg-red-900/30 border border-red-700 text-red-300 text-sm rounded p-3 mb-4">
-          {error}. Is the backend running on port 8000? Try{" "}
-          <code>uvicorn app.main:app --reload</code> in the backend folder.
+        <div className="card border-avoid/30 bg-avoid/5 p-4 mb-6 flex items-start gap-3">
+          <Icon name="warn" className="w-5 h-5 text-avoid shrink-0 mt-0.5" />
+          <p className="text-sm text-slate-300">
+            {error}. Is the backend running on port 8000?
+          </p>
         </div>
       )}
 
-      {loading && <p className="text-slate-400">Loading...</p>}
+      {loading && (
+        <div className="card p-10 text-center">
+          <p className="text-slate-500 text-sm">Loading…</p>
+        </div>
+      )}
 
       {!loading && !error && results.length === 0 && (
-        <p className="text-slate-400">
-          No screener results yet — the pipeline hasn't run. Once the finance
-          connector sync job populates <code>screener_results</code>, they'll
-          show here automatically (auto-refreshes every 24h on weekdays per
-          the plan).
-        </p>
+        <div className="card p-10 text-center">
+          <p className="text-slate-400 text-sm mb-1">No screener results yet</p>
+          <p className="text-slate-600 text-xs">
+            The pipeline hasn't run. Once <code className="bg-black/30 px-1 rounded">screener_results</code> populates, they'll show here.
+          </p>
+        </div>
       )}
 
       {results.length > 0 && (
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="text-left text-slate-400 border-b border-slate-700">
-              <th className="py-2 pr-4">Ticker</th>
-              <th className="py-2 pr-4">Buffett Score</th>
-              <th className="py-2 pr-4">Lynch Score</th>
-              <th className="py-2 pr-4">Fraud Flag</th>
-              <th className="py-2 pr-4">Rating</th>
-            </tr>
-          </thead>
-          <tbody>
-            {results.map((r) => (
-              <tr key={r.ticker} className="border-b border-slate-800">
-                <td className="py-2 pr-4 font-medium">{r.ticker}</td>
-                <td className="py-2 pr-4">{r.buffett_score ?? "—"}</td>
-                <td className="py-2 pr-4">{r.lynch_score ?? "—"}</td>
-                <td className="py-2 pr-4">{r.fraud_flag ? "Yes" : "No"}</td>
-                <td className="py-2 pr-4">
-                  <RatingBadge rating={r.rating} />
-                </td>
+        <div className="card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 text-xs uppercase tracking-wide border-b border-border/60">
+                <th className="px-6 py-3 font-medium">Ticker</th>
+                <th className="px-6 py-3 font-medium">Buffett Score</th>
+                <th className="px-6 py-3 font-medium">Lynch Score</th>
+                <th className="px-6 py-3 font-medium">Fraud Flag</th>
+                <th className="px-6 py-3 font-medium">Rating</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {results.map((r, i) => (
+                <tr key={r.ticker} className={`border-b border-border/40 last:border-0 hover:bg-white/[0.03] transition-colors ${i % 2 === 0 ? "" : "bg-white/[0.015]"}`}>
+                  <td className="px-6 py-3.5 font-semibold text-slate-100">{r.ticker}</td>
+                  <td className="px-6 py-3.5 text-slate-300 tabular-nums">{r.buffett_score ?? "—"}</td>
+                  <td className="px-6 py-3.5 text-slate-300 tabular-nums">{r.lynch_score ?? "—"}</td>
+                  <td className="px-6 py-3.5">
+                    {r.fraud_flag ? (
+                      <span className="text-avoid text-xs font-medium">Yes</span>
+                    ) : (
+                      <span className="text-slate-500 text-xs">No</span>
+                    )}
+                  </td>
+                  <td className="px-6 py-3.5">
+                    <RatingBadge rating={r.rating} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
