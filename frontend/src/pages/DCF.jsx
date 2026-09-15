@@ -4,9 +4,27 @@ import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
 import WaccCalculator from "../components/WaccCalculator.jsx";
 import MonteCarloDCF from "../components/MonteCarloDCF.jsx";
-import FcfBuilder from "../components/FcfBuilder.jsx";
+import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
+
+function defaultHistoryYears() {
+  const startYear = 2016;
+  const years = [];
+  for (let i = 0; i < 10; i++) {
+    const growthFactor = Math.pow(1.08, i);
+    years.push({
+      year: String(startYear + i),
+      revenue: Math.round(3000 * growthFactor),
+      ebitMargin: 22 + i * 0.3,
+      taxRate: 21,
+      depreciation: Math.round(150 * growthFactor),
+      capex: Math.round(180 * growthFactor),
+      deltaWorkingCapital: Math.round(20 * growthFactor),
+    });
+  }
+  return years;
+}
 
 function computeScenario(fcf, growthRate, terminalGrowth, wacc, years = 5) {
   if (!fcf || !wacc || wacc <= terminalGrowth) return null;
@@ -37,15 +55,7 @@ export default function DCF() {
   const [terminalGrowth, setTerminalGrowth] = useState(GDP_CAPS.US);
   const [marginOfSafety, setMarginOfSafety] = useState(20);
   const [medianIntrinsicValue, setMedianIntrinsicValue] = useState(null);
-
-  const [fcfInputs, setFcfInputs] = useState({
-    revenue: 5000,
-    ebitMargin: 25,
-    taxRate: 21,
-    depreciation: 200,
-    capex: 250,
-    deltaWorkingCapital: 30,
-  });
+  const [historyYears, setHistoryYears] = useState(defaultHistoryYears());
 
   const cap = GDP_CAPS[market];
   const exceedsCap = terminalGrowth > cap;
@@ -57,16 +67,17 @@ export default function DCF() {
     return { key, growth: growth[key], value, perShare, upside };
   });
 
-  const safeBuyPrice = medianIntrinsicValue ? medianIntrinsicValue * (1 - marginOfSafety / 100) : null;
-  const currentMarginOfSafety = medianIntrinsicValue && currentPrice
+  const adjustedIntrinsicValue = medianIntrinsicValue ? medianIntrinsicValue * (1 - marginOfSafety / 100) : null;
+  const currentDiscount = medianIntrinsicValue && currentPrice
     ? ((medianIntrinsicValue - currentPrice) / medianIntrinsicValue) * 100
     : null;
+  const meetsTargetCushion = currentDiscount !== null && currentDiscount >= marginOfSafety;
 
   return (
     <div>
       <PageHeader
         title="DCF Calculator"
-        description="Full build-up from FCF fundamentals through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in a Buy/Watch/Caution read against the current price."
+        description="Historical FCF trend (up to 10 years) feeds growth assumptions, then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value."
       />
 
       <div className="card p-6 mb-6">
@@ -103,21 +114,32 @@ export default function DCF() {
         </div>
       </div>
 
-      <FcfBuilder inputs={fcfInputs} onChange={setFcfInputs} onFcfChange={setFcf} />
+      <FcfHistoryBuilder
+        years={historyYears}
+        onYearsChange={setHistoryYears}
+        onBaseFcfChange={setFcf}
+        onSuggestedGrowthChange={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
+      />
 
       <WaccCalculator market={market} onWaccChange={setWacc} />
 
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">DCF Inputs</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <EditableField label="Base Year FCF (from build-up above)" value={fcf} onChange={setFcf} step="10" suffix="$M" />
+          <EditableField label="Base Year FCF (from history above)" value={fcf} onChange={setFcf} step="10" suffix="$M" />
           <EditableField label="WACC (auto-synced, editable)" value={wacc} onChange={setWacc} suffix="%" />
           <EditableField label="Shares Outstanding" value={shares} onChange={setShares} step="1" suffix="M" />
         </div>
       </div>
 
       <div className="card p-6 mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">Growth Assumptions</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
+          Growth Assumptions
+        </h3>
+        <p className="text-slate-500 text-xs mb-4">
+          "Normal" is pre-filled from your historical FCF CAGR above — override any of the three
+          if you think the trend won't hold.
+        </p>
         <div className="grid grid-cols-3 gap-4 mb-5">
           <EditableField
             label="Conservative"
@@ -126,7 +148,7 @@ export default function DCF() {
             suffix="%"
           />
           <EditableField
-            label="Normal"
+            label="Normal (from FCF CAGR)"
             value={growth.normal}
             onChange={(v) => setGrowth({ ...growth, normal: v })}
             suffix="%"
@@ -160,7 +182,7 @@ export default function DCF() {
             <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">
               {s.key}
             </p>
-            <p className="text-slate-400 text-xs mb-3">{s.growth}% growth</p>
+            <p className="text-slate-400 text-xs mb-3">{s.growth.toFixed(1)}% growth</p>
             <p className="stat-value text-2xl text-white mb-1">
               {s.perShare ? `$${s.perShare.toFixed(2)}` : "—"}
             </p>
@@ -200,45 +222,47 @@ export default function DCF() {
             <p className="stat-value text-xl text-slate-200">${currentPrice.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Median Intrinsic Value</p>
+            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Raw Intrinsic Value (Median)</p>
             <p className="stat-value text-xl text-accent2">
               {medianIntrinsicValue ? `$${medianIntrinsicValue.toFixed(2)}` : "—"}
             </p>
           </div>
           <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Current Margin of Safety</p>
-            <p className={`stat-value text-xl ${currentMarginOfSafety >= 0 ? "text-buy" : "text-avoid"}`}>
-              {currentMarginOfSafety !== null ? `${currentMarginOfSafety >= 0 ? "+" : ""}${currentMarginOfSafety.toFixed(1)}%` : "—"}
-            </p>
-          </div>
-          <div>
             <EditableField
-              label="Target Margin of Safety"
+              label="Margin of Safety"
               value={marginOfSafety}
               onChange={setMarginOfSafety}
               suffix="%"
             />
+          </div>
+          <div>
+            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">
+              Adjusted Intrinsic Value (Intrinsic × (1 − MOS))
+            </p>
+            <p className="stat-value text-xl text-buy">
+              {adjustedIntrinsicValue ? `$${adjustedIntrinsicValue.toFixed(2)}` : "—"}
+            </p>
           </div>
         </div>
 
         <div className="pt-4 border-t border-border/60 flex items-center justify-between">
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">
-              Suggested Max Buy Price (at {marginOfSafety}% cushion)
+              Current Price vs. Raw Intrinsic Value
             </p>
-            <p className="stat-value text-2xl text-white">
-              {safeBuyPrice ? `$${safeBuyPrice.toFixed(2)}` : "—"}
+            <p className={`stat-value text-2xl ${meetsTargetCushion ? "text-buy" : "text-avoid"}`}>
+              {currentDiscount !== null ? `${currentDiscount >= 0 ? "+" : ""}${currentDiscount.toFixed(1)}% below intrinsic` : "—"}
             </p>
           </div>
           <div className="text-right max-w-sm">
             <p className="text-slate-400 text-sm leading-relaxed">
-              {currentMarginOfSafety === null
-                ? "Waiting on Monte Carlo simulation to compute median intrinsic value."
-                : currentMarginOfSafety >= marginOfSafety
-                ? "Current price sits below your target cushion — statistically attractive entry per this model."
-                : currentMarginOfSafety >= 0
-                ? "Some margin of safety exists, but below your target cushion. Treat as a Watch, not a Buy."
-                : "Current price exceeds the model's median intrinsic value. No margin of safety at this price."}
+              {medianIntrinsicValue === null
+                ? "Waiting on Monte Carlo simulation to compute intrinsic value."
+                : meetsTargetCushion
+                ? `Current price ($${currentPrice.toFixed(2)}) sits below the MOS-adjusted intrinsic value ($${adjustedIntrinsicValue.toFixed(2)}) — even after discounting for model uncertainty, the price looks attractive.`
+                : currentDiscount >= 0
+                ? `Current price is below raw intrinsic value but hasn't cleared your ${marginOfSafety}% cushion. Adjusted intrinsic value: $${adjustedIntrinsicValue.toFixed(2)}.`
+                : `Current price exceeds raw intrinsic value — no cushion at this price even before applying margin of safety.`}
             </p>
           </div>
         </div>
