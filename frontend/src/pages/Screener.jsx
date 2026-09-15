@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import PageHeader from "../components/PageHeader.jsx";
 import RatingBadge from "../components/RatingBadge.jsx";
 import CriteriaChecklist from "../components/CriteriaChecklist.jsx";
+import CriteriaEditor from "../components/CriteriaEditor.jsx";
 import Icon from "../components/Icon.jsx";
 import { SCREENER_MODES } from "../data/screenerCriteria.js";
 import { SAMPLE_INDIA_STOCKS, SAMPLE_US_STOCKS } from "../data/sampleStocks.js";
@@ -11,16 +12,31 @@ export default function Screener() {
   const [market, setMarket] = useState("india");
   const [mode, setMode] = useState("lynch");
   const [expandedTicker, setExpandedTicker] = useState(null);
+  const [showEditor, setShowEditor] = useState(false);
+  const [customCriteria, setCustomCriteria] = useState({});
 
   const modes = SCREENER_MODES[market];
 
-  useMemo(() => {
+  useEffect(() => {
     if (!modes.find((m) => m.key === mode)) {
       setMode(modes[0].key);
     }
   }, [market]);
 
-  const activeMode = modes.find((m) => m.key === mode) || modes[0];
+  const defaultMode = modes.find((m) => m.key === mode) || modes[0];
+  const criteriaKey = `${market}_${mode}`;
+  const activeCriteria = customCriteria[criteriaKey] || defaultMode.criteria;
+
+  function updateCriteria(newCriteria) {
+    setCustomCriteria({ ...customCriteria, [criteriaKey]: newCriteria });
+  }
+
+  function resetCriteria() {
+    const next = { ...customCriteria };
+    delete next[criteriaKey];
+    setCustomCriteria(next);
+  }
+
   const stocks = market === "india" ? SAMPLE_INDIA_STOCKS : SAMPLE_US_STOCKS;
   const currencySymbol = market === "india" ? "₹" : "$";
   const capUnit = market === "india" ? "Cr" : "M";
@@ -29,21 +45,21 @@ export default function Screener() {
     return stocks.map((stock) => {
       let evaluation;
       if (market === "india") {
-        if (mode === "lynch") evaluation = evaluateIndiaLynch(stock, activeMode.criteria);
-        else if (mode === "buffett") evaluation = evaluateIndiaBuffett(stock, activeMode.criteria);
-        else evaluation = evaluateIndiaCombined(stock, activeMode.criteria);
+        if (mode === "lynch") evaluation = evaluateIndiaLynch(stock, activeCriteria);
+        else if (mode === "buffett") evaluation = evaluateIndiaBuffett(stock, activeCriteria);
+        else evaluation = evaluateIndiaCombined(stock, activeCriteria);
       } else {
-        evaluation = evaluateUsBuffettLynch(stock, activeMode.criteria, mode);
+        evaluation = evaluateUsBuffettLynch(stock, activeCriteria, mode);
       }
       return { stock, evaluation };
     });
-  }, [stocks, mode, market, activeMode]);
+  }, [stocks, mode, market, activeCriteria]);
 
   return (
     <div>
       <PageHeader
         title="Screener"
-        description="Filters candidates against Buffett quality and Lynch GARP criteria — separately scored per market since US and India have different accounting norms and typical valuation ranges. Sample data shown; wire the finance connector (US) or a trusted India source (Phase 2) for live results."
+        description="Filters candidates against Buffett quality and Lynch GARP criteria — separately scored per market since US and India have different accounting norms and typical valuation ranges. Sample data shown; connect real data via the finance connector (US) or your own trusted India source."
         action={
           <div className="flex gap-2">
             <select
@@ -63,7 +79,7 @@ export default function Screener() {
         <span className="text-slate-400 text-xs font-medium uppercase tracking-wide mr-2">
           Screen
         </span>
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap flex-1">
           {modes.map((m) => (
             <button
               key={m.key}
@@ -76,7 +92,20 @@ export default function Screener() {
             </button>
           ))}
         </div>
+        <button
+          onClick={() => setShowEditor(!showEditor)}
+          className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
+            showEditor ? "bg-accent/20 text-accent2" : "bg-white/5 text-slate-400 hover:bg-white/10"
+          }`}
+        >
+          <Icon name="wacc" size={14} />
+          {showEditor ? "Hide Editor" : "Edit Thresholds"}
+        </button>
       </div>
+
+      {showEditor && (
+        <CriteriaEditor criteria={activeCriteria} onChange={updateCriteria} onReset={resetCriteria} />
+      )}
 
       {mode === "combined" && market === "india" && (
         <div className="card p-4 mb-6 border border-caution/30 bg-caution/5 flex items-start gap-3">
@@ -144,8 +173,8 @@ export default function Screener() {
 
       <div className="card p-4 mt-6 text-slate-500 text-xs">
         Market cap / sales figures shown in {currencySymbol}
-        {capUnit} ({market === "india" ? "₹ Crore" : "$ Millions"}). Click any row to see the full
-        pass/fail breakdown against every criterion in the active screen.
+        {capUnit} ({market === "india" ? "₹ Crore" : "$ Millions"}). Click any row for the full
+        pass/fail breakdown. Click "Edit Thresholds" above to override any criterion live.
       </div>
     </div>
   );
