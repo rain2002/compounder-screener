@@ -8,14 +8,29 @@ function defaultFundamentalsYears() {
   const startYear = 2016;
   const years = [];
   for (let i = 0; i < 10; i++) {
-    const growthFactor = Math.pow(1.09, i);
-    const revenue = Math.round(3000 * growthFactor);
+    const g = Math.pow(1.09, i);
+    const revenue = Math.round(3000 * g);
+    const ebitda = Math.round(revenue * (0.24 + i * 0.005));
+    const ebit = Math.round(revenue * (0.18 + i * 0.004));
+    const netIncome = Math.round(revenue * (0.12 + i * 0.003));
     years.push({
       year: String(startYear + i),
       revenue,
-      ebitda: Math.round(revenue * (0.24 + i * 0.005)),
-      ebit: Math.round(revenue * (0.18 + i * 0.004)),
-      netProfit: Math.round(revenue * (0.12 + i * 0.003)),
+      grossProfit: Math.round(revenue * 0.55),
+      ebitda,
+      ebit,
+      interestExpense: Math.round(20 * g),
+      netIncome,
+      eps: Math.round((netIncome / 500) * 100) / 100,
+      totalDebt: Math.round(800 * g * 0.9),
+      cash: Math.round(600 * g),
+      totalEquity: Math.round(4000 * g),
+      currentAssets: Math.round(2200 * g),
+      currentLiabilities: Math.round(1100 * g),
+      inventory: Math.round(500 * g),
+      accountsReceivable: Math.round(450 * g),
+      operatingCashFlow: Math.round(netIncome * 1.25),
+      capex: Math.round(revenue * 0.09),
     });
   }
   return years;
@@ -23,9 +38,11 @@ function defaultFundamentalsYears() {
 
 const METRIC_OPTIONS = [
   { key: "revenue", label: "Revenue" },
+  { key: "grossProfit", label: "Gross Profit" },
   { key: "ebitda", label: "EBITDA" },
   { key: "ebit", label: "EBIT" },
-  { key: "netProfit", label: "Net Profit" },
+  { key: "netIncome", label: "Net Income" },
+  { key: "operatingCashFlow", label: "Operating Cash Flow" },
 ];
 
 export default function Technical() {
@@ -40,7 +57,7 @@ export default function Technical() {
     <div>
       <PageHeader
         title="Technical Analysis"
-        description="Fundamental trend analysis across Revenue, EBITDA, EBIT, and Net Profit — historical growth rates feed a guardrailed forecast. Full ML model (Phase 2+) will replace the rule-based growth estimate below with a pooled cross-sectional prediction."
+        description="Fundamental trend analysis across all 3 financial statements, using the ratios Buffett and Lynch both check — ROE, ROIC, Debt/Equity, margins, FCF, and more. Historical growth feeds a guardrailed forecast; full ML model integration is Phase 2+."
       />
 
       <div className="card p-6 mb-6">
@@ -56,12 +73,12 @@ export default function Technical() {
 
       <FundamentalsBuilder years={years} onYearsChange={setYears} />
 
-      <div className="card p-4 mb-6 flex items-center gap-2">
+      <div className="card p-4 mb-6 flex items-center gap-2 flex-wrap">
         <Icon name="check" size={16} className="text-accent2" />
         <span className="text-slate-400 text-xs font-medium uppercase tracking-wide mr-2">
           Forecast Metric
         </span>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {METRIC_OPTIONS.map((m) => (
             <button
               key={m.key}
@@ -98,6 +115,7 @@ export default function Technical() {
           <li>• Confidence is derived from the coefficient of variation of historical YoY growth — volatile history automatically lowers trust in the forecast.</li>
           <li>• Fewer than 3 years of history returns "Insufficient Data" instead of a false-confidence number.</li>
           <li>• The ±1σ range widens with forecast horizon, same principle as the DCF Monte Carlo band — further-out years get less certainty, not more.</li>
+          <li>• Ratio checklist (ROE, ROIC, Debt/Equity, margins, FCF) flags red/green against the actual thresholds Buffett and Lynch used, not arbitrary cutoffs.</li>
         </ul>
       </div>
     </div>
