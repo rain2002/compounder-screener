@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
 import FundamentalsBuilder from "../components/FundamentalsBuilder.jsx";
 import GuardrailedForecast from "../components/GuardrailedForecast.jsx";
+import FundamentalsChart from "../components/FundamentalsChart.jsx";
 
 function defaultFundamentalsYears() {
   const startYear = 2016;
@@ -45,13 +46,60 @@ const METRIC_OPTIONS = [
   { key: "operatingCashFlow", label: "Operating Cash Flow" },
 ];
 
+const GUARDRAILS = { maxGrowthCap: 40, minGrowthFloor: -20 };
+
+function trimLeadingZeros(years, key) {
+  const firstRealIndex = years.findIndex((y) => y[key] > 0);
+  if (firstRealIndex <= 0) return years;
+  return years.slice(firstRealIndex);
+}
+
+function computeGrowthStats(years, key) {
+  const trimmed = trimLeadingZeros(years, key);
+  const rates = [];
+  for (let i = 1; i < trimmed.length; i++) {
+    const prev = trimmed[i - 1][key];
+    const curr = trimmed[i][key];
+    if (prev > 0) rates.push(((curr - prev) / prev) * 100);
+  }
+  if (rates.length < 2) return { mean: 0, std: 0 };
+  const mean = rates.reduce((a, b) => a + b, 0) / rates.length;
+  const variance = rates.reduce((a, b) => a + (b - mean) ** 2, 0) / rates.length;
+  return { mean, std: Math.sqrt(variance) };
+}
+
 export default function Technical() {
   const [ticker, setTicker] = useState("AAPL");
   const [years, setYears] = useState(defaultFundamentalsYears());
   const [selectedMetric, setSelectedMetric] = useState("revenue");
   const [forecastYears, setForecastYears] = useState(5);
+  const [manualOverride, setManualOverride] = useState(null);
 
   const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
+
+  const { mean, std } = useMemo(() => computeGrowthStats(years, selectedMetric), [years, selectedMetric]);
+
+  const rawGrowth = manualOverride !== null ? manualOverride : mean;
+  const guardrailedGrowth = Math.max(GUARDRAILS.minGrowthFloor, Math.min(GUARDRAILS.maxGrowthCap, rawGrowth));
+
+  const { forecast, forecastBand } = useMemo(() => {
+    const lastValue = years[years.length - 1][selectedMetric];
+    const lowGrowth = Math.max(GUARDRAILS.minGrowthFloor, guardrailedGrowth - std);
+    const highGrowth = Math.min(GUARDRAILS.maxGrowthCap, guardrailedGrowth + std);
+    const f = [];
+    const b = [];
+    let running = lastValue;
+    let runningLow = lastValue;
+    let runningHigh = lastValue;
+    for (let i = 1; i <= forecastYears; i++) {
+      running = running * (1 + guardrailedGrowth / 100);
+      runningLow = runningLow * (1 + lowGrowth / 100);
+      runningHigh = runningHigh * (1 + highGrowth / 100);
+      f.push({ year: i, value: running });
+      b.push({ year: i, low: runningLow, high: runningHigh });
+    }
+    return { forecast: f, forecastBand: b };
+  }, [years, selectedMetric, guardrailedGrowth, std, forecastYears]);
 
   return (
     <div>
@@ -94,6 +142,14 @@ export default function Technical() {
           ))}
         </div>
       </div>
+
+      <FundamentalsChart
+        years={years}
+        metricKey={selectedMetric}
+        metricLabel={metricLabel}
+        forecast={forecast}
+        forecastBand={forecastBand}
+      />
 
       <GuardrailedForecast
         years={years}
