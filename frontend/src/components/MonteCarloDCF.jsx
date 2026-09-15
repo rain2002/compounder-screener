@@ -94,20 +94,20 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
           className="absolute inset-y-0 bg-gradient-to-r from-avoid/30 via-watch/30 to-buy/30"
           style={{ left: "5%", right: "5%" }}
         />
-        <div className="absolute inset-y-0 w-0.5 bg-accent2" style={{ left: "50%" }} />
+        <div className="absolute inset-y-0 w-1 bg-white shadow-lg" style={{ left: "50%" }} />
       </div>
 
       <div className="grid grid-cols-5 gap-2 text-center mb-5">
         {[
-          ["P10", sim.p10],
-          ["P25", sim.p25],
-          ["P50 (Median)", sim.p50],
-          ["P75", sim.p75],
-          ["P90", sim.p90],
-        ].map(([label, val]) => (
-          <div key={label}>
-            <p className="text-slate-500 text-xs mb-1">{label}</p>
-            <p className={`font-semibold ${label.startsWith("P50") ? "text-accent2 text-base" : "text-slate-300 text-sm"}`}>
+          ["P10", sim.p10, false],
+          ["P25", sim.p25, false],
+          ["P50 (Median)", sim.p50, true],
+          ["P75", sim.p75, false],
+          ["P90", sim.p90, false],
+        ].map(([label, val, isMedian]) => (
+          <div key={label} className={isMedian ? "bg-accent/10 rounded-lg py-1.5 -my-1.5" : ""}>
+            <p className={`text-xs mb-1 ${isMedian ? "text-accent2 font-semibold" : "text-slate-500"}`}>{label}</p>
+            <p className={`font-bold ${isMedian ? "text-white text-lg" : "text-slate-300 text-sm font-semibold"}`}>
               ${val.toFixed(2)}
             </p>
           </div>
