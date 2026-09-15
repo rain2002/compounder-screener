@@ -1,18 +1,32 @@
 import { useState, useMemo } from "react";
 import EditableField from "./EditableField.jsx";
 import Icon from "./Icon.jsx";
+import { formatMoney } from "../utils/units.js";
+
+function trimLeadingZeros(years, key) {
+  const firstRealIndex = years.findIndex((y) => y[key] > 0);
+  if (firstRealIndex <= 0) return years;
+  return years.slice(firstRealIndex);
+}
 
 function stdDevOfGrowthRates(years, key) {
+  const trimmed = trimLeadingZeros(years, key);
   const rates = [];
-  for (let i = 1; i < years.length; i++) {
-    const prev = years[i - 1][key];
-    const curr = years[i][key];
+  for (let i = 1; i < trimmed.length; i++) {
+    const prev = trimmed[i - 1][key];
+    const curr = trimmed[i][key];
     if (prev > 0) rates.push(((curr - prev) / prev) * 100);
   }
-  if (rates.length < 2) return { mean: 0, std: 0, rates };
+  if (rates.length < 2) return { mean: 0, std: 0, rates, effectiveYears: trimmed.length, wasTrimmed: trimmed.length < years.length };
   const mean = rates.reduce((a, b) => a + b, 0) / rates.length;
   const variance = rates.reduce((a, b) => a + (b - mean) ** 2, 0) / rates.length;
-  return { mean, std: Math.sqrt(variance), rates };
+  return {
+    mean,
+    std: Math.sqrt(variance),
+    rates,
+    effectiveYears: trimmed.length,
+    wasTrimmed: trimmed.length < years.length,
+  };
 }
 
 const GUARDRAILS = {
@@ -24,7 +38,10 @@ const GUARDRAILS = {
 export default function GuardrailedForecast({ years, metricKey, metricLabel, forecastYears, onForecastYearsChange }) {
   const [manualOverride, setManualOverride] = useState(null);
 
-  const { mean, std, rates } = useMemo(() => stdDevOfGrowthRates(years, metricKey), [years, metricKey]);
+  const { mean, std, rates, effectiveYears, wasTrimmed } = useMemo(
+    () => stdDevOfGrowthRates(years, metricKey),
+    [years, metricKey]
+  );
 
   const rawForecastGrowth = manualOverride !== null ? manualOverride : mean;
   const guardrailedGrowth = Math.max(
@@ -70,10 +87,22 @@ export default function GuardrailedForecast({ years, metricKey, metricLabel, for
         </h3>
       </div>
       <p className="text-slate-500 text-xs mb-5">
-        Rule-based stand-in for the pooled ML model (XGBoost/Random Forest, Phase 2+). Growth rate
-        is the historical mean YoY growth, clipped to sane bounds so a single anomalous year can't
-        produce an absurd forecast.
+        Rule-based stand-in for the pooled ML model (XGBoost/Random Forest, Phase 2+ — requires
+        cross-sectional data from many companies, not available from a single company's history).
+        Growth rate is the historical mean YoY growth, clipped to sane bounds so a single anomalous
+        year can't produce an absurd forecast.
       </p>
+
+      {wasTrimmed && (
+        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-accent/10 border border-accent/30">
+          <Icon name="check" size={16} className="text-accent2 shrink-0" />
+          <p className="text-accent2 text-xs">
+            Detected {years.length - effectiveYears} leading year(s) with zero {metricLabel.toLowerCase()}
+            (likely pre-founding or pre-IPO) — excluded from growth calculations. Using {effectiveYears}
+            effective years instead of {years.length}.
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
         <div>
@@ -138,10 +167,10 @@ export default function GuardrailedForecast({ years, metricKey, metricLabel, for
           </thead>
           <tbody>
             <tr>
-              <td className="px-2 py-2 text-slate-500 text-xs sticky left-0 bg-base">Forecast ($M)</td>
+              <td className="px-2 py-2 text-slate-500 text-xs sticky left-0 bg-base">Forecast</td>
               {forecast.map((f, i) => (
                 <td key={i} className="px-2 py-2 text-center text-accent2 font-semibold text-xs">
-                  ${f.value.toFixed(0)}
+                  {formatMoney(f.value)}
                 </td>
               ))}
             </tr>
@@ -149,7 +178,7 @@ export default function GuardrailedForecast({ years, metricKey, metricLabel, for
               <td className="px-2 py-2 text-slate-500 text-xs sticky left-0 bg-base">Range (±1σ)</td>
               {forecastBand.map((f, i) => (
                 <td key={i} className="px-2 py-2 text-center text-slate-500 text-xs">
-                  ${f.low.toFixed(0)}–${f.high.toFixed(0)}
+                  {formatMoney(f.low)}–{formatMoney(f.high)}
                 </td>
               ))}
             </tr>

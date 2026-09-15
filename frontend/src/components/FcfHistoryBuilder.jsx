@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import Icon from "./Icon.jsx";
+import { formatMoney } from "../utils/units.js";
 
 function computeFcf(row) {
   const ebit = row.revenue * (row.ebitMargin / 100);
@@ -7,25 +8,35 @@ function computeFcf(row) {
   return nopat + row.depreciation - row.capex - row.deltaWorkingCapital;
 }
 
-function cagr(first, last, years) {
-  if (first <= 0 || last <= 0 || years <= 0) return null;
-  return (Math.pow(last / first, 1 / years) - 1) * 100;
+function trimLeadingZeros(series) {
+  const firstRealIndex = series.findIndex((v) => v > 0);
+  if (firstRealIndex <= 0) return series;
+  return series.slice(firstRealIndex);
+}
+
+function cagr(series) {
+  const trimmed = trimLeadingZeros(series);
+  if (trimmed.length < 2) return null;
+  const first = trimmed[0];
+  const last = trimmed[trimmed.length - 1];
+  const n = trimmed.length - 1;
+  if (first <= 0 || last <= 0 || n <= 0) return null;
+  return (Math.pow(last / first, 1 / n) - 1) * 100;
 }
 
 export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChange, onSuggestedGrowthChange }) {
   const fcfSeries = years.map((y) => ({ ...y, fcf: computeFcf(y) }));
 
-  const revenueCagr = useMemo(() => {
-    if (fcfSeries.length < 2) return null;
-    return cagr(fcfSeries[0].revenue, fcfSeries[fcfSeries.length - 1].revenue, fcfSeries.length - 1);
-  }, [fcfSeries]);
+  const revenues = fcfSeries.map((y) => y.revenue);
+  const fcfs = fcfSeries.map((y) => y.fcf);
 
-  const fcfCagr = useMemo(() => {
-    if (fcfSeries.length < 2) return null;
-    const first = fcfSeries[0].fcf;
-    const last = fcfSeries[fcfSeries.length - 1].fcf;
-    return cagr(first, last, fcfSeries.length - 1);
-  }, [fcfSeries]);
+  const revenueCagr = useMemo(() => cagr(revenues), [years]);
+  const fcfCagr = useMemo(() => cagr(fcfs), [years]);
+
+  const excludedYears = useMemo(() => {
+    const firstReal = revenues.findIndex((v) => v > 0);
+    return firstReal > 0 ? firstReal : 0;
+  }, [years]);
 
   const baseFcf = fcfSeries[fcfSeries.length - 1]?.fcf ?? 0;
 
@@ -85,12 +96,23 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
           </button>
         </div>
       </div>
-      <p className="text-slate-500 text-xs mb-5">
+      <p className="text-slate-500 text-xs mb-4">
         Rule of thumb: 10 years of history gives the most reliable trend, but younger companies
         won't have that much — use however many years of real filings exist. Growth rate below is
-        derived from this trend (CAGR), not guessed. Pre-filled with placeholder figures — replace
-        with real 10-K numbers, or wait for the finance connector sync (Phase 2) to auto-populate.
+        derived from this trend (CAGR), not guessed. Values entered in $M — displayed as K/M/B/T
+        automatically. Pre-filled with placeholder figures — replace with real 10-K numbers, or
+        wait for the finance connector sync (Phase 2) to auto-populate.
       </p>
+
+      {excludedYears > 0 && (
+        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-accent/10 border border-accent/30">
+          <Icon name="check" size={16} className="text-accent2 shrink-0" />
+          <p className="text-accent2 text-xs">
+            {excludedYears} leading year(s) with zero revenue detected (pre-founding) — CAGR
+            calculations automatically exclude these and use only real reporting years.
+          </p>
+        </div>
+      )}
 
       <div className="overflow-x-auto -mx-2">
         <table className="w-full text-sm min-w-[700px]">
@@ -129,12 +151,12 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
             ))}
             <tr className="bg-accent/5">
               <td className="px-2 py-2.5 text-slate-200 text-xs font-semibold sticky left-0 bg-accent/5">
-                Computed FCF ($M)
+                Computed FCF
               </td>
               {fcfSeries.map((y, i) => (
                 <td key={i} className="px-2 py-2.5 text-center">
                   <span className={`text-xs font-semibold ${i === fcfSeries.length - 1 ? "text-accent2" : "text-slate-300"}`}>
-                    ${y.fcf.toFixed(0)}
+                    {formatMoney(y.fcf)}
                   </span>
                 </td>
               ))}
@@ -158,7 +180,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
         </div>
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Base Year FCF (most recent)</p>
-          <p className="stat-value text-lg text-white">${baseFcf.toFixed(0)}M</p>
+          <p className="stat-value text-lg text-white">{formatMoney(baseFcf)}</p>
         </div>
       </div>
     </div>

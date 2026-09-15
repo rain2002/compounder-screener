@@ -1,9 +1,21 @@
 import { useMemo, useState } from "react";
 import Icon from "./Icon.jsx";
+import { formatMoney } from "../utils/units.js";
 
-function cagr(first, last, years) {
-  if (first <= 0 || last <= 0 || years <= 0) return null;
-  return (Math.pow(last / first, 1 / years) - 1) * 100;
+function trimLeadingZeros(years, key) {
+  const firstRealIndex = years.findIndex((y) => y[key] > 0);
+  if (firstRealIndex <= 0) return years;
+  return years.slice(firstRealIndex);
+}
+
+function cagr(years, key) {
+  const trimmed = trimLeadingZeros(years, key);
+  if (trimmed.length < 2) return null;
+  const first = trimmed[0][key];
+  const last = trimmed[trimmed.length - 1][key];
+  const n = trimmed.length - 1;
+  if (first <= 0 || last <= 0 || n <= 0) return null;
+  return (Math.pow(last / first, 1 / n) - 1) * 100;
 }
 
 const STATEMENTS = {
@@ -16,7 +28,7 @@ const STATEMENTS = {
       { key: "ebit", label: "EBIT", step: 5 },
       { key: "interestExpense", label: "Interest Expense", step: 1 },
       { key: "netIncome", label: "Net Income", step: 5 },
-      { key: "eps", label: "EPS ($)", step: 0.05 },
+      { key: "eps", label: "EPS ($)", step: 0.05, noScale: true },
     ],
   },
   balance: {
@@ -58,6 +70,11 @@ function computeDerived(y) {
   return { fcf, roe, roic, debtToEquity, debtToEbitda, currentRatio, interestCoverage, grossMargin, operatingMargin, netMargin, cashConversion };
 }
 
+function fcfCagr(years) {
+  const withFcf = years.map((y) => ({ ...y, __fcf: y.operatingCashFlow - y.capex }));
+  return cagr(withFcf, "__fcf");
+}
+
 export default function FundamentalsBuilder({ years, onYearsChange }) {
   const [activeTab, setActiveTab] = useState("income");
 
@@ -84,11 +101,14 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
   const cagrs = useMemo(() => {
     const result = {};
     ALL_METRICS.forEach((m) => {
-      result[m.key] = cagr(years[0][m.key], years[years.length - 1][m.key], years.length - 1);
+      result[m.key] = cagr(years, m.key);
     });
-    result.fcf = cagr(firstDerived.fcf, lastDerived.fcf, years.length - 1);
+    result.fcf = fcfCagr(years);
     return result;
   }, [years]);
+
+  const revenueFoundingIndex = years.findIndex((y) => y.revenue > 0);
+  const excludedYears = revenueFoundingIndex > 0 ? revenueFoundingIndex : 0;
 
   const activeMetrics = STATEMENTS[activeTab].metrics;
 
@@ -112,9 +132,20 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
       </div>
       <p className="text-slate-500 text-xs mb-4">
         Covers the metrics Buffett and Lynch both check across all 3 statements — not just income
-        statement basics. Pre-filled with placeholder figures — replace with real 10-K numbers, or
-        wait for the finance connector sync (Phase 2).
+        statement basics. Values entered in $M — displayed as K/M/B/T automatically. Pre-filled
+        with placeholder figures — replace with real 10-K numbers, or wait for the finance
+        connector sync (Phase 2).
       </p>
+
+      {excludedYears > 0 && (
+        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-accent/10 border border-accent/30">
+          <Icon name="check" size={16} className="text-accent2 shrink-0" />
+          <p className="text-accent2 text-xs">
+            {excludedYears} leading year(s) with zero revenue detected (pre-founding) — CAGRs below
+            automatically exclude these and use only real reporting years.
+          </p>
+        </div>
+      )}
 
       <div className="flex gap-2 mb-4">
         {Object.entries(STATEMENTS).map(([key, s]) => (
@@ -134,7 +165,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
         <table className="w-full text-sm min-w-[700px]">
           <thead>
             <tr className="text-left text-slate-500 text-xs uppercase tracking-wide border-b border-border/60">
-              <th className="px-2 py-2 font-medium sticky left-0 bg-surface">Metric ($M)</th>
+              <th className="px-2 py-2 font-medium sticky left-0 bg-surface">Metric</th>
               {years.map((y, i) => (
                 <th key={i} className="px-2 py-2 font-medium text-center min-w-[90px]">
                   <input
@@ -150,7 +181,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
             {activeMetrics.map((m) => (
               <tr key={m.key} className="border-b border-border/30">
                 <td className="px-2 py-2 text-slate-500 text-xs sticky left-0 bg-base whitespace-nowrap">
-                  {m.label}
+                  {m.label} {!m.noScale && <span className="text-slate-600">($M)</span>}
                 </td>
                 {years.map((y, i) => (
                   <td key={i} className="px-1 py-1.5">
@@ -172,7 +203,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
                 </td>
                 {derived.map((d, i) => (
                   <td key={i} className="px-2 py-2.5 text-center text-accent2 font-semibold text-xs">
-                    ${d.fcf.toFixed(0)}
+                    {formatMoney(d.fcf)}
                   </td>
                 ))}
               </tr>
@@ -207,7 +238,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
           <RatioCell label="Operating Margin" value={`${lastDerived.operatingMargin.toFixed(1)}%`} good={lastDerived.operatingMargin >= firstDerived.operatingMargin} />
           <RatioCell label="Net Margin" value={`${lastDerived.netMargin.toFixed(1)}%`} good={lastDerived.netMargin >= firstDerived.netMargin} />
           <RatioCell label="Cash Conversion" value={`${lastDerived.cashConversion.toFixed(2)}x`} good={lastDerived.cashConversion >= 1} />
-          <RatioCell label="FCF" value={`$${lastDerived.fcf.toFixed(0)}M`} good={lastDerived.fcf > 0} />
+          <RatioCell label="FCF" value={formatMoney(lastDerived.fcf)} good={lastDerived.fcf > 0} />
           <RatioCell label="FCF CAGR" value={cagrs.fcf !== null ? `${cagrs.fcf.toFixed(1)}%` : "—"} good={cagrs.fcf > 0} />
         </div>
       </div>
