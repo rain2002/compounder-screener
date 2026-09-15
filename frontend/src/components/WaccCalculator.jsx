@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import EditableField from "./EditableField.jsx";
 import Icon from "./Icon.jsx";
 
@@ -15,6 +15,7 @@ export default function WaccCalculator({ market, onWaccChange }) {
   const [taxRate, setTaxRate] = useState(21);
   const [marketValueEquity, setMarketValueEquity] = useState(8000);
   const [marketValueDebt, setMarketValueDebt] = useState(2000);
+  const [autoSync, setAutoSync] = useState(true);
 
   const costOfEquity = riskFreeRate + beta * equityRiskPremium;
   const afterTaxCostOfDebt = costOfDebt * (1 - taxRate / 100);
@@ -23,18 +24,34 @@ export default function WaccCalculator({ market, onWaccChange }) {
   const weightDebt = totalCapital ? marketValueDebt / totalCapital : 0;
   const wacc = costOfEquity * weightEquity + afterTaxCostOfDebt * weightDebt;
 
+  useEffect(() => {
+    if (autoSync) onWaccChange(Number(wacc.toFixed(2)));
+  }, [wacc, autoSync]);
+
   return (
     <div className="card p-6 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Icon name="wacc" size={16} className="text-accent2" />
-        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-          WACC Calculator (CAPM)
-        </h3>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Icon name="wacc" size={16} className="text-accent2" />
+          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
+            WACC Calculator (CAPM)
+          </h3>
+        </div>
+        <label className="flex items-center gap-2 text-xs text-slate-400 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={autoSync}
+            onChange={(e) => setAutoSync(e.target.checked)}
+            className="rounded accent-accent"
+          />
+          Auto-sync to DCF
+        </label>
       </div>
 
       <p className="text-slate-500 text-xs mb-5">
         Cost of equity via CAPM (Risk-free rate + Beta × Equity Risk Premium), cost of debt after tax,
-        weighted by market value of equity vs. debt. Defaults reflect a rough {market === "INDIA" ? "India" : "US"} benchmark — edit freely.
+        weighted by market value of equity vs. debt. WACC flows into the DCF below automatically —
+        uncheck "Auto-sync" to override it manually there instead.
       </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
@@ -61,15 +78,7 @@ export default function WaccCalculator({ market, onWaccChange }) {
         </div>
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">WACC</p>
-          <div className="flex items-center gap-2">
-            <p className="stat-value text-lg text-accent2">{wacc.toFixed(2)}%</p>
-            <button
-              onClick={() => onWaccChange(Number(wacc.toFixed(2)))}
-              className="text-xs px-2 py-1 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors font-medium"
-            >
-              Use in DCF
-            </button>
-          </div>
+          <p className="stat-value text-lg text-accent2">{wacc.toFixed(2)}%</p>
         </div>
       </div>
     </div>

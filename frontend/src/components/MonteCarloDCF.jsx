@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import EditableField from "./EditableField.jsx";
 import Icon from "./Icon.jsx";
 
@@ -38,7 +38,7 @@ function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminal
   };
 }
 
-export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, growthMean }) {
+export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, growthMean, currentPrice, onMedianChange }) {
   const [growthStd, setGrowthStd] = useState(4);
   const [waccStd, setWaccStd] = useState(1.5);
   const [trials, setTrials] = useState(3000);
@@ -58,10 +58,16 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
     [fcf, growthMean, growthStd, waccMean, waccStd, terminalGrowth, shares, trials]
   );
 
+  useEffect(() => {
+    if (onMedianChange) onMedianChange(sim.p50);
+  }, [sim.p50]);
+
   const spreadWidth = sim.p90 - sim.p10;
   const relativeSpread = sim.p50 ? (spreadWidth / sim.p50) * 100 : 0;
   const confidence = relativeSpread < 40 ? "High" : relativeSpread < 80 ? "Moderate" : "Low";
   const confidenceColor = relativeSpread < 40 ? "text-buy" : relativeSpread < 80 ? "text-watch" : "text-avoid";
+
+  const upsideAtMedian = currentPrice ? ((sim.p50 - currentPrice) / currentPrice) * 100 : null;
 
   return (
     <div className="card p-6 mb-6">
@@ -73,7 +79,8 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
       </div>
       <p className="text-slate-500 text-xs mb-5">
         Runs {trials.toLocaleString()} randomized trials varying growth rate and WACC around your
-        Normal scenario inputs to produce an intrinsic value range instead of a single point estimate.
+        Normal scenario inputs. This removes single-point-estimate bias — instead of one "confident"
+        number, you get a probability-weighted range of outcomes.
       </p>
 
       <div className="grid grid-cols-3 gap-4 mb-5">
@@ -85,15 +92,9 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
       <div className="relative h-10 mb-3 rounded-lg overflow-hidden bg-black/30">
         <div
           className="absolute inset-y-0 bg-gradient-to-r from-avoid/30 via-watch/30 to-buy/30"
-          style={{
-            left: "5%",
-            right: "5%",
-          }}
+          style={{ left: "5%", right: "5%" }}
         />
-        <div
-          className="absolute inset-y-0 w-0.5 bg-accent2"
-          style={{ left: "50%" }}
-        />
+        <div className="absolute inset-y-0 w-0.5 bg-accent2" style={{ left: "50%" }} />
       </div>
 
       <div className="grid grid-cols-5 gap-2 text-center mb-5">
@@ -120,6 +121,14 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
             ${sim.p10.toFixed(2)} – ${sim.p90.toFixed(2)} / share
           </p>
         </div>
+        {upsideAtMedian !== null && (
+          <div className="text-right">
+            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Upside at Median</p>
+            <p className={`text-sm font-semibold ${upsideAtMedian >= 0 ? "text-buy" : "text-avoid"}`}>
+              {upsideAtMedian >= 0 ? "+" : ""}{upsideAtMedian.toFixed(1)}%
+            </p>
+          </div>
+        )}
         <div className="text-right">
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Forecast Confidence</p>
           <p className={`text-sm font-semibold ${confidenceColor}`}>{confidence}</p>
