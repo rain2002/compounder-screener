@@ -24,6 +24,17 @@ function cagr(series) {
   return (Math.pow(last / first, 1 / n) - 1) * 100;
 }
 
+function resequenceYears(years, index, newYearValue) {
+  const parsed = parseInt(newYearValue, 10);
+  if (Number.isNaN(parsed)) {
+    return years.map((y, i) => (i === index ? { ...y, year: newYearValue } : y));
+  }
+  return years.map((y, i) => {
+    if (i < index) return y;
+    return { ...y, year: String(parsed + (i - index)) };
+  });
+}
+
 export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChange, onSuggestedGrowthChange }) {
   const fcfSeries = years.map((y) => ({ ...y, fcf: computeFcf(y) }));
 
@@ -48,13 +59,17 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
   }, [baseFcf, fcfCagr]);
 
   function updateYear(index, field, value) {
+    if (field === "year") {
+      onYearsChange(resequenceYears(years, index, value));
+      return;
+    }
     const next = years.map((y, i) => (i === index ? { ...y, [field]: value } : y));
     onYearsChange(next);
   }
 
   function addYear() {
     const last = years[years.length - 1];
-    const nextYearLabel = (parseInt(last.year) + 1).toString();
+    const nextYearLabel = (parseInt(last.year, 10) + 1).toString();
     onYearsChange([...years, { ...last, year: nextYearLabel }]);
   }
 
@@ -100,8 +115,9 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
         Rule of thumb: 10 years of history gives the most reliable trend, but younger companies
         won't have that much — use however many years of real filings exist. Growth rate below is
         derived from this trend (CAGR), not guessed. Values entered in $M — displayed as K/M/B/T
-        automatically. Pre-filled with placeholder figures — replace with real 10-K numbers, or
-        wait for the finance connector sync (Phase 2) to auto-populate.
+        automatically. Editing any year header auto-resequences every year after it to stay
+        consecutive. Pre-filled with placeholder figures — replace with real 10-K numbers, or wait
+        for the finance connector sync (Phase 2) to auto-populate.
       </p>
 
       {excludedYears > 0 && (

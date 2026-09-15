@@ -75,17 +75,32 @@ function fcfCagr(years) {
   return cagr(withFcf, "__fcf");
 }
 
+function resequenceYears(years, index, newYearValue) {
+  const parsed = parseInt(newYearValue, 10);
+  if (Number.isNaN(parsed)) {
+    return years.map((y, i) => (i === index ? { ...y, year: newYearValue } : y));
+  }
+  return years.map((y, i) => {
+    if (i < index) return y;
+    return { ...y, year: String(parsed + (i - index)) };
+  });
+}
+
 export default function FundamentalsBuilder({ years, onYearsChange }) {
   const [activeTab, setActiveTab] = useState("income");
 
   function updateYear(index, field, value) {
+    if (field === "year") {
+      onYearsChange(resequenceYears(years, index, value));
+      return;
+    }
     const next = years.map((y, i) => (i === index ? { ...y, [field]: value } : y));
     onYearsChange(next);
   }
 
   function addYear() {
     const last = years[years.length - 1];
-    const nextYearLabel = (parseInt(last.year) + 1).toString();
+    const nextYearLabel = (parseInt(last.year, 10) + 1).toString();
     onYearsChange([...years, { ...last, year: nextYearLabel }]);
   }
 
@@ -132,9 +147,10 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
       </div>
       <p className="text-slate-500 text-xs mb-4">
         Covers the metrics Buffett and Lynch both check across all 3 statements — not just income
-        statement basics. Values entered in $M — displayed as K/M/B/T automatically. Pre-filled
-        with placeholder figures — replace with real 10-K numbers, or wait for the finance
-        connector sync (Phase 2).
+        statement basics. Values entered in $M — displayed as K/M/B/T automatically. Editing any
+        year header auto-resequences every year after it to stay consecutive. Pre-filled with
+        placeholder figures — replace with real 10-K numbers, or wait for the finance connector
+        sync (Phase 2).
       </p>
 
       {excludedYears > 0 && (
