@@ -1,165 +1,104 @@
-import { useState, useMemo } from "react";
-import EditableField from "../components/EditableField.jsx";
+import { useState } from "react";
 import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
-import StatCard from "../components/StatCard.jsx";
-import PriceHistoryBuilder, { generateDefaultPrices } from "../components/PriceHistoryBuilder.jsx";
-import PriceChart from "../components/PriceChart.jsx";
-import { computeIndicators } from "../components/TechnicalIndicators.jsx";
+import FundamentalsBuilder from "../components/FundamentalsBuilder.jsx";
+import GuardrailedForecast from "../components/GuardrailedForecast.jsx";
+
+function defaultFundamentalsYears() {
+  const startYear = 2016;
+  const years = [];
+  for (let i = 0; i < 10; i++) {
+    const growthFactor = Math.pow(1.09, i);
+    const revenue = Math.round(3000 * growthFactor);
+    years.push({
+      year: String(startYear + i),
+      revenue,
+      ebitda: Math.round(revenue * (0.24 + i * 0.005)),
+      ebit: Math.round(revenue * (0.18 + i * 0.004)),
+      netProfit: Math.round(revenue * (0.12 + i * 0.003)),
+    });
+  }
+  return years;
+}
+
+const METRIC_OPTIONS = [
+  { key: "revenue", label: "Revenue" },
+  { key: "ebitda", label: "EBITDA" },
+  { key: "ebit", label: "EBIT" },
+  { key: "netProfit", label: "Net Profit" },
+];
 
 export default function Technical() {
   const [ticker, setTicker] = useState("AAPL");
-  const [lookback, setLookback] = useState(90);
-  const [horizon, setHorizon] = useState(30);
-  const [smaWindow, setSmaWindow] = useState(20);
-  const [rsiWindow, setRsiWindow] = useState(14);
-  const [prices, setPrices] = useState(() => generateDefaultPrices(90, 150));
+  const [years, setYears] = useState(defaultFundamentalsYears());
+  const [selectedMetric, setSelectedMetric] = useState("revenue");
+  const [forecastYears, setForecastYears] = useState(5);
 
-  function handleLookbackChange(v) {
-    const newLookback = Math.max(20, Math.round(v));
-    setLookback(newLookback);
-    if (newLookback > prices.length) {
-      setPrices(generateDefaultPrices(newLookback, prices[0] || 150));
-    } else {
-      setPrices(prices.slice(prices.length - newLookback));
-    }
-  }
-
-  const indicators = useMemo(
-    () => computeIndicators(prices, smaWindow, rsiWindow, horizon),
-    [prices, smaWindow, rsiWindow, horizon]
-  );
-
-  const rsiZone =
-    indicators.rsiValue === null
-      ? "—"
-      : indicators.rsiValue >= 70
-      ? "Overbought"
-      : indicators.rsiValue <= 30
-      ? "Oversold"
-      : "Neutral";
-  const rsiColor =
-    indicators.rsiValue === null
-      ? "text-slate-400"
-      : indicators.rsiValue >= 70
-      ? "text-avoid"
-      : indicators.rsiValue <= 30
-      ? "text-buy"
-      : "text-slate-300";
-
-  const forecastEnd = indicators.regression.forecast[indicators.regression.forecast.length - 1];
-  const forecastChangePct = forecastEnd
-    ? ((forecastEnd.point - indicators.current) / indicators.current) * 100
-    : null;
+  const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
 
   return (
     <div>
       <PageHeader
         title="Technical Analysis"
-        description="Price trend and momentum from a linear regression forecast + SMA + RSI. Full ARIMA/Prophet/LSTM model integration is Phase 4 — this is a lightweight, fully computed v1 in the meantime."
+        description="Fundamental trend analysis across Revenue, EBITDA, EBIT, and Net Profit — historical growth rates feed a guardrailed forecast. Full ML model (Phase 2+) will replace the rule-based growth estimate below with a pooled cross-sectional prediction."
       />
 
       <div className="card p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Ticker</span>
-            <input
-              value={ticker}
-              onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              className="bg-black/30 border border-border rounded-lg px-3 py-2 text-sm font-semibold text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/50"
-            />
-          </label>
-          <EditableField label="Lookback Window" value={lookback} onChange={handleLookbackChange} step="10" suffix="days" />
-          <EditableField label="Forecast Horizon" value={horizon} onChange={setHorizon} step="5" suffix="days" />
-          <EditableField label="SMA Window" value={smaWindow} onChange={setSmaWindow} step="5" suffix="days" />
+        <label className="flex flex-col gap-1.5">
+          <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Ticker</span>
+          <input
+            value={ticker}
+            onChange={(e) => setTicker(e.target.value.toUpperCase())}
+            className="bg-black/30 border border-border rounded-lg px-3 py-2 text-sm font-semibold text-slate-100 w-40 focus:outline-none focus:ring-2 focus:ring-accent/50"
+          />
+        </label>
+      </div>
+
+      <FundamentalsBuilder years={years} onYearsChange={setYears} />
+
+      <div className="card p-4 mb-6 flex items-center gap-2">
+        <Icon name="check" size={16} className="text-accent2" />
+        <span className="text-slate-400 text-xs font-medium uppercase tracking-wide mr-2">
+          Forecast Metric
+        </span>
+        <div className="flex gap-2">
+          {METRIC_OPTIONS.map((m) => (
+            <button
+              key={m.key}
+              onClick={() => setSelectedMetric(m.key)}
+              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
+                selectedMetric === m.key
+                  ? "bg-accent/20 text-accent2"
+                  : "bg-white/5 text-slate-400 hover:bg-white/10"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <PriceHistoryBuilder
-        prices={prices}
-        onPricesChange={setPrices}
-        days={lookback}
-        onDaysChange={handleLookbackChange}
+      <GuardrailedForecast
+        years={years}
+        metricKey={selectedMetric}
+        metricLabel={metricLabel}
+        forecastYears={forecastYears}
+        onForecastYearsChange={setForecastYears}
       />
-
-      <div className="card p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Icon name="technical" size={16} className="text-accent2" />
-            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-              {ticker} — Price + Forecast
-            </h3>
-          </div>
-          <div className="flex items-center gap-4 text-xs text-slate-500">
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-slate-200 inline-block" /> Price
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-watch inline-block" style={{ borderTop: "1px dashed" }} /> SMA-{smaWindow}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-3 h-0.5 bg-accent2 inline-block" /> Forecast
-            </span>
-          </div>
-        </div>
-        <PriceChart prices={prices} smaSeries={indicators.smaSeries} regression={indicators.regression} horizonDays={horizon} />
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <StatCard label="Current Price" value={`$${indicators.current.toFixed(2)}`} />
-        <StatCard
-          label={`vs SMA-${smaWindow}`}
-          value={indicators.trend === "above" ? "Above" : "Below"}
-          tone={indicators.trend === "above" ? "good" : "bad"}
-        />
-        <StatCard
-          label={`RSI-${rsiWindow}`}
-          value={indicators.rsiValue !== null ? indicators.rsiValue.toFixed(0) : "—"}
-          tone={rsiZone === "Overbought" ? "bad" : rsiZone === "Oversold" ? "good" : "neutral"}
-        />
-        <StatCard label="RSI Zone" value={rsiZone} tone={rsiZone === "Overbought" ? "bad" : rsiZone === "Oversold" ? "good" : "neutral"} />
-      </div>
 
       <div className="card p-6 border-2 border-accent/30">
-        <div className="flex items-center gap-2 mb-4">
-          <Icon name="check" size={16} className="text-accent2" />
+        <div className="flex items-center gap-2 mb-3">
+          <Icon name="warn" size={16} className="text-caution" />
           <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-            Forecast Summary
+            Guardrails In Place
           </h3>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">
-              {horizon}-Day Forecast Price
-            </p>
-            <p className="stat-value text-xl text-accent2">
-              {forecastEnd ? `$${forecastEnd.point.toFixed(2)}` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Forecast Range</p>
-            <p className="stat-value text-lg text-slate-200">
-              {forecastEnd ? `$${forecastEnd.low.toFixed(2)} – $${forecastEnd.high.toFixed(2)}` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Projected Change</p>
-            <p className={`stat-value text-xl ${forecastChangePct >= 0 ? "text-buy" : "text-avoid"}`}>
-              {forecastChangePct !== null ? `${forecastChangePct >= 0 ? "+" : ""}${forecastChangePct.toFixed(1)}%` : "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">52-Period High / Low</p>
-            <p className="stat-value text-sm text-slate-200">
-              ${indicators.high.toFixed(2)} / ${indicators.low.toFixed(2)}
-            </p>
-          </div>
-        </div>
-        <p className="text-slate-500 text-xs mt-4 pt-4 border-t border-border/60 leading-relaxed">
-          Forecast is a linear regression trend projection with a widening uncertainty band (not
-          ARIMA/Prophet/LSTM) — treat this as a rough directional read, not a precise prediction.
-          The wider the band at day {horizon}, the less this trend should be trusted that far out.
-        </p>
+        <ul className="text-slate-400 text-sm space-y-1.5 leading-relaxed">
+          <li>• Growth rate is clipped to −20% to +40% per year — no single outlier year can produce an absurd multi-year compounding forecast.</li>
+          <li>• Confidence is derived from the coefficient of variation of historical YoY growth — volatile history automatically lowers trust in the forecast.</li>
+          <li>• Fewer than 3 years of history returns "Insufficient Data" instead of a false-confidence number.</li>
+          <li>• The ±1σ range widens with forecast horizon, same principle as the DCF Monte Carlo band — further-out years get less certainty, not more.</li>
+        </ul>
       </div>
     </div>
   );
