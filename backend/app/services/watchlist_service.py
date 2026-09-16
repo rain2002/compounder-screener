@@ -21,6 +21,13 @@ def _company_folder(market: str, ticker: str) -> str:
     return path
 
 
+def _delete_company_and_files(db: Session, company: WatchlistCompany):
+    if company.folder_path and os.path.exists(company.folder_path):
+        shutil.rmtree(company.folder_path, ignore_errors=True)
+    db.delete(company)
+    db.commit()
+
+
 def _evict_oldest_if_full(db: Session, market: str):
     count = db.query(WatchlistCompany).filter(WatchlistCompany.market == market).count()
     if count < MAX_COMPANIES_PER_MARKET:
@@ -33,10 +40,7 @@ def _evict_oldest_if_full(db: Session, market: str):
         .first()
     )
     if oldest:
-        if os.path.exists(oldest.folder_path):
-            shutil.rmtree(oldest.folder_path, ignore_errors=True)
-        db.delete(oldest)
-        db.commit()
+        _delete_company_and_files(db, oldest)
 
 
 def add_company(db: Session, market: str, ticker: str, name=None, price=None,
@@ -68,6 +72,14 @@ def add_company(db: Session, market: str, ticker: str, name=None, price=None,
     db.commit()
     db.refresh(company)
     return company
+
+
+def delete_company(db: Session, company_id: int) -> bool:
+    company = db.query(WatchlistCompany).filter(WatchlistCompany.id == company_id).first()
+    if not company:
+        return False
+    _delete_company_and_files(db, company)
+    return True
 
 
 def add_filing(db: Session, company_id: int, file_name: str, file_bytes: bytes, fiscal_year=None) -> TenKFiling:

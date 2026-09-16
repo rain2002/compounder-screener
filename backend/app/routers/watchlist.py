@@ -92,3 +92,10 @@ def upload_filing(company_id: int, fiscal_year: Optional[str] = Form(None),
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     return {"id": filing.id, "file_name": filing.file_name, "fiscal_year": filing.fiscal_year}
+
+
+@router.delete("/{company_id}")
+def remove_company(company_id: int, db: Session = Depends(get_db)):
+    if not watchlist_service.delete_company(db, company_id):
+        raise HTTPException(status_code=404, detail="Company not found in watchlist")
+    return {"deleted": company_id}

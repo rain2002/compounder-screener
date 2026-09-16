@@ -66,6 +66,20 @@ export default function Watchlist() {
     }
   }
 
+  async function deleteCompany(company) {
+    const ok = window.confirm(
+      `Delete ${company.ticker} from watchlist? This permanently deletes its uploaded filings from disk.`
+    );
+    if (!ok) return;
+    const res = await fetch(`${BASE_URL}/watchlist/${company.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.detail || "Delete failed");
+      return;
+    }
+    fetchWatchlist();
+  }
+
   async function uploadFiling(companyId, file) {
     const formData = new FormData();
     formData.append("file", file);
@@ -180,9 +194,17 @@ export default function Watchlist() {
                     <p className="font-semibold text-slate-100">{company.ticker}</p>
                     <p className="text-sm text-slate-400">{company.name || "—"}</p>
                   </div>
-                  <span className="text-xs bg-slate-800 text-slate-400 rounded px-2 py-1">
-                    Slot {company.slot}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs bg-slate-800 text-slate-400 rounded px-2 py-1">
+                      Slot {company.slot}
+                    </span>
+                    <button
+                      onClick={() => deleteCompany(company)}
+                      className="text-xs px-2 py-1 rounded-md bg-avoid/15 text-avoid hover:bg-avoid/25 transition-colors font-medium"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
                 <div className="text-sm mt-3 space-y-1 text-slate-300">
                   <p>Price: {company.price ?? "N/A"}</p>
