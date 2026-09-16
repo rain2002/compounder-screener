@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
-import Screener from "./pages/Screener.jsx";
+import Watchlist from "./pages/Watchlist.jsx";
 import Technical from "./pages/Technical.jsx";
 import Sentiment from "./pages/Sentiment.jsx";
 import DCF from "./pages/DCF.jsx";
@@ -12,7 +12,7 @@ export default function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route path="/screener" element={<Screener />} />
+        <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/technical" element={<Technical />} />
         <Route path="/sentiment" element={<Sentiment />} />
         <Route path="/dcf" element={<DCF />} />

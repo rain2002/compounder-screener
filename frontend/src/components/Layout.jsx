@@ -3,7 +3,7 @@ import Icon from "./Icon.jsx";
 
 const links = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
-  { to: "/screener", label: "Screener", icon: "screener" },
+  { to: "/watchlist", label: "Watchlist", icon: "screener" },
   { to: "/dcf", label: "DCF Calculator", icon: "dcf" },
   { to: "/technical", label: "Technical", icon: "technical" },
   { to: "/sentiment", label: "Sentiment", icon: "sentiment" },
@@ -20,22 +20,21 @@ export default function Layout({ children }) {
               C
             </div>
             <div>
-              <p className="font-bold text-white text-sm leading-tight">Compounder</p>
-              <p className="text-slate-500 text-xs leading-tight">Screener</p>
+              <p className="text-sm font-bold text-slate-100 leading-tight">Compounder</p>
+              <p className="text-xs text-slate-500 leading-tight">Screener</p>
             </div>
           </div>
         </div>
-
-        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
+        <nav className="flex flex-col gap-1 px-3 py-4">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                `flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-accent/10 text-accent2 shadow-glow"
-                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                    ? "bg-accent/15 text-accent2"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
                 }`
               }
             >
@@ -44,17 +43,8 @@ export default function Layout({ children }) {
             </NavLink>
           ))}
         </nav>
-
-        <div className="px-4 py-4 border-t border-border/60">
-          <p className="text-slate-600 text-xs leading-relaxed">
-            Buffett + Lynch screener · US & India
-          </p>
-        </div>
       </aside>
-
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-6xl mx-auto px-8 py-8 fade-in">{children}</div>
-      </main>
+      <main className="flex-1 p-6">{children}</main>
     </div>
   );
 }

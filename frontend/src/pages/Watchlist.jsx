@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import PageHeader from "../components/PageHeader.jsx";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const MAX_SLOTS = 10;
+const MAX_FILINGS = 10;
 
 export default function Watchlist() {
   const [market, setMarket] = useState("US");
@@ -16,9 +18,13 @@ export default function Watchlist() {
   }, [market]);
 
   async function fetchWatchlist() {
-    const res = await fetch(`${API_BASE}/api/watchlist/${market}`);
-    const data = await res.json();
-    setCompanies(data);
+    try {
+      const res = await fetch(`${BASE_URL}/watchlist/${market}`);
+      const data = await res.json();
+      setCompanies(Array.isArray(data) ? data : []);
+    } catch {
+      setCompanies([]);
+    }
   }
 
   async function addCompany() {
@@ -29,7 +35,7 @@ export default function Watchlist() {
     }
     setLoading(true);
     try {
-      const endpoint = market === "US" ? "/api/watchlist/us/add" : "/api/watchlist/india/add";
+      const endpoint = market === "US" ? "/watchlist/us/add" : "/watchlist/india/add";
       const body =
         market === "US"
           ? { ticker }
@@ -41,7 +47,7 @@ export default function Watchlist() {
               sector: indiaForm.sector,
             };
 
-      const res = await fetch(`${API_BASE}${endpoint}`, {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -63,7 +69,7 @@ export default function Watchlist() {
   async function uploadFiling(companyId, file) {
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch(`${API_BASE}/api/watchlist/${companyId}/filings`, {
+    const res = await fetch(`${BASE_URL}/watchlist/${companyId}/filings`, {
       method: "POST",
       body: formData,
     });
@@ -78,119 +84,126 @@ export default function Watchlist() {
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => companies[i] || null);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">Watchlist</h1>
+    <div>
+      <PageHeader
+        title="Watchlist"
+        description="Up to 10 companies per market. US companies auto-fetch price and profile via Finnhub; India companies are entered manually. Each company can hold up to 10 annual report PDFs, shared automatically with the Sentiment page."
+      />
 
       <div className="flex gap-4 mb-6 items-center">
         <select
           value={market}
           onChange={(e) => setMarket(e.target.value)}
-          className="border rounded px-3 py-2"
+          className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm"
         >
           <option value="US">US</option>
           <option value="India">India</option>
         </select>
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-slate-400">
           {companies.length}/{MAX_SLOTS} companies
         </span>
       </div>
 
-      <div className="border rounded p-4 mb-6 bg-gray-50">
-        <h2 className="font-semibold mb-3">Add Company</h2>
-        <div className="flex flex-wrap gap-2 items-end">
-          <div>
-            <label className="block text-xs text-gray-500">Ticker</label>
+      <div className="card p-6 mb-6">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">Add Company</h3>
+        <div className="flex flex-wrap gap-3 items-end">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Ticker</span>
             <input
               value={ticker}
-              onChange={(e) => setTicker(e.target.value)}
-              className="border rounded px-2 py-1"
+              onChange={(e) => setTicker(e.target.value.toUpperCase())}
+              className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm"
               placeholder={market === "US" ? "AAPL" : "RELIANCE"}
             />
-          </div>
+          </label>
 
           {market === "India" && (
             <>
-              <div>
-                <label className="block text-xs text-gray-500">Name</label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Name</span>
                 <input
                   value={indiaForm.name}
                   onChange={(e) => setIndiaForm({ ...indiaForm, name: e.target.value })}
-                  className="border rounded px-2 py-1"
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm"
                 />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500">Price</label>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Price (Rs)</span>
                 <input
+                  type="number"
                   value={indiaForm.price}
                   onChange={(e) => setIndiaForm({ ...indiaForm, price: e.target.value })}
-                  className="border rounded px-2 py-1 w-24"
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm w-28"
                 />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500">Market Cap</label>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market Cap (Cr)</span>
                 <input
+                  type="number"
                   value={indiaForm.market_cap}
                   onChange={(e) => setIndiaForm({ ...indiaForm, market_cap: e.target.value })}
-                  className="border rounded px-2 py-1 w-28"
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm w-32"
                 />
-              </div>
-              <div>
-                <label className="block text-xs text-gray-500">Sector</label>
+              </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Sector</span>
                 <input
                   value={indiaForm.sector}
                   onChange={(e) => setIndiaForm({ ...indiaForm, sector: e.target.value })}
-                  className="border rounded px-2 py-1"
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm"
                 />
-              </div>
+              </label>
             </>
           )}
 
           <button
             onClick={addCompany}
             disabled={loading}
-            className="bg-blue-600 text-white rounded px-4 py-2 disabled:opacity-50"
+            className="px-4 py-2 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors text-sm font-medium disabled:opacity-50"
           >
             {loading ? "Adding..." : "Add"}
           </button>
         </div>
-        {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
-        <p className="text-xs text-gray-500 mt-2">
-          Adding an 11th company deletes the oldest company and its filings permanently.
+        {error && <p className="text-avoid text-sm mt-3">{error}</p>}
+        <p className="text-xs text-slate-500 mt-3">
+          Adding an 11th company permanently deletes the oldest company and all its filings from disk.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {slots.map((company, idx) => (
-          <div key={idx} className="border rounded p-4 min-h-[140px]">
+          <div key={idx} className="card p-5 min-h-[140px]">
             {company ? (
               <>
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-semibold">{company.ticker}</p>
-                    <p className="text-sm text-gray-600">{company.name}</p>
+                    <p className="font-semibold text-slate-100">{company.ticker}</p>
+                    <p className="text-sm text-slate-400">{company.name || "—"}</p>
                   </div>
-                  <span className="text-xs bg-gray-200 rounded px-2 py-1">Slot {company.slot}</span>
+                  <span className="text-xs bg-slate-800 text-slate-400 rounded px-2 py-1">
+                    Slot {company.slot}
+                  </span>
                 </div>
-                <div className="text-sm mt-2 space-y-1">
+                <div className="text-sm mt-3 space-y-1 text-slate-300">
                   <p>Price: {company.price ?? "N/A"}</p>
                   <p>Market Cap: {company.market_cap ?? "N/A"}</p>
                   <p>Sector: {company.sector ?? "N/A"}</p>
                 </div>
-                <div className="mt-3">
-                  <p className="text-xs text-gray-500 mb-1">
-                    10-Ks: {company.filings.length}/10
+                <div className="mt-4 pt-3 border-t border-border/60">
+                  <p className="text-xs text-slate-500 mb-2">
+                    Annual reports: {company.filings.length}/{MAX_FILINGS}
                   </p>
                   <input
                     type="file"
                     accept=".pdf"
-                    disabled={company.filings.length >= 10}
+                    disabled={company.filings.length >= MAX_FILINGS}
                     onChange={(e) => e.target.files[0] && uploadFiling(company.id, e.target.files[0])}
-                    className="text-xs"
+                    className="text-xs text-slate-400"
                   />
                 </div>
               </>
             ) : (
-              <p className="text-gray-400 text-sm">Empty slot</p>
+              <p className="text-slate-600 text-sm">Empty slot</p>
             )}
           </div>
         ))}

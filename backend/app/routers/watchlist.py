@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.services import watchlist_service, quote_service
 
-router = APIRouter(prefix="/api/watchlist", tags=["watchlist"])
+router = APIRouter(prefix="/watchlist", tags=["watchlist"])
 
 
 class TenKFilingOut(BaseModel):
