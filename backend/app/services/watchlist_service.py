@@ -2,17 +2,21 @@ import os
 import shutil
 from sqlalchemy.orm import Session
 from app.models.watchlist import WatchlistCompany, TenKFiling
+from app.config import get_settings
 
 MAX_COMPANIES_PER_MARKET = 10
 MAX_FILINGS_PER_COMPANY = 10
-STORAGE_ROOT = os.environ.get(
-    "WATCHLIST_UPLOAD_DIR",
-    os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads"),
+DEFAULT_STORAGE_ROOT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads"
 )
 
 
+def _storage_root() -> str:
+    return get_settings().watchlist_upload_dir or DEFAULT_STORAGE_ROOT
+
+
 def _company_folder(market: str, ticker: str) -> str:
-    path = os.path.join(STORAGE_ROOT, market, ticker)
+    path = os.path.join(_storage_root(), market, ticker)
     os.makedirs(path, exist_ok=True)
     return path
 

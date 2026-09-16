@@ -1,13 +1,13 @@
-import os
 import httpx
+from app.config import get_settings
 
 FINNHUB_BASE = "https://finnhub.io/api/v1"
 
 
 def get_us_quote_and_profile(ticker: str) -> dict:
-    api_key = os.getenv("FINNHUB_API_KEY")
+    api_key = get_settings().finnhub_api_key
     if not api_key:
-        raise RuntimeError("FINNHUB_API_KEY not set in environment")
+        raise RuntimeError("FINNHUB_API_KEY not set in backend/.env")
 
     ticker = ticker.upper().strip()
 
