@@ -41,10 +41,10 @@ class WatchlistAddUS(BaseModel):
 
 class WatchlistAddIndia(BaseModel):
     ticker: str
-    name: str
-    price: float
-    market_cap: float
-    sector: str
+    name: Optional[str] = None
+    price: Optional[float] = None
+    market_cap: Optional[float] = None
+    sector: Optional[str] = None
 
 
 @router.get("/{market}", response_model=List[WatchlistCompanyOut])
@@ -74,9 +74,32 @@ def add_us_company(payload: WatchlistAddUS, db: Session = Depends(get_db)):
 @router.post("/india/add", response_model=WatchlistCompanyOut)
 def add_india_company(payload: WatchlistAddIndia, db: Session = Depends(get_db)):
     try:
+        api_data = quote_service.get_india_quote_and_profile(payload.ticker)
+        data = {
+            "ticker": api_data["ticker"],
+            "name": api_data["name"] or payload.name,
+            "price": api_data["price"] if api_data["price"] is not None else payload.price,
+            "market_cap": api_data["market_cap"] if api_data["market_cap"] is not None else payload.market_cap,
+            "sector": api_data["sector"] or payload.sector,
+        }
+    except Exception as api_error:
+        if not payload.name:
+            raise HTTPException(
+                status_code=502,
+                detail=f"India API lookup failed: {api_error}. Enter manual fallback fields and retry.",
+            )
+        data = {
+            "ticker": payload.ticker.upper().strip(),
+            "name": payload.name,
+            "price": payload.price,
+            "market_cap": payload.market_cap,
+            "sector": payload.sector,
+        }
+
+    try:
         company = watchlist_service.add_company(
-            db, market="India", ticker=payload.ticker, name=payload.name,
-            price=payload.price, market_cap=payload.market_cap, sector=payload.sector,
+            db, market="India", ticker=data["ticker"], name=data["name"],
+            price=data["price"], market_cap=data["market_cap"], sector=data["sector"],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

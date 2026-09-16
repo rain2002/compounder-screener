@@ -41,10 +41,10 @@ export default function Watchlist() {
           ? { ticker }
           : {
               ticker,
-              name: indiaForm.name,
-              price: parseFloat(indiaForm.price),
-              market_cap: parseFloat(indiaForm.market_cap),
-              sector: indiaForm.sector,
+              name: indiaForm.name || null,
+              price: indiaForm.price ? parseFloat(indiaForm.price) : null,
+              market_cap: indiaForm.market_cap ? parseFloat(indiaForm.market_cap) : null,
+              sector: indiaForm.sector || null,
             };
 
       const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -101,7 +101,7 @@ export default function Watchlist() {
     <div>
       <PageHeader
         title="Watchlist"
-        description="Up to 10 companies per market. US companies auto-fetch price and profile via Finnhub; India companies are entered manually. Each company can hold up to 10 annual report PDFs, shared automatically with the Sentiment page."
+        description="Up to 10 companies per market. Company details are fetched automatically for US and India. Each company can hold up to 10 annual report PDFs, shared automatically with the Sentiment page."
       />
 
       <div className="flex gap-4 mb-6 items-center">
@@ -119,7 +119,12 @@ export default function Watchlist() {
       </div>
 
       <div className="card p-6 mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">Add Company</h3>
+        <h3 className="text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wide">Add Company</h3>
+        <p className="text-xs text-slate-500 mb-4">
+          {market === "US"
+            ? "Enter a US ticker, such as AAPL or MSFT."
+            : "Enter an NSE/BSE ticker, such as RELIANCE.NS or RELIANCE.BO. Fields below are optional fallback values if the India API is unavailable."}
+        </p>
         <div className="flex flex-wrap gap-3 items-end">
           <label className="flex flex-col gap-1.5">
             <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Ticker</span>
@@ -127,14 +132,14 @@ export default function Watchlist() {
               value={ticker}
               onChange={(e) => setTicker(e.target.value.toUpperCase())}
               className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm"
-              placeholder={market === "US" ? "AAPL" : "RELIANCE"}
+              placeholder={market === "US" ? "AAPL" : "RELIANCE.NS"}
             />
           </label>
 
           {market === "India" && (
             <>
               <label className="flex flex-col gap-1.5">
-                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Name</span>
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Name (fallback)</span>
                 <input
                   value={indiaForm.name}
                   onChange={(e) => setIndiaForm({ ...indiaForm, name: e.target.value })}
@@ -142,7 +147,7 @@ export default function Watchlist() {
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Price (Rs)</span>
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Price Rs (fallback)</span>
                 <input
                   type="number"
                   value={indiaForm.price}
@@ -151,7 +156,7 @@ export default function Watchlist() {
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market Cap (Cr)</span>
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market Cap Cr (fallback)</span>
                 <input
                   type="number"
                   value={indiaForm.market_cap}
@@ -160,7 +165,7 @@ export default function Watchlist() {
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Sector</span>
+                <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Sector (fallback)</span>
                 <input
                   value={indiaForm.sector}
                   onChange={(e) => setIndiaForm({ ...indiaForm, sector: e.target.value })}
@@ -195,9 +200,7 @@ export default function Watchlist() {
                     <p className="text-sm text-slate-400">{company.name || "—"}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs bg-slate-800 text-slate-400 rounded px-2 py-1">
-                      Slot {company.slot}
-                    </span>
+                    <span className="text-xs bg-slate-800 text-slate-400 rounded px-2 py-1">Slot {company.slot}</span>
                     <button
                       onClick={() => deleteCompany(company)}
                       className="text-xs px-2 py-1 rounded-md bg-avoid/15 text-avoid hover:bg-avoid/25 transition-colors font-medium"
@@ -212,9 +215,7 @@ export default function Watchlist() {
                   <p>Sector: {company.sector ?? "N/A"}</p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-border/60">
-                  <p className="text-xs text-slate-500 mb-2">
-                    Annual reports: {company.filings.length}/{MAX_FILINGS}
-                  </p>
+                  <p className="text-xs text-slate-500 mb-2">Annual reports: {company.filings.length}/{MAX_FILINGS}</p>
                   <input
                     type="file"
                     accept=".pdf"
