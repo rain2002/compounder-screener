@@ -22,6 +22,9 @@ def _company_folder(market: str, ticker: str) -> str:
 
 
 def _delete_company_and_files(db: Session, company: WatchlistCompany):
+    from app.services import sentiment_service
+    sentiment_service.delete_result_for_company(db, company.id)
+
     if company.folder_path and os.path.exists(company.folder_path):
         shutil.rmtree(company.folder_path, ignore_errors=True)
     db.delete(company)
