@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import EditableField from "../components/EditableField.jsx";
 import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
 import WaccCalculator from "../components/WaccCalculator.jsx";
 import MonteCarloDCF from "../components/MonteCarloDCF.jsx";
 import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
+import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
 
@@ -40,22 +41,45 @@ function computeScenario(fcf, growthRate, terminalGrowth, wacc, years = 5) {
 }
 
 const scenarioStyle = {
-  conservative: "border-l-4 border-l-slate-500",
-  normal: "border-l-4 border-l-accent",
-  optimistic: "border-l-4 border-l-buy",
+  conservative: "border-avoid/30",
+  normal: "border-accent/30",
+  optimistic: "border-buy/30",
 };
 
-export default function DCF() {
-  const [market, setMarket] = useState("US");
-  const [currentPrice, setCurrentPrice] = useState(150);
-  const [fcf, setFcf] = useState(1000);
-  const [wacc, setWacc] = useState(9);
-  const [shares, setShares] = useState(100);
-  const [growth, setGrowth] = useState({ conservative: 5, normal: 10, optimistic: 15 });
-  const [terminalGrowth, setTerminalGrowth] = useState(GDP_CAPS.US);
-  const [marginOfSafety, setMarginOfSafety] = useState(20);
+function defaultDcfState() {
+  return {
+    market: "US",
+    currentPrice: 150,
+    fcf: 1000,
+    wacc: 9,
+    shares: 100,
+    growth: { conservative: 5, normal: 10, optimistic: 15 },
+    terminalGrowth: GDP_CAPS.US,
+    marginOfSafety: 20,
+    historyYears: defaultHistoryYears(),
+  };
+}
+
+function DcfCalculator({ initialState, onStateChange }) {
+  const s = initialState || defaultDcfState();
+
+  const [market, setMarket] = useState(s.market);
+  const [currentPrice, setCurrentPrice] = useState(s.currentPrice);
+  const [fcf, setFcf] = useState(s.fcf);
+  const [wacc, setWacc] = useState(s.wacc);
+  const [shares, setShares] = useState(s.shares);
+  const [growth, setGrowth] = useState(s.growth);
+  const [terminalGrowth, setTerminalGrowth] = useState(s.terminalGrowth);
+  const [marginOfSafety, setMarginOfSafety] = useState(s.marginOfSafety);
   const [medianIntrinsicValue, setMedianIntrinsicValue] = useState(null);
-  const [historyYears, setHistoryYears] = useState(defaultHistoryYears());
+  const [historyYears, setHistoryYears] = useState(s.historyYears);
+
+  useEffect(() => {
+    onStateChange({
+      market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears]);
 
   const cap = GDP_CAPS[market];
   const exceedsCap = terminalGrowth > cap;
@@ -75,11 +99,6 @@ export default function DCF() {
 
   return (
     <div>
-      <PageHeader
-        title="DCF Calculator"
-        description="Historical FCF trend (up to 10 years) feeds growth assumptions, then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value."
-      />
-
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
@@ -105,9 +124,9 @@ export default function DCF() {
                 setMarket(e.target.value);
                 setTerminalGrowth(GDP_CAPS[e.target.value]);
               }}
-              className="bg-black/30 border border-border rounded-lg px-3 py-2 text-sm font-medium text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/50"
+              className="bg-slate-800 border border-slate-700 rounded px-2 py-1"
             >
-              <option value="US">United States</option>
+              <option value="US">US</option>
               <option value="INDIA">India</option>
             </select>
           </label>
@@ -160,8 +179,9 @@ export default function DCF() {
             suffix="%"
           />
         </div>
+
         <EditableField
-          label={`Terminal Growth — capped to ${market} GDP (~${cap}%)`}
+          label={`Terminal growth — capped to ${market} GDP growth ~${cap}%`}
           value={terminalGrowth}
           onChange={setTerminalGrowth}
           suffix="%"
@@ -177,21 +197,21 @@ export default function DCF() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {scenarios.map((s) => (
-          <div key={s.key} className={`card ${scenarioStyle[s.key]} p-5`}>
+        {scenarios.map((s2) => (
+          <div key={s2.key} className={`card ${scenarioStyle[s2.key]} p-5`}>
             <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">
-              {s.key}
+              {s2.key}
             </p>
-            <p className="text-slate-400 text-xs mb-3">{s.growth.toFixed(1)}% growth</p>
+            <p className="text-slate-400 text-xs mb-3">{s2.growth.toFixed(1)}% growth</p>
             <p className="stat-value text-2xl text-white mb-1">
-              {s.perShare ? `$${s.perShare.toFixed(2)}` : "—"}
+              {s2.perShare ? `$${s2.perShare.toFixed(2)}` : "—"}
             </p>
             <p className="text-slate-500 text-sm mb-2">
-              {s.value ? `$${s.value.toFixed(0)}M total` : "—"}
+              {s2.value ? `$${s2.value.toFixed(0)}M total` : "—"}
             </p>
-            {s.upside !== null && (
-              <p className={`text-sm font-semibold ${s.upside >= 0 ? "text-buy" : "text-avoid"}`}>
-                {s.upside >= 0 ? "+" : ""}{s.upside.toFixed(1)}% {s.upside >= 0 ? "upside" : "downside"}
+            {s2.upside !== null && (
+              <p className={`text-sm font-semibold ${s2.upside >= 0 ? "text-buy" : "text-avoid"}`}>
+                {s2.upside >= 0 ? "+" : ""}{s2.upside.toFixed(1)}% {s2.upside >= 0 ? "upside" : "downside"}
               </p>
             )}
           </div>
@@ -269,4 +289,31 @@ export default function DCF() {
       </div>
     </div>
   );
+}
+
+export default function DCF() {
+  return (
+    <div>
+      <PageHeader
+        title="DCF Calculator"
+        description="Historical FCF trend (up to 10 years) feeds growth assumptions, then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value. Select a company from your Watchlist to save and reload its inputs automatically."
+      />
+      <CompanyStateSelector pageName="dcf">
+        {({ companyId, loadedState, saveState }) => (
+          <PersistedDcf key={companyId} loadedState={loadedState} saveState={saveState} />
+        )}
+      </CompanyStateSelector>
+    </div>
+  );
+}
+
+function PersistedDcf({ loadedState, saveState }) {
+  const debounceRef = useRef(null);
+
+  function handleStateChange(nextState) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => saveState(nextState), 1200);
+  }
+
+  return <DcfCalculator initialState={loadedState || defaultDcfState()} onStateChange={handleStateChange} />;
 }
