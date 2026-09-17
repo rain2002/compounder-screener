@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
 import FundamentalsBuilder from "../components/FundamentalsBuilder.jsx";
 import GuardrailedForecast from "../components/GuardrailedForecast.jsx";
 import FundamentalsChart from "../components/FundamentalsChart.jsx";
+import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
 function defaultFundamentalsYears() {
   const startYear = 2016;
@@ -68,12 +69,29 @@ function computeGrowthStats(years, key) {
   return { mean, std: Math.sqrt(variance) };
 }
 
-export default function Technical() {
-  const [ticker, setTicker] = useState("AAPL");
-  const [years, setYears] = useState(defaultFundamentalsYears());
-  const [selectedMetric, setSelectedMetric] = useState("revenue");
-  const [forecastYears, setForecastYears] = useState(5);
-  const [manualOverride, setManualOverride] = useState(null);
+function defaultTechnicalState() {
+  return {
+    ticker: "AAPL",
+    years: defaultFundamentalsYears(),
+    selectedMetric: "revenue",
+    forecastYears: 5,
+    manualOverride: null,
+  };
+}
+
+function TechnicalCalculator({ initialState, onStateChange }) {
+  const s = initialState || defaultTechnicalState();
+
+  const [ticker, setTicker] = useState(s.ticker);
+  const [years, setYears] = useState(s.years);
+  const [selectedMetric, setSelectedMetric] = useState(s.selectedMetric);
+  const [forecastYears, setForecastYears] = useState(s.forecastYears);
+  const [manualOverride, setManualOverride] = useState(s.manualOverride);
+
+  useEffect(() => {
+    onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticker, years, selectedMetric, forecastYears, manualOverride]);
 
   const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
 
@@ -103,11 +121,6 @@ export default function Technical() {
 
   return (
     <div>
-      <PageHeader
-        title="Technical Analysis"
-        description="Fundamental trend analysis across all 3 financial statements, using the ratios Buffett and Lynch both check — ROE, ROIC, Debt/Equity, margins, FCF, and more. Historical growth feeds a guardrailed forecast; full ML model integration is Phase 2+."
-      />
-
       <div className="card p-6 mb-6">
         <label className="flex flex-col gap-1.5">
           <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Ticker</span>
@@ -175,5 +188,37 @@ export default function Technical() {
         </ul>
       </div>
     </div>
+  );
+}
+
+export default function Technical() {
+  return (
+    <div>
+      <PageHeader
+        title="Technical Analysis"
+        description="Fundamental trend analysis across all 3 financial statements, using the ratios Buffett and Lynch both check — ROE, ROIC, Debt/Equity, margins, FCF, and more. Select a company from your Watchlist to save and reload its inputs automatically."
+      />
+      <CompanyStateSelector pageName="technical">
+        {({ companyId, loadedState, saveState }) => (
+          <PersistedTechnical key={companyId} loadedState={loadedState} saveState={saveState} />
+        )}
+      </CompanyStateSelector>
+    </div>
+  );
+}
+
+function PersistedTechnical({ loadedState, saveState }) {
+  const debounceRef = useRef(null);
+
+  function handleStateChange(nextState) {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => saveState(nextState), 1200);
+  }
+
+  return (
+    <TechnicalCalculator
+      initialState={loadedState || defaultTechnicalState()}
+      onStateChange={handleStateChange}
+    />
   );
 }
