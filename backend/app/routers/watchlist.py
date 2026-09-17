@@ -117,6 +117,24 @@ def upload_filing(company_id: int, fiscal_year: Optional[str] = Form(None),
     return {"id": filing.id, "file_name": filing.file_name, "fiscal_year": filing.fiscal_year}
 
 
+@router.delete("/filings/{filing_id}")
+def remove_filing(filing_id: int, db: Session = Depends(get_db)):
+    if not watchlist_service.delete_filing(db, filing_id):
+        raise HTTPException(status_code=404, detail="Filing not found")
+    return {"deleted": filing_id}
+
+
+@router.put("/filings/{filing_id}")
+def replace_filing_endpoint(filing_id: int, fiscal_year: Optional[str] = Form(None),
+                             file: UploadFile = File(...), db: Session = Depends(get_db)):
+    contents = file.file.read()
+    try:
+        filing = watchlist_service.replace_filing(db, filing_id, file.filename, contents, fiscal_year)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    return {"id": filing.id, "file_name": filing.file_name, "fiscal_year": filing.fiscal_year}
+
+
 @router.delete("/{company_id}")
 def remove_company(company_id: int, db: Session = Depends(get_db)):
     if not watchlist_service.delete_company(db, company_id):

@@ -8,24 +8,18 @@ const MAX_FILINGS = 10;
 function formatPrice(value, market) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "N/A";
   const currency = market === "India" ? "INR" : "USD";
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 2,
-  }).format(Number(value));
+  return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value));
 }
 
 function formatMarketCap(value, market) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "N/A";
   const amount = Number(value);
-
   if (market === "India") {
     const crore = amount / 10_000_000;
     if (crore >= 100_000) return `₹${(crore / 100_000).toFixed(2)} Lakh Cr`;
     if (crore >= 1) return `₹${crore.toLocaleString("en-IN", { maximumFractionDigits: 2 })} Cr`;
     return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
   }
-
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}T`;
   if (amount >= 1_000) return `$${(amount / 1_000).toFixed(2)}B`;
   return `$${amount.toFixed(2)}M`;
@@ -112,6 +106,30 @@ export default function Watchlist() {
     fetchWatchlist();
   }
 
+  async function deleteFiling(filingId) {
+    const ok = window.confirm("Delete this filing permanently from disk?");
+    if (!ok) return;
+    const res = await fetch(`${BASE_URL}/watchlist/filings/${filingId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.detail || "Delete failed");
+      return;
+    }
+    fetchWatchlist();
+  }
+
+  async function replaceFiling(filingId, file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await fetch(`${BASE_URL}/watchlist/filings/${filingId}`, { method: "PUT", body: formData });
+    if (!res.ok) {
+      const err = await res.json();
+      alert(err.detail || "Replace failed");
+      return;
+    }
+    fetchWatchlist();
+  }
+
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => companies[i] || null);
 
   return (
@@ -162,8 +180,44 @@ export default function Watchlist() {
                 <p>Sector: {company.sector ?? "N/A"}</p>
               </div>
               <div className="mt-4 pt-3 border-t border-border/60">
-                <p className="text-xs text-slate-500 mb-2">Annual reports: {company.filings.length}/{MAX_FILINGS}</p>
-                <input type="file" accept=".pdf" disabled={company.filings.length >= MAX_FILINGS} onChange={(e) => e.target.files[0] && uploadFiling(company.id, e.target.files[0])} className="text-xs text-slate-400" />
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs text-slate-500">Annual reports: {company.filings.length}/{MAX_FILINGS}</p>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    disabled={company.filings.length >= MAX_FILINGS}
+                    onChange={(e) => e.target.files[0] && uploadFiling(company.id, e.target.files[0])}
+                    className="text-xs text-slate-400"
+                  />
+                </div>
+                {company.filings.length > 0 && (
+                  <ul className="space-y-1.5">
+                    {company.filings.map((filing) => (
+                      <li key={filing.id} className="flex items-center justify-between bg-slate-800/60 rounded px-2 py-1.5">
+                        <span className="text-xs text-slate-300 truncate max-w-[140px]" title={filing.file_name}>
+                          {filing.file_name}
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <label className="text-xs px-2 py-1 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors font-medium cursor-pointer">
+                            Replace
+                            <input
+                              type="file"
+                              accept=".pdf"
+                              className="hidden"
+                              onChange={(e) => e.target.files[0] && replaceFiling(filing.id, e.target.files[0])}
+                            />
+                          </label>
+                          <button
+                            onClick={() => deleteFiling(filing.id)}
+                            className="text-xs px-2 py-1 rounded-md bg-avoid/15 text-avoid hover:bg-avoid/25 transition-colors font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </> : <p className="text-slate-600 text-sm">Empty slot</p>}
           </div>

@@ -107,6 +107,43 @@ def add_filing(db: Session, company_id: int, file_name: str, file_bytes: bytes, 
     return filing
 
 
+def delete_filing(db: Session, filing_id: int) -> bool:
+    filing = db.query(TenKFiling).filter(TenKFiling.id == filing_id).first()
+    if not filing:
+        return False
+    if filing.file_path and os.path.exists(filing.file_path):
+        os.remove(filing.file_path)
+    db.delete(filing)
+    db.commit()
+    return True
+
+
+def replace_filing(db: Session, filing_id: int, file_name: str, file_bytes: bytes, fiscal_year=None) -> TenKFiling:
+    filing = db.query(TenKFiling).filter(TenKFiling.id == filing_id).first()
+    if not filing:
+        raise ValueError("Filing not found")
+
+    company = db.query(WatchlistCompany).filter(WatchlistCompany.id == filing.company_id).first()
+    if not company:
+        raise ValueError("Parent company not found")
+
+    if filing.file_path and os.path.exists(filing.file_path):
+        os.remove(filing.file_path)
+
+    new_path = os.path.join(company.folder_path, file_name)
+    with open(new_path, "wb") as f:
+        f.write(file_bytes)
+
+    filing.file_name = file_name
+    filing.file_path = new_path
+    if fiscal_year is not None:
+        filing.fiscal_year = fiscal_year
+
+    db.commit()
+    db.refresh(filing)
+    return filing
+
+
 def get_watchlist(db: Session, market: str):
     return (
         db.query(WatchlistCompany)
