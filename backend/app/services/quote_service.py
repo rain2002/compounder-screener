@@ -1,8 +1,8 @@
 import httpx
+import yfinance as yf
 from app.config import get_settings
 
 FINNHUB_BASE = "https://finnhub.io/api/v1"
-INDIA_STOCK_API_BASE = "http://65.0.104.9"
 
 
 def get_us_quote_and_profile(ticker: str) -> dict:
@@ -33,43 +33,26 @@ def get_us_quote_and_profile(ticker: str) -> dict:
     }
 
 
-def _first(data: dict, *keys):
-    for key in keys:
-        value = data.get(key)
-        if value not in (None, "", "N/A"):
-            return value
-    return None
-
-
 def get_india_quote_and_profile(ticker: str) -> dict:
-    """Fetch NSE/BSE quote from 0xramm's free India market API.
-    Use exchange suffixes such as RELIANCE.NS or RELIANCE.BO.
+    """Fetch NSE/BSE data from Yahoo Finance through yfinance.
+    Use .NS for NSE (RELIANCE.NS) and .BO for BSE (RELIANCE.BO).
     """
     ticker = ticker.upper().strip()
-    with httpx.Client(timeout=12) as client:
-        response = client.get(
-            f"{INDIA_STOCK_API_BASE}/stock",
-            params={"symbol": ticker, "res": "num"},
-        )
-        response.raise_for_status()
-        payload = response.json()
+    if not ticker.endswith((".NS", ".BO")):
+        ticker = f"{ticker}.NS"
 
-    data = payload.get("data", payload) if isinstance(payload, dict) else {}
-    if not data or data.get("error"):
-        raise ValueError(f"No India market data found for {ticker}")
+    stock = yf.Ticker(ticker)
+    info = stock.info or {}
 
-    name = _first(data, "name", "longName", "shortName", "companyName")
-    price = _first(data, "currentPrice", "regularMarketPrice", "price", "lastPrice")
-    market_cap = _first(data, "marketCap", "market_cap", "marketCapitalization")
-    sector = _first(data, "sector", "industry", "sectorName")
+    if not info or (not info.get("longName") and not info.get("shortName")):
+        raise ValueError(f"No Yahoo Finance data found for {ticker}")
 
-    if name is None and price is None:
-        raise ValueError(f"0xramm returned no usable quote for {ticker}")
+    price = info.get("currentPrice") or info.get("regularMarketPrice") or info.get("previousClose")
 
     return {
         "ticker": ticker,
-        "name": name,
+        "name": info.get("longName") or info.get("shortName") or info.get("displayName"),
         "price": price,
-        "market_cap": market_cap,
-        "sector": sector,
+        "market_cap": info.get("marketCap"),
+        "sector": info.get("sector") or info.get("industry"),
     }
