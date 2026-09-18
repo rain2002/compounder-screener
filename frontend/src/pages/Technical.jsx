@@ -63,10 +63,10 @@ function computeGrowthStats(years, key) {
     const curr = trimmed[i][key];
     if (prev > 0) rates.push(((curr - prev) / prev) * 100);
   }
-  if (rates.length < 2) return { mean: 0, std: 0 };
+  if (rates.length < 2) return { mean: 0, std: 0, count: rates.length };
   const mean = rates.reduce((a, b) => a + b, 0) / rates.length;
   const variance = rates.reduce((a, b) => a + (b - mean) ** 2, 0) / rates.length;
-  return { mean, std: Math.sqrt(variance) };
+  return { mean, std: Math.sqrt(variance), count: rates.length };
 }
 
 function defaultTechnicalState() {
@@ -76,6 +76,7 @@ function defaultTechnicalState() {
     selectedMetric: "revenue",
     forecastYears: 5,
     manualOverride: null,
+    growthStats: null,
   };
 }
 
@@ -88,17 +89,25 @@ function TechnicalCalculator({ initialState, onStateChange }) {
   const [forecastYears, setForecastYears] = useState(s.forecastYears);
   const [manualOverride, setManualOverride] = useState(s.manualOverride);
 
-  useEffect(() => {
-    onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticker, years, selectedMetric, forecastYears, manualOverride]);
-
   const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
 
-  const { mean, std } = useMemo(() => computeGrowthStats(years, selectedMetric), [years, selectedMetric]);
+  const { mean, std, count } = useMemo(() => computeGrowthStats(years, selectedMetric), [years, selectedMetric]);
 
   const rawGrowth = manualOverride !== null ? manualOverride : mean;
   const guardrailedGrowth = Math.max(GUARDRAILS.minGrowthFloor, Math.min(GUARDRAILS.maxGrowthCap, rawGrowth));
+
+  const volatility = mean !== 0 ? Math.abs(std / mean) : std > 10 ? 2 : 0;
+  const confidence = count < 3 ? "Insufficient Data" : volatility < 0.3 ? "High" : volatility < 0.7 ? "Moderate" : "Low";
+
+  const growthStats = useMemo(
+    () => ({ mean, std, guardrailedGrowth, confidence, metric: selectedMetric, metricLabel }),
+    [mean, std, guardrailedGrowth, confidence, selectedMetric, metricLabel]
+  );
+
+  useEffect(() => {
+    onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride, growthStats });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticker, years, selectedMetric, forecastYears, manualOverride, growthStats]);
 
   const { forecast, forecastBand } = useMemo(() => {
     const lastValue = years[years.length - 1][selectedMetric];

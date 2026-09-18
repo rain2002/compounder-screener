@@ -57,6 +57,7 @@ function defaultDcfState() {
     terminalGrowth: GDP_CAPS.US,
     marginOfSafety: 20,
     historyYears: defaultHistoryYears(),
+    monteCarlo: null,
   };
 }
 
@@ -73,13 +74,14 @@ function DcfCalculator({ initialState, onStateChange }) {
   const [marginOfSafety, setMarginOfSafety] = useState(s.marginOfSafety);
   const [medianIntrinsicValue, setMedianIntrinsicValue] = useState(null);
   const [historyYears, setHistoryYears] = useState(s.historyYears);
+  const [monteCarlo, setMonteCarlo] = useState(s.monteCarlo);
 
   useEffect(() => {
     onStateChange({
-      market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears,
+      market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears]);
+  }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo]);
 
   const cap = GDP_CAPS[market];
   const exceedsCap = terminalGrowth > cap;
@@ -226,6 +228,7 @@ function DcfCalculator({ initialState, onStateChange }) {
         growthMean={growth.normal}
         currentPrice={currentPrice}
         onMedianChange={setMedianIntrinsicValue}
+        onSimulationChange={setMonteCarlo}
       />
 
       <div className="card p-6 border-2 border-accent/30">

@@ -2,21 +2,29 @@ import { useMemo, useState, useEffect } from "react";
 import EditableField from "./EditableField.jsx";
 import Icon from "./Icon.jsx";
 
-function randNormal(mean, stdDev) {
-  let u = 0, v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  const z = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  return mean + z * stdDev;
+function randNormal(mean, std) {
+  const u1 = Math.random();
+  const u2 = Math.random();
+  const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+  return mean + z * std;
 }
 
-function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminalGrowth, shares, trials = 3000, years = 5 }) {
+function percentile(sorted, p) {
+  const idx = (sorted.length - 1) * p;
+  const lo = Math.floor(idx);
+  const hi = Math.ceil(idx);
+  if (lo === hi) return sorted[lo];
+  return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+}
+
+function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminalGrowth, shares, trials, years = 5 }) {
   const results = [];
-  for (let i = 0; i < trials; i++) {
+  for (let t = 0; t < trials; t++) {
     const g = randNormal(growthMean, growthStd);
-    const w = Math.max(randNormal(waccMean, waccStd), terminalGrowth + 0.5);
-    let cf = fcf;
+    const w = Math.max(0.5, randNormal(waccMean, waccStd));
+    if (w <= terminalGrowth) continue;
     let pv = 0;
+    let cf = fcf;
     for (let y = 1; y <= years; y++) {
       cf = cf * (1 + g / 100);
       pv += cf / Math.pow(1 + w / 100, y);
@@ -24,21 +32,18 @@ function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminal
     const terminalValue = (cf * (1 + terminalGrowth / 100)) / (w / 100 - terminalGrowth / 100);
     const pvTerminal = terminalValue / Math.pow(1 + w / 100, years);
     const total = pv + pvTerminal;
-    if (total > 0 && Number.isFinite(total)) results.push(total / shares);
+    if (shares) results.push(total / shares);
   }
   results.sort((a, b) => a - b);
-  const pct = (p) => results[Math.floor(results.length * p)] || 0;
   return {
-    p10: pct(0.1),
-    p25: pct(0.25),
-    p50: pct(0.5),
-    p75: pct(0.75),
-    p90: pct(0.9),
-    count: results.length,
+    p10: percentile(results, 0.1),
+    p50: percentile(results, 0.5),
+    p90: percentile(results, 0.9),
+    all: results,
   };
 }
 
-export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, growthMean, currentPrice, onMedianChange }) {
+export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, growthMean, currentPrice, onMedianChange, onSimulationChange }) {
   const [growthStd, setGrowthStd] = useState(4);
   const [waccStd, setWaccStd] = useState(1.5);
   const [trials, setTrials] = useState(3000);
@@ -58,14 +63,24 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
     [fcf, growthMean, growthStd, waccMean, waccStd, terminalGrowth, shares, trials]
   );
 
-  useEffect(() => {
-    if (onMedianChange) onMedianChange(sim.p50);
-  }, [sim.p50]);
-
   const spreadWidth = sim.p90 - sim.p10;
   const relativeSpread = sim.p50 ? (spreadWidth / sim.p50) * 100 : 0;
   const confidence = relativeSpread < 40 ? "High" : relativeSpread < 80 ? "Moderate" : "Low";
   const confidenceColor = relativeSpread < 40 ? "text-buy" : relativeSpread < 80 ? "text-watch" : "text-avoid";
+
+  useEffect(() => {
+    if (onMedianChange) onMedianChange(sim.p50);
+    if (onSimulationChange) {
+      onSimulationChange({
+        p10: sim.p10,
+        p50: sim.p50,
+        p90: sim.p90,
+        relativeSpread,
+        confidence,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sim.p10, sim.p50, sim.p90, relativeSpread, confidence]);
 
   const upsideAtMedian = currentPrice ? ((sim.p50 - currentPrice) / currentPrice) * 100 : null;
 
@@ -94,30 +109,28 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
           className="absolute inset-y-0 bg-gradient-to-r from-avoid/30 via-watch/30 to-buy/30"
           style={{ left: "5%", right: "5%" }}
         />
-        <div className="absolute inset-y-0 w-1 bg-white shadow-lg" style={{ left: "50%" }} />
+        <div className="absolute inset-y-0 w-0.5 bg-accent2" style={{ left: "50%" }} />
       </div>
 
       <div className="grid grid-cols-5 gap-2 text-center mb-5">
-        {[
-          ["P10", sim.p10, false],
-          ["P25", sim.p25, false],
-          ["P50 (Median)", sim.p50, true],
-          ["P75", sim.p75, false],
-          ["P90", sim.p90, false],
-        ].map(([label, val, isMedian]) => (
-          <div key={label} className={isMedian ? "bg-accent/10 rounded-lg py-1.5 -my-1.5" : ""}>
-            <p className={`text-xs mb-1 ${isMedian ? "text-accent2 font-semibold" : "text-slate-500"}`}>{label}</p>
-            <p className={`font-bold ${isMedian ? "text-white text-lg" : "text-slate-300 text-sm font-semibold"}`}>
-              ${val.toFixed(2)}
-            </p>
-          </div>
-        ))}
+        <div>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">P10</p>
+          <p className="text-sm font-semibold text-avoid">${sim.p10.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Median (P50)</p>
+          <p className="text-sm font-semibold text-accent2">${sim.p50.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">P90</p>
+          <p className="text-sm font-semibold text-buy">${sim.p90.toFixed(2)}</p>
+        </div>
       </div>
 
       <div className="flex items-center justify-between pt-4 border-t border-border/60">
         <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">P10–P90 Range</p>
-          <p className="text-slate-200 text-sm font-medium">
+          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">80% Confidence Range</p>
+          <p className="text-sm font-semibold text-slate-200">
             ${sim.p10.toFixed(2)} – ${sim.p90.toFixed(2)} / share
           </p>
         </div>

@@ -8,7 +8,7 @@ import json
 
 router = APIRouter(prefix="/page-state", tags=["page-state"])
 
-ALLOWED_PAGES = {"dcf", "technical"}
+ALLOWED_PAGES = {"dcf", "technical", "variance"}
 
 
 class SaveStateIn(BaseModel):
