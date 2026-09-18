@@ -4,6 +4,7 @@ import Icon from "../components/Icon.jsx";
 import FundamentalsBuilder from "../components/FundamentalsBuilder.jsx";
 import GuardrailedForecast from "../components/GuardrailedForecast.jsx";
 import FundamentalsChart from "../components/FundamentalsChart.jsx";
+import FinancialForecast from "../components/FinancialForecast.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
 function defaultFundamentalsYears() {
@@ -69,6 +70,14 @@ function computeGrowthStats(years, key) {
   return { mean, std: Math.sqrt(variance), count: rates.length };
 }
 
+function defaultScenarios() {
+  return {
+    conservative: { growth: 5, margins: { grossMargin: 50, ebitdaMargin: 20, ebitMargin: 15, netMargin: 10, ocfMargin: 15 } },
+    normal: { growth: 10, margins: { grossMargin: 55, ebitdaMargin: 25, ebitMargin: 19, netMargin: 13, ocfMargin: 18 } },
+    optimistic: { growth: 15, margins: { grossMargin: 60, ebitdaMargin: 30, ebitMargin: 23, netMargin: 16, ocfMargin: 22 } },
+  };
+}
+
 function defaultTechnicalState() {
   return {
     ticker: "AAPL",
@@ -77,17 +86,32 @@ function defaultTechnicalState() {
     forecastYears: 5,
     manualOverride: null,
     growthStats: null,
+    financialForecast: {
+      sector: "general",
+      scenarios: defaultScenarios(),
+      forecastYears: 5,
+      fadeFactor: 0.25,
+      displayScenario: "normal",
+    },
   };
 }
 
 function TechnicalCalculator({ initialState, onStateChange }) {
   const s = initialState || defaultTechnicalState();
+  const ffDefaults = defaultTechnicalState().financialForecast;
+  const ff = s.financialForecast || ffDefaults;
 
   const [ticker, setTicker] = useState(s.ticker);
   const [years, setYears] = useState(s.years);
   const [selectedMetric, setSelectedMetric] = useState(s.selectedMetric);
   const [forecastYears, setForecastYears] = useState(s.forecastYears);
   const [manualOverride, setManualOverride] = useState(s.manualOverride);
+
+  const [ffSector, setFfSector] = useState(ff.sector ?? ffDefaults.sector);
+  const [ffScenarios, setFfScenarios] = useState(ff.scenarios ?? ffDefaults.scenarios);
+  const [ffForecastYears, setFfForecastYears] = useState(ff.forecastYears ?? ffDefaults.forecastYears);
+  const [ffFadeFactor, setFfFadeFactor] = useState(ff.fadeFactor ?? ffDefaults.fadeFactor);
+  const [ffDisplayScenario, setFfDisplayScenario] = useState(ff.displayScenario ?? ffDefaults.displayScenario);
 
   const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
 
@@ -104,10 +128,26 @@ function TechnicalCalculator({ initialState, onStateChange }) {
     [mean, std, guardrailedGrowth, confidence, selectedMetric, metricLabel]
   );
 
+  const financialForecast = useMemo(
+    () => ({
+      sector: ffSector,
+      scenarios: ffScenarios,
+      forecastYears: ffForecastYears,
+      fadeFactor: ffFadeFactor,
+      displayScenario: ffDisplayScenario,
+      // NOTE: this snapshot overwrites on every edit (piggybacks the per-company page-state blob).
+      // When Variance's "actual vs. predicted" comparison is built, this should move to an
+      // append-only forecast_snapshots table keyed by (company_id, generated_at) so historical
+      // forecasts aren't lost when the user tweaks assumptions later.
+      savedAt: new Date().toISOString(),
+    }),
+    [ffSector, ffScenarios, ffForecastYears, ffFadeFactor, ffDisplayScenario]
+  );
+
   useEffect(() => {
-    onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride, growthStats });
+    onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticker, years, selectedMetric, forecastYears, manualOverride, growthStats]);
+  }, [ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast]);
 
   const { forecast, forecastBand } = useMemo(() => {
     const lastValue = years[years.length - 1][selectedMetric];
@@ -143,10 +183,24 @@ function TechnicalCalculator({ initialState, onStateChange }) {
 
       <FundamentalsBuilder years={years} onYearsChange={setYears} />
 
+      <FinancialForecast
+        years={years}
+        sector={ffSector}
+        onSectorChange={setFfSector}
+        scenarios={ffScenarios}
+        onScenariosChange={setFfScenarios}
+        forecastYears={ffForecastYears}
+        onForecastYearsChange={setFfForecastYears}
+        fadeFactor={ffFadeFactor}
+        onFadeFactorChange={setFfFadeFactor}
+        displayScenario={ffDisplayScenario}
+        onDisplayScenarioChange={setFfDisplayScenario}
+      />
+
       <div className="card p-4 mb-6 flex items-center gap-2 flex-wrap">
         <Icon name="check" size={16} className="text-accent2" />
         <span className="text-slate-400 text-xs font-medium uppercase tracking-wide mr-2">
-          Forecast Metric
+          Single-Metric Forecast (legacy view)
         </span>
         <div className="flex gap-2 flex-wrap">
           {METRIC_OPTIONS.map((m) => (
@@ -189,8 +243,8 @@ function TechnicalCalculator({ initialState, onStateChange }) {
           </h3>
         </div>
         <ul className="text-slate-400 text-sm space-y-1.5 leading-relaxed">
-          <li>• Growth rate is clipped to −20% to +40% per year — no single outlier year can produce an absurd multi-year compounding forecast.</li>
-          <li>• Confidence is derived from the coefficient of variation of historical YoY growth — volatile history automatically lowers trust in the forecast.</li>
+          <li>• Financial Forecast above blends 3Y/5Y/10Y revenue CAGR, forecasts margins directly (not derived from raw profit growth), and fades growth toward a long-run rate — this is the primary rule-based forecast (Stage 1).</li>
+          <li>• The single-metric forecast below is the legacy view: growth rate is clipped to −20% to +40% per year, confidence derived from YoY growth volatility. It still drives the confidence reading used on the Variance page.</li>
           <li>• Fewer than 3 years of history returns "Insufficient Data" instead of a false-confidence number.</li>
           <li>• The ±1σ range widens with forecast horizon, same principle as the DCF Monte Carlo band — further-out years get less certainty, not more.</li>
           <li>• Ratio checklist (ROE, ROIC, Debt/Equity, margins, FCF) flags red/green against the actual thresholds Buffett and Lynch used, not arbitrary cutoffs.</li>
@@ -205,7 +259,7 @@ export default function Technical() {
     <div>
       <PageHeader
         title="Technical Analysis"
-        description="Fundamental trend analysis across all 3 financial statements, using the ratios Buffett and Lynch both check — ROE, ROIC, Debt/Equity, margins, FCF, and more. Select a company from your Watchlist to save and reload its inputs automatically."
+        description="Financial Forecast (Stage 1, rule-based) projects Revenue, EBITDA, EBIT, Net Income, and OCF via weighted CAGR + margin scenarios + growth fade. Ratio checklist and legacy single-metric forecast remain below. Select a company from your Watchlist to save and reload its inputs automatically."
       />
       <CompanyStateSelector pageName="technical">
         {({ companyId, loadedState, saveState }) => (
