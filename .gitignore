@@ -18,3 +18,8 @@ dist/
 # Database dumps
 *.dump
 *.sql.gz
+
+training/data/raw/
+training/data/processed/
+training/models/
+training_env/
