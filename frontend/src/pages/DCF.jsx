@@ -5,6 +5,7 @@ import Icon from "../components/Icon.jsx";
 import WaccCalculator from "../components/WaccCalculator.jsx";
 import MonteCarloDCF from "../components/MonteCarloDCF.jsx";
 import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
+import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
@@ -58,6 +59,7 @@ function defaultDcfState() {
     marginOfSafety: 20,
     historyYears: defaultHistoryYears(),
     monteCarlo: null,
+    balanceSheet: { totalDebt: 800, cash: 600, totalEquity: 4000 },
   };
 }
 
@@ -75,13 +77,15 @@ function DcfCalculator({ initialState, onStateChange }) {
   const [medianIntrinsicValue, setMedianIntrinsicValue] = useState(null);
   const [historyYears, setHistoryYears] = useState(s.historyYears);
   const [monteCarlo, setMonteCarlo] = useState(s.monteCarlo);
+  const [balanceSheet, setBalanceSheet] = useState(s.balanceSheet || defaultDcfState().balanceSheet);
 
   useEffect(() => {
     onStateChange({
-      market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo,
+      market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety,
+      historyYears, monteCarlo, balanceSheet,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo]);
+  }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
 
   const cap = GDP_CAPS[market];
   const exceedsCap = terminalGrowth > cap;
@@ -142,6 +146,16 @@ function DcfCalculator({ initialState, onStateChange }) {
         onSuggestedGrowthChange={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
       />
 
+      {market === "US" && (
+        <MLGrowthSuggestion
+          historyYears={historyYears}
+          totalDebt={balanceSheet.totalDebt}
+          cash={balanceSheet.cash}
+          totalEquity={balanceSheet.totalEquity}
+          onApply={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
+        />
+      )}
+
       <WaccCalculator market={market} onWaccChange={setWacc} />
 
       <div className="card p-6 mb-6">
@@ -155,11 +169,44 @@ function DcfCalculator({ initialState, onStateChange }) {
 
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
+          Balance Sheet (for ML growth features)
+        </h3>
+        <p className="text-slate-500 text-xs mb-4">
+          Total Debt, Cash, and Total Equity feed the ROIC and leverage ratios the pooled ML model
+          uses above. Not used anywhere else in the DCF math.
+        </p>
+        <div className="grid grid-cols-3 gap-4">
+          <EditableField
+            label="Total Debt"
+            value={balanceSheet.totalDebt}
+            onChange={(v) => setBalanceSheet({ ...balanceSheet, totalDebt: v })}
+            step="10"
+            suffix="$M"
+          />
+          <EditableField
+            label="Cash & Equivalents"
+            value={balanceSheet.cash}
+            onChange={(v) => setBalanceSheet({ ...balanceSheet, cash: v })}
+            step="10"
+            suffix="$M"
+          />
+          <EditableField
+            label="Total Equity"
+            value={balanceSheet.totalEquity}
+            onChange={(v) => setBalanceSheet({ ...balanceSheet, totalEquity: v })}
+            step="10"
+            suffix="$M"
+          />
+        </div>
+      </div>
+
+      <div className="card p-6 mb-6">
+        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
           Growth Assumptions
         </h3>
         <p className="text-slate-500 text-xs mb-4">
           "Normal" is pre-filled from your historical FCF CAGR above — override any of the three
-          if you think the trend won't hold.
+          if you think the trend won't hold, or apply the ML ensemble suggestion above.
         </p>
         <div className="grid grid-cols-3 gap-4 mb-5">
           <EditableField
@@ -169,7 +216,7 @@ function DcfCalculator({ initialState, onStateChange }) {
             suffix="%"
           />
           <EditableField
-            label="Normal (from FCF CAGR)"
+            label="Normal (from FCF CAGR or ML)"
             value={growth.normal}
             onChange={(v) => setGrowth({ ...growth, normal: v })}
             suffix="%"
@@ -299,7 +346,7 @@ export default function DCF() {
     <div>
       <PageHeader
         title="DCF Calculator"
-        description="Historical FCF trend (up to 10 years) feeds growth assumptions, then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value. Select a company from your Watchlist to save and reload its inputs automatically."
+        description="Historical FCF trend feeds growth assumptions (or use the pooled ML growth suggestion for US companies), then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value."
       />
       <CompanyStateSelector pageName="dcf">
         {({ companyId, loadedState, saveState }) => (
