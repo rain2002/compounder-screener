@@ -10,6 +10,7 @@ already produced and saved to training/models/.
 import json
 from pathlib import Path
 import numpy as np
+import pandas as pd
 import joblib
 import xgboost as xgb
 
@@ -22,13 +23,6 @@ FEATURE_COLS = [
     "fcf_cagr_3y", "revenue_cagr_3y",
 ]
 
-# No real company sustains FCF growth outside this range for a full year --
-# these bounds exist purely to stop a single model (especially Ridge, which
-# is linear and has no natural output cap) from extrapolating to nonsense
-# like +1400% when an input feature falls outside the range the model was
-# trained on. Tree models (RF/XGBoost) are naturally bounded by their
-# training leaves and rarely need this, but it's applied uniformly as a
-# safety net for all three.
 GROWTH_FLOOR = -75.0
 GROWTH_CAP = 150.0
 
@@ -95,15 +89,15 @@ def predict_growth(features: dict) -> dict:
             "distribution_note": f"No trained models found at {MODELS_DIR}. Run the training pipeline first.",
         }
 
-    row = np.array([[features.get(col, np.nan) for col in FEATURE_COLS]])
+    row_df = pd.DataFrame([[features.get(col, np.nan) for col in FEATURE_COLS]], columns=FEATURE_COLS)
 
     raw_preds = {}
     if _state["ridge"] is not None:
-        raw_preds["ridge"] = float(_state["ridge"].predict(row)[0])
+        raw_preds["ridge"] = float(_state["ridge"].predict(row_df)[0])
     if _state["rf"] is not None:
-        raw_preds["random_forest"] = float(_state["rf"].predict(row)[0])
+        raw_preds["random_forest"] = float(_state["rf"].predict(row_df)[0])
     if _state["xgb"] is not None:
-        row_imputed = _state["xgb_imputer"].transform(row)
+        row_imputed = _state["xgb_imputer"].transform(row_df)
         row_scaled = _state["xgb_scaler"].transform(row_imputed)
         raw_preds["xgboost"] = float(_state["xgb"].predict(row_scaled)[0])
 

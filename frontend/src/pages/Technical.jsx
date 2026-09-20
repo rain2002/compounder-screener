@@ -44,11 +44,6 @@ function defaultFundamentalsYears() {
 }
 
 
-// Maps the /companies/{ticker}/financials API response (raw $ values, EDGAR
-// field names) into the shape FundamentalsBuilder/FundamentalsChart expect
-// ($M values, camelCase names used throughout this page). EBITDA is
-// approximated as operatingIncome since EDGAR has no dedicated EBITDA tag --
-// flagged in the UI note below so it's not mistaken for a precise figure.
 function mapApiYearsToFundamentals(apiYears) {
   return apiYears.map((y) => {
     const revenue = y.revenue ? Math.round(y.revenue / 1e6) : 0;
@@ -158,20 +153,40 @@ function TechnicalCalculator({ initialState, onStateChange, ticker }) {
   const [ffFadeFactor, setFfFadeFactor] = useState(ff.fadeFactor ?? ffDefaults.fadeFactor);
   const [ffDisplayScenario, setFfDisplayScenario] = useState(ff.displayScenario ?? ffDefaults.displayScenario);
 
+  const [hydrated, setHydrated] = useState(!!initialState);
 
-  // Auto-populate real financials from EDGAR-derived data when this company
-  // has no saved Technical inputs yet. Never overwrites existing saved state.
+
   useEffect(() => {
-    if (initialState) return;
-    if (!ticker) return;
+    if (initialState) {
+      setHydrated(true);
+      return;
+    }
+    if (!ticker) {
+      setHydrated(true);
+      return;
+    }
+
+    let cancelled = false;
 
     fetch(`${BASE_URL}/companies/${ticker}/financials`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.years || data.years.length === 0) return;
-        setYears(mapApiYearsToFundamentals(data.years));
+      .then((res) => {
+        if (!res.ok) throw new Error("financials fetch failed");
+        return res.json();
       })
-      .catch(() => {});
+      .then((data) => {
+        if (cancelled) return;
+        if (data.years && data.years.length > 0) {
+          setYears(mapApiYearsToFundamentals(data.years));
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker]);
 
@@ -210,9 +225,10 @@ function TechnicalCalculator({ initialState, onStateChange, ticker }) {
 
 
   useEffect(() => {
+    if (!hydrated) return;
     onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast]);
+  }, [hydrated, ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast]);
 
 
   const { forecast, forecastBand } = useMemo(() => {
@@ -237,6 +253,11 @@ function TechnicalCalculator({ initialState, onStateChange, ticker }) {
 
   return (
     <div>
+      {!hydrated && (
+        <div className="card p-4 mb-4 text-slate-400 text-sm">
+          Loading company financials...
+        </div>
+      )}
       <div className="card p-6 mb-6">
         <p className="text-slate-400 text-xs font-medium uppercase tracking-wide mb-1">Ticker</p>
         <p className="text-lg font-semibold text-slate-100">{ticker || "—"}</p>
