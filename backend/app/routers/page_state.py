@@ -6,7 +6,9 @@ from app.database import get_db
 from app.services import page_state_service
 import json
 
+
 router = APIRouter(prefix="/page-state", tags=["page-state"])
+
 
 ALLOWED_PAGES = {"dcf", "technical", "variance"}
 
@@ -31,3 +33,11 @@ def save_state(company_id: int, page_name: str, payload: SaveStateIn, db: Sessio
         raise HTTPException(status_code=400, detail="Invalid page_name")
     record = page_state_service.save_state(db, company_id, page_name, json.dumps(payload.state))
     return {"saved": True, "updated_at": record.updated_at}
+
+
+@router.post("/cleanup/dcf-history")
+def cleanup_dcf_history(db: Session = Depends(get_db)):
+    """One-time cleanup: trims any saved DCF historyYears longer than 10
+    down to the most recent 10 years. Safe to call multiple times."""
+    modified_count = page_state_service.cleanup_oversized_dcf_history(db)
+    return {"records_modified": modified_count}
