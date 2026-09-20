@@ -13,7 +13,10 @@ import numpy as np
 import joblib
 import xgboost as xgb
 
-MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "training" / "models"
+# ml_growth_service.py lives at backend/app/services/ml_growth_service.py
+# -> .parent (services) -> .parent (app) -> .parent (backend) -> .parent (repo root)
+# then repo_root / training / models
+MODELS_DIR = Path(__file__).resolve().parent.parent.parent.parent / "training" / "models"
 
 FEATURE_COLS = [
     "fcf_growth_1y", "revenue_growth_1y", "net_income_growth_1y",
@@ -43,7 +46,7 @@ def load_models():
 
     metadata_path = MODELS_DIR / "us_model_metadata.json"
     if not metadata_path.exists():
-        print("[ml_growth_service] No trained models found -- ML growth suggestions disabled.")
+        print(f"[ml_growth_service] No trained models found at {MODELS_DIR} -- ML growth suggestions disabled.")
         return
 
     with open(metadata_path) as f:
@@ -66,7 +69,7 @@ def load_models():
         _state["xgb_scaler"] = joblib.load(MODELS_DIR / "us_fcf_xgboost_scaler.joblib")
 
     _state["loaded"] = True
-    print(f"[ml_growth_service] Loaded models: {kept}, weights: {_state['weights']}")
+    print(f"[ml_growth_service] Loaded models from {MODELS_DIR}: {kept}, weights: {_state['weights']}")
 
 
 def is_available() -> bool:
@@ -95,7 +98,7 @@ def predict_growth(features: dict) -> dict:
         return {
             "ridge_growth": None, "rf_growth": None, "xgb_growth": None,
             "ensemble_growth": None, "confidence": "Unavailable",
-            "distribution_note": "No trained models found. Run the training pipeline first.",
+            "distribution_note": f"No trained models found at {MODELS_DIR}. Run the training pipeline first.",
         }
 
     row = np.array([[features.get(col, np.nan) for col in FEATURE_COLS]])
