@@ -32,7 +32,7 @@ class FinancialSnapshot(Base):
     revenue_growth = Column(Float)
     owner_earnings = Column(Float)
     beneish_m_score = Column(Float)
-    raw_metrics = Column(JSON)  # full ratio/financial payload from finance connector
+    raw_metrics = Column(JSON)
     created_at = Column(DateTime, server_default=func.now())
 
 
@@ -45,5 +45,5 @@ class ScreenerResult(Base):
     buffett_score = Column(Float)
     lynch_score = Column(Float)
     fraud_flag = Column(Boolean, default=False)
-    rating = Column(String)  # Buy / Watch / Caution / Avoid
+    rating = Column(String)
     notes = Column(JSON)

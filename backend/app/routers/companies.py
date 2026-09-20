@@ -4,6 +4,8 @@ from typing import Optional
 from app.database import get_db
 from app.models.company import Company
 from app.schemas import CompanyOut
+from sqlalchemy import asc
+from app.models.company_financials import CompanyFinancials
 
 router = APIRouter(prefix="/companies", tags=["companies"])
 
@@ -24,3 +26,22 @@ def get_company(ticker: str, db: Session = Depends(get_db)):
     if not company:
         raise HTTPException(status_code=404, detail=f"Company {ticker} not found")
     return company
+
+@router.get("/{ticker}/financials")
+def get_company_financials(ticker: str, db: Session = Depends(get_db)):
+    rows = (
+        db.query(CompanyFinancials)
+        .filter(CompanyFinancials.ticker == ticker.upper())
+        .order_by(asc(CompanyFinancials.fiscal_year))
+        .all()
+    )
+    if not rows:
+        return {"ticker": ticker.upper(), "years": []}
+
+    years = [{
+        "year": str(r.fiscal_year), "revenue": r.revenue, "netIncome": r.net_income,
+        "operatingIncome": r.operating_income, "operatingCashFlow": r.operating_cash_flow,
+        "capex": r.capex, "totalDebt": r.total_debt, "cash": r.cash,
+        "totalEquity": r.total_equity, "sharesOutstanding": r.shares_outstanding, "fcf": r.fcf,
+    } for r in rows]
+    return {"ticker": ticker.upper(), "entityName": rows[-1].entity_name, "years": years}
