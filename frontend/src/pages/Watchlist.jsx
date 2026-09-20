@@ -1,9 +1,12 @@
 import { useState, useEffect } from "react";
 import PageHeader from "../components/PageHeader.jsx";
+import { api } from "../api/client.js";
+
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const MAX_SLOTS = 10;
 const MAX_FILINGS = 10;
+
 
 function formatPrice(value, market) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "N/A";
@@ -11,19 +14,21 @@ function formatPrice(value, market) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency, maximumFractionDigits: 2 }).format(Number(value));
 }
 
+
 function formatMarketCap(value, market) {
   if (value === null || value === undefined || Number.isNaN(Number(value))) return "N/A";
   const amount = Number(value);
   if (market === "India") {
     const crore = amount / 10_000_000;
-    if (crore >= 100_000) return `₹${(crore / 100_000).toFixed(2)} Lakh Cr`;
-    if (crore >= 1) return `₹${crore.toLocaleString("en-IN", { maximumFractionDigits: 2 })} Cr`;
-    return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+    if (crore >= 100_000) return `\u20b9${(crore / 100_000).toFixed(2)} Lakh Cr`;
+    if (crore >= 1) return `\u20b9${crore.toLocaleString("en-IN", { maximumFractionDigits: 2 })} Cr`;
+    return `\u20b9${amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
   }
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}T`;
   if (amount >= 1_000) return `$${(amount / 1_000).toFixed(2)}B`;
   return `$${amount.toFixed(2)}M`;
 }
+
 
 export default function Watchlist() {
   const [market, setMarket] = useState("US");
@@ -32,10 +37,42 @@ export default function Watchlist() {
   const [indiaForm, setIndiaForm] = useState({ name: "", price: "", market_cap: "", sector: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [livePrices, setLivePrices] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
+
 
   useEffect(() => {
     fetchWatchlist();
   }, [market]);
+
+
+  useEffect(() => {
+    if (companies.length > 0) {
+      refreshLivePrices(companies);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companies.length, market]);
+
+
+  async function refreshLivePrices(list) {
+    setRefreshing(true);
+    const updates = {};
+    await Promise.all(
+      list.map(async (c) => {
+        try {
+          const data = await api.quote(c.ticker);
+          if (data && data.current_price !== null && data.current_price !== undefined) {
+            updates[c.ticker] = data.current_price;
+          }
+        } catch {
+          // silently skip tickers that fail (rate limit, invalid symbol, etc.)
+        }
+      })
+    );
+    setLivePrices((prev) => ({ ...prev, ...updates }));
+    setRefreshing(false);
+  }
+
 
   async function fetchWatchlist() {
     try {
@@ -46,6 +83,7 @@ export default function Watchlist() {
       setCompanies([]);
     }
   }
+
 
   async function addCompany() {
     setError("");
@@ -82,6 +120,7 @@ export default function Watchlist() {
     }
   }
 
+
   async function deleteCompany(company) {
     const ok = window.confirm(`Delete ${company.ticker} from watchlist? This permanently deletes its uploaded filings from disk.`);
     if (!ok) return;
@@ -93,6 +132,7 @@ export default function Watchlist() {
     }
     fetchWatchlist();
   }
+
 
   async function uploadFiling(companyId, file) {
     const formData = new FormData();
@@ -106,6 +146,7 @@ export default function Watchlist() {
     fetchWatchlist();
   }
 
+
   async function deleteFiling(filingId) {
     const ok = window.confirm("Delete this filing permanently from disk?");
     if (!ok) return;
@@ -117,6 +158,7 @@ export default function Watchlist() {
     }
     fetchWatchlist();
   }
+
 
   async function replaceFiling(filingId, file) {
     const formData = new FormData();
@@ -130,11 +172,14 @@ export default function Watchlist() {
     fetchWatchlist();
   }
 
+
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => companies[i] || null);
+
 
   return (
     <div>
       <PageHeader title="Watchlist" description="Up to 10 companies per market. Company details are fetched automatically for US and India. Each company can hold up to 10 annual report PDFs, shared automatically with the Sentiment page." />
+
 
       <div className="flex gap-4 mb-6 items-center">
         <select value={market} onChange={(e) => setMarket(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm">
@@ -142,7 +187,15 @@ export default function Watchlist() {
           <option value="India">India</option>
         </select>
         <span className="text-sm text-slate-400">{companies.length}/{MAX_SLOTS} companies</span>
+        <button
+          onClick={() => refreshLivePrices(companies)}
+          disabled={refreshing || companies.length === 0}
+          className="px-3 py-1.5 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors text-xs font-medium disabled:opacity-50"
+        >
+          {refreshing ? "Refreshing..." : "Refresh live prices"}
+        </button>
       </div>
+
 
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-2 uppercase tracking-wide">Add Company</h3>
@@ -156,8 +209,8 @@ export default function Watchlist() {
           </label>
           {market === "India" && <>
             <label className="flex flex-col gap-1.5"><span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Name (fallback)</span><input value={indiaForm.name} onChange={(e) => setIndiaForm({ ...indiaForm, name: e.target.value })} className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm" /></label>
-            <label className="flex flex-col gap-1.5"><span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Price ₹ (fallback)</span><input type="number" value={indiaForm.price} onChange={(e) => setIndiaForm({ ...indiaForm, price: e.target.value })} className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm w-28" /></label>
-            <label className="flex flex-col gap-1.5"><span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market Cap ₹ (fallback)</span><input type="number" value={indiaForm.market_cap} onChange={(e) => setIndiaForm({ ...indiaForm, market_cap: e.target.value })} className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm w-32" /></label>
+            <label className="flex flex-col gap-1.5"><span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Price \u20b9 (fallback)</span><input type="number" value={indiaForm.price} onChange={(e) => setIndiaForm({ ...indiaForm, price: e.target.value })} className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm w-28" /></label>
+            <label className="flex flex-col gap-1.5"><span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market Cap \u20b9 (fallback)</span><input type="number" value={indiaForm.market_cap} onChange={(e) => setIndiaForm({ ...indiaForm, market_cap: e.target.value })} className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm w-32" /></label>
             <label className="flex flex-col gap-1.5"><span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Sector (fallback)</span><input value={indiaForm.sector} onChange={(e) => setIndiaForm({ ...indiaForm, sector: e.target.value })} className="bg-slate-800 border border-slate-700 rounded px-2 py-1.5 text-sm" /></label>
           </>}
           <button onClick={addCompany} disabled={loading} className="px-4 py-2 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors text-sm font-medium disabled:opacity-50">{loading ? "Adding..." : "Add"}</button>
@@ -166,16 +219,20 @@ export default function Watchlist() {
         <p className="text-xs text-slate-500 mt-3">Adding an 11th company permanently deletes the oldest company and all its filings from disk.</p>
       </div>
 
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {slots.map((company, idx) => (
           <div key={idx} className="card p-5 min-h-[140px]">
             {company ? <>
               <div className="flex justify-between items-start">
-                <div><p className="font-semibold text-slate-100">{company.ticker}</p><p className="text-sm text-slate-400">{company.name || "—"}</p></div>
+                <div><p className="font-semibold text-slate-100">{company.ticker}</p><p className="text-sm text-slate-400">{company.name || "\u2014"}</p></div>
                 <div className="flex items-center gap-2"><span className="text-xs bg-slate-800 text-slate-400 rounded px-2 py-1">Slot {company.slot}</span><button onClick={() => deleteCompany(company)} className="text-xs px-2 py-1 rounded-md bg-avoid/15 text-avoid hover:bg-avoid/25 transition-colors font-medium">Delete</button></div>
               </div>
               <div className="text-sm mt-3 space-y-1 text-slate-300">
-                <p>Price: {formatPrice(company.price, company.market)}</p>
+                <p>
+                  Price: {formatPrice(livePrices[company.ticker] ?? company.price, company.market)}
+                  {livePrices[company.ticker] !== undefined && <span className="text-buy text-xs ml-1.5">(live)</span>}
+                </p>
                 <p>Market Cap: {formatMarketCap(company.market_cap, company.market)}</p>
                 <p>Sector: {company.sector ?? "N/A"}</p>
               </div>
