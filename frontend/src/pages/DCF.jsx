@@ -7,7 +7,7 @@ import MonteCarloDCF from "../components/MonteCarloDCF.jsx";
 import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
 import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
-import { apiClient } from "../api/client";
+import { api } from "../api/client";
 
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
@@ -23,8 +23,8 @@ function useLivePrice(symbol) {
 
     const fetchPrice = async () => {
       try {
-        const res = await apiClient.get(`/quote/${symbol}`);
-        if (active) setPrice(res.data.current_price);
+        const data = await api.quote(symbol);
+        if (active) setPrice(data.current_price);
       } catch (err) {
         console.error("Price fetch failed", err);
       }
@@ -116,7 +116,6 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
   const [hydrated, setHydrated] = useState(!!initialState);
 
-  // Live price from Finnhub via backend /quote/{symbol}
   const livePrice = useLivePrice(ticker);
 
   useEffect(() => {
