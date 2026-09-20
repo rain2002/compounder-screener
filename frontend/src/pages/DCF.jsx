@@ -87,51 +87,70 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
   const [monteCarlo, setMonteCarlo] = useState(s.monteCarlo);
   const [balanceSheet, setBalanceSheet] = useState(s.balanceSheet || defaultDcfState().balanceSheet);
 
+  const [hydrated, setHydrated] = useState(!!initialState);
 
-  // Auto-populate real financials from EDGAR-derived data when this company
-  // has no saved DCF inputs yet (initialState is null). Never overwrites
-  // existing saved/edited state. Silently keeps synthetic defaults if the
-  // fetch fails or the ticker has no ingested financials.
+
   useEffect(() => {
-    if (initialState) return;
-    if (!ticker) return;
+    if (initialState) {
+      setHydrated(true);
+      return;
+    }
+    if (!ticker) {
+      setHydrated(true);
+      return;
+    }
+
+    let cancelled = false;
 
     fetch(`${BASE_URL}/companies/${ticker}/financials`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.years || data.years.length === 0) return;
-
-        const mapped = data.years.map((y) => ({
-          year: y.year,
-          revenue: y.revenue ? Math.round(y.revenue / 1e6) : 0,
-          ebitMargin: y.revenue && y.operatingIncome ? (y.operatingIncome / y.revenue) * 100 : 0,
-          taxRate: 21,
-          depreciation: 0,
-          capex: y.capex ? Math.round(y.capex / 1e6) : 0,
-          deltaWorkingCapital: 0,
-        }));
-        setHistoryYears(mapped);
-
-        const last = data.years[data.years.length - 1];
-        if (last.fcf) setFcf(Math.round(last.fcf / 1e6));
-        setBalanceSheet({
-          totalDebt: last.totalDebt ? Math.round(last.totalDebt / 1e6) : 0,
-          cash: last.cash ? Math.round(last.cash / 1e6) : 0,
-          totalEquity: last.totalEquity ? Math.round(last.totalEquity / 1e6) : 0,
-        });
+      .then((res) => {
+        if (!res.ok) throw new Error("financials fetch failed");
+        return res.json();
       })
-      .catch(() => {});
+      .then((data) => {
+        if (cancelled) return;
+
+        if (data.years && data.years.length > 0) {
+          const mapped = data.years.map((y) => ({
+            year: y.year,
+            revenue: y.revenue ? Math.round(y.revenue / 1e6) : 0,
+            ebitMargin: y.revenue && y.operatingIncome ? (y.operatingIncome / y.revenue) * 100 : 0,
+            taxRate: 21,
+            depreciation: 0,
+            capex: y.capex ? Math.round(y.capex / 1e6) : 0,
+            deltaWorkingCapital: 0,
+          }));
+          setHistoryYears(mapped);
+
+          const last = data.years[data.years.length - 1];
+          if (last.fcf) setFcf(Math.round(last.fcf / 1e6));
+          setBalanceSheet({
+            totalDebt: last.totalDebt ? Math.round(last.totalDebt / 1e6) : 0,
+            cash: last.cash ? Math.round(last.cash / 1e6) : 0,
+            totalEquity: last.totalEquity ? Math.round(last.totalEquity / 1e6) : 0,
+          });
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker]);
 
 
   useEffect(() => {
+    if (!hydrated) return;
     onStateChange({
       market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety,
       historyYears, monteCarlo, balanceSheet,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
+  }, [hydrated, market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
 
 
   const cap = GDP_CAPS[market];
@@ -155,6 +174,11 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
   return (
     <div>
+      {!hydrated && (
+        <div className="card p-4 mb-4 text-slate-400 text-sm">
+          Loading company financials...
+        </div>
+      )}
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
