@@ -1,0 +1,30 @@
+html, body, #root {
+  height: auto;
+  min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-y: auto !important;
+}
+
+#root {
+  overflow-y: auto;
+}
+
+* {
+  max-width: 100%;
+}
+
+table {
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+table thead, table tbody {
+  display: table;
+  width: 100%;
+}
