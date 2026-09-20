@@ -3,16 +3,13 @@ One-time (or re-runnable) ingestion script: loads
 training/data/processed/company_year_financials.csv into the
 company_financials table.
 
-Usage (from backend/ directory, with venv active):
+Usage (from backend/ directory, with the backend's environment active):
     python -m scripts.ingest_financials
 
 Safe to re-run: upserts on (ticker, fiscal_year) so re-running after a
 fresh EDGAR pull just refreshes the numbers instead of duplicating rows.
 
-NOTE: this uses SQLite's ON CONFLICT upsert syntax. If your database_url
-in config.py points to Postgres/MySQL instead, swap sqlite_upsert below
-for sqlalchemy.dialects.postgresql.insert (or mysql.insert) -- the
-.on_conflict_do_update() call itself is dialect-specific.
+Uses Postgres ON CONFLICT upsert syntax (psycopg driver).
 """
 
 import sys
@@ -21,7 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import pandas as pd
-from sqlalchemy.dialects.sqlite import insert as sqlite_upsert
+from sqlalchemy.dialects.postgresql import insert as pg_upsert
 from app.database import SessionLocal, engine, Base
 from app.models.company_financials import CompanyFinancials
 
@@ -56,7 +53,7 @@ def main():
         records = df.to_dict(orient="records")
         for i in range(0, len(records), 500):
             batch = records[i:i + 500]
-            stmt = sqlite_upsert(CompanyFinancials).values(batch)
+            stmt = pg_upsert(CompanyFinancials).values(batch)
             stmt = stmt.on_conflict_do_update(
                 index_elements=["ticker", "fiscal_year"],
                 set_={
