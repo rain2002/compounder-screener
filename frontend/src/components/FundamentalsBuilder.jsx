@@ -99,14 +99,14 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
   }
 
   function addYear() {
-    const last = years[years.length - 1];
-    const nextYearLabel = (parseInt(last.year, 10) + 1).toString();
-    onYearsChange([...years, { ...last, year: nextYearLabel }]);
+    const first = years[0];
+    const prevYearLabel = (parseInt(first.year, 10) - 1).toString();
+    onYearsChange([{ ...first, year: prevYearLabel }, ...years]);
   }
 
   function removeYear() {
     if (years.length <= 2) return;
-    onYearsChange(years.slice(0, -1));
+    onYearsChange(years.slice(1));
   }
 
   const derived = years.map(computeDerived);
