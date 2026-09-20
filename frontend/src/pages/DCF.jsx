@@ -7,7 +7,6 @@ import MonteCarloDCF from "../components/MonteCarloDCF.jsx";
 import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
 import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
-import { api } from "../api/client";
 
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
@@ -15,53 +14,19 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const MAX_HISTORY_YEARS = 10;
 
 
-function useLivePrice(symbol) {
-  const [price, setPrice] = useState(null);
-
-  useEffect(() => {
-    setPrice(null);
-    if (!symbol) return;
-    let active = true;
-
-    const fetchPrice = async () => {
-      try {
-        const data = await api.quote(symbol);
-        if (active) setPrice(data.current_price);
-      } catch (err) {
-        console.error("Price fetch failed", err);
-      }
-    };
-
-    fetchPrice();
-    const interval = setInterval(fetchPrice, 30000);
-    return () => {
-      active = false;
-      clearInterval(interval);
-    };
-  }, [symbol]);
-
-  return price;
-}
-
-function clampHistory(years) {
-  if (!Array.isArray(years)) return blankHistoryYears();
-  if (years.length > MAX_HISTORY_YEARS) return years.slice(years.length - MAX_HISTORY_YEARS);
-  return years;
-}
-
-function blankHistoryYears() {
-  const currentYear = new Date().getFullYear();
-  const startYear = currentYear - (MAX_HISTORY_YEARS - 1);
+function defaultHistoryYears() {
+  const startYear = 2016;
   const years = [];
-  for (let i = 0; i < MAX_HISTORY_YEARS; i++) {
+  for (let i = 0; i < 10; i++) {
+    const growthFactor = Math.pow(1.08, i);
     years.push({
       year: String(startYear + i),
-      revenue: 0,
-      ebitMargin: 0,
+      revenue: Math.round(3000 * growthFactor),
+      ebitMargin: 22 + i * 0.3,
       taxRate: 21,
-      depreciation: 0,
-      capex: 0,
-      deltaWorkingCapital: 0,
+      depreciation: Math.round(150 * growthFactor),
+      capex: Math.round(180 * growthFactor),
+      deltaWorkingCapital: Math.round(20 * growthFactor),
     });
   }
   return years;
@@ -89,88 +54,46 @@ const scenarioStyle = {
 };
 
 
-function blankDcfState(market) {
+function defaultDcfState() {
   return {
-    market,
-    currentPrice: 0,
-    fcf: 0,
+    market: "US",
+    currentPrice: 150,
+    fcf: 1000,
     wacc: 9,
-    shares: 0,
-    growth: { conservative: 0, normal: 0, optimistic: 0 },
-    terminalGrowth: GDP_CAPS[market] || GDP_CAPS.US,
+    shares: 100,
+    growth: { conservative: 5, normal: 10, optimistic: 15 },
+    terminalGrowth: GDP_CAPS.US,
     marginOfSafety: 20,
-    historyYears: blankHistoryYears(),
+    historyYears: defaultHistoryYears(),
     monteCarlo: null,
-    balanceSheet: { totalDebt: 0, cash: 0, totalEquity: 0 },
-  };
-}
-
-function normalizeState(state, market) {
-  const base = blankDcfState(state?.market || market || "US");
-  if (!state) return base;
-  return {
-    market: state.market || base.market,
-    currentPrice: state.currentPrice ?? base.currentPrice,
-    fcf: state.fcf ?? base.fcf,
-    wacc: state.wacc ?? base.wacc,
-    shares: state.shares ?? base.shares,
-    growth: state.growth || base.growth,
-    terminalGrowth: state.terminalGrowth ?? base.terminalGrowth,
-    marginOfSafety: state.marginOfSafety ?? base.marginOfSafety,
-    historyYears: clampHistory(state.historyYears || base.historyYears),
-    monteCarlo: state.monteCarlo ?? base.monteCarlo,
-    balanceSheet: state.balanceSheet || base.balanceSheet,
+    balanceSheet: { totalDebt: 800, cash: 600, totalEquity: 4000 },
   };
 }
 
 
 function DcfCalculator({ initialState, onStateChange, ticker }) {
-  const [market, setMarket] = useState(() => normalizeState(initialState).market);
-  const [currentPrice, setCurrentPrice] = useState(() => normalizeState(initialState).currentPrice);
-  const [fcf, setFcf] = useState(() => normalizeState(initialState).fcf);
-  const [wacc, setWacc] = useState(() => normalizeState(initialState).wacc);
-  const [shares, setShares] = useState(() => normalizeState(initialState).shares);
-  const [growth, setGrowth] = useState(() => normalizeState(initialState).growth);
-  const [terminalGrowth, setTerminalGrowth] = useState(() => normalizeState(initialState).terminalGrowth);
-  const [marginOfSafety, setMarginOfSafety] = useState(() => normalizeState(initialState).marginOfSafety);
+  const s = initialState || defaultDcfState();
+
+
+  const [market, setMarket] = useState(s.market);
+  const [currentPrice, setCurrentPrice] = useState(s.currentPrice);
+  const [fcf, setFcf] = useState(s.fcf);
+  const [wacc, setWacc] = useState(s.wacc);
+  const [shares, setShares] = useState(s.shares);
+  const [growth, setGrowth] = useState(s.growth);
+  const [terminalGrowth, setTerminalGrowth] = useState(s.terminalGrowth);
+  const [marginOfSafety, setMarginOfSafety] = useState(s.marginOfSafety);
   const [medianIntrinsicValue, setMedianIntrinsicValue] = useState(null);
-  const [historyYears, setHistoryYears] = useState(() => normalizeState(initialState).historyYears);
-  const [monteCarlo, setMonteCarlo] = useState(() => normalizeState(initialState).monteCarlo);
-  const [balanceSheet, setBalanceSheet] = useState(() => normalizeState(initialState).balanceSheet);
+  const [historyYears, setHistoryYears] = useState(s.historyYears);
+  const [monteCarlo, setMonteCarlo] = useState(s.monteCarlo);
+  const [balanceSheet, setBalanceSheet] = useState(s.balanceSheet || defaultDcfState().balanceSheet);
 
-  const [hydrated, setHydrated] = useState(false);
-  const [dataUnavailable, setDataUnavailable] = useState(false);
+  const [hydrated, setHydrated] = useState(!!initialState);
 
-  const livePrice = useLivePrice(ticker);
 
   useEffect(() => {
     if (initialState) {
-      const normalized = normalizeState(initialState);
-      setMarket(normalized.market);
-      setCurrentPrice(normalized.currentPrice);
-      setFcf(normalized.fcf);
-      setWacc(normalized.wacc);
-      setShares(normalized.shares);
-      setGrowth(normalized.growth);
-      setTerminalGrowth(normalized.terminalGrowth);
-      setMarginOfSafety(normalized.marginOfSafety);
-      setHistoryYears(normalized.historyYears);
-      setMonteCarlo(normalized.monteCarlo);
-      setBalanceSheet(normalized.balanceSheet);
-      setDataUnavailable(false);
       setHydrated(true);
-    }
-  }, [initialState]);
-
-  useEffect(() => {
-    if (livePrice !== null && livePrice !== undefined) {
-      setCurrentPrice(livePrice);
-      setDataUnavailable(false);
-    }
-  }, [livePrice]);
-
-  useEffect(() => {
-    if (initialState) {
       return;
     }
     if (!ticker) {
@@ -189,7 +112,8 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
         if (cancelled) return;
 
         if (data.years && data.years.length > 0) {
-          const mapped = clampHistory(data.years.map((y) => ({
+          const recentYears = data.years.slice(-MAX_HISTORY_YEARS);
+          const mapped = recentYears.map((y) => ({
             year: y.year,
             revenue: y.revenue ? Math.round(y.revenue / 1e6) : 0,
             ebitMargin: y.revenue && y.operatingIncome ? (y.operatingIncome / y.revenue) * 100 : 0,
@@ -197,39 +121,19 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
             depreciation: 0,
             capex: y.capex ? Math.round(y.capex / 1e6) : 0,
             deltaWorkingCapital: 0,
-          })));
+          }));
           setHistoryYears(mapped);
-          setDataUnavailable(false);
 
-          const last = data.years[data.years.length - 1];
+          const last = recentYears[recentYears.length - 1];
           if (last.fcf) setFcf(Math.round(last.fcf / 1e6));
           setBalanceSheet({
             totalDebt: last.totalDebt ? Math.round(last.totalDebt / 1e6) : 0,
             cash: last.cash ? Math.round(last.cash / 1e6) : 0,
             totalEquity: last.totalEquity ? Math.round(last.totalEquity / 1e6) : 0,
           });
-        } else {
-          const blank = blankDcfState(market);
-          setHistoryYears(blank.historyYears);
-          setFcf(blank.fcf);
-          setBalanceSheet(blank.balanceSheet);
-          setCurrentPrice(blank.currentPrice);
-          setShares(blank.shares);
-          setGrowth(blank.growth);
-          setDataUnavailable(true);
         }
       })
-      .catch(() => {
-        if (cancelled) return;
-        const blank = blankDcfState(market);
-        setHistoryYears(blank.historyYears);
-        setFcf(blank.fcf);
-        setBalanceSheet(blank.balanceSheet);
-        setCurrentPrice(blank.currentPrice);
-        setShares(blank.shares);
-        setGrowth(blank.growth);
-        setDataUnavailable(true);
-      })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setHydrated(true);
       });
@@ -238,14 +142,14 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticker, initialState]);
+  }, [ticker]);
 
 
   useEffect(() => {
     if (!hydrated) return;
     onStateChange({
       market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety,
-      historyYears: clampHistory(historyYears), monteCarlo, balanceSheet,
+      historyYears, monteCarlo, balanceSheet,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
@@ -277,25 +181,11 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
           Loading company financials...
         </div>
       )}
-
-      {hydrated && dataUnavailable && (
-        <div className="card border-caution/30 bg-caution/5 p-4 mb-4 flex items-start gap-3">
-          <Icon name="warn" size={20} className="text-caution shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-caution">No financial data available for {ticker}</p>
-            <p className="text-slate-400 text-sm mt-0.5">
-              All fields below are blank rather than filled with placeholder estimates. Enter real
-              figures manually, or try again once this company's data is available.
-            </p>
-          </div>
-        </div>
-      )}
-
       <div className="card p-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">
-              Current Share Price {livePrice !== null && <span className="text-buy">(live)</span>}
+              Current Share Price
             </p>
             <div className="flex items-center gap-3">
               <span className="text-slate-500">$</span>
@@ -304,7 +194,6 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
                 step="0.01"
                 value={currentPrice}
                 onChange={(e) => setCurrentPrice(parseFloat(e.target.value) || 0)}
-                placeholder={dataUnavailable ? "N/A" : ""}
                 className="bg-transparent text-3xl font-bold text-white w-40 focus:outline-none border-b border-transparent focus:border-accent"
               />
             </div>
@@ -329,7 +218,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
       <FcfHistoryBuilder
         years={historyYears}
-        onYearsChange={(y) => setHistoryYears(clampHistory(y))}
+        onYearsChange={setHistoryYears}
         onBaseFcfChange={setFcf}
         onSuggestedGrowthChange={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
       />
@@ -487,9 +376,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Current Price</p>
-            <p className="stat-value text-xl text-slate-200">
-              {currentPrice ? `$${currentPrice.toFixed(2)}` : "—"}
-            </p>
+            <p className="stat-value text-xl text-slate-200">${currentPrice.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Raw Intrinsic Value (Median)</p>
@@ -527,9 +414,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
           </div>
           <div className="text-right max-w-sm">
             <p className="text-slate-400 text-sm leading-relaxed">
-              {dataUnavailable
-                ? "No financial data available for this company — enter figures manually above to run the DCF."
-                : medianIntrinsicValue === null
+              {medianIntrinsicValue === null
                 ? "Waiting on Monte Carlo simulation to compute intrinsic value."
                 : meetsTargetCushion
                 ? `Current price ($${currentPrice.toFixed(2)}) sits below the MOS-adjusted intrinsic value ($${adjustedIntrinsicValue.toFixed(2)}) — even after discounting for model uncertainty, the price looks attractive.`
@@ -570,10 +455,12 @@ export default function DCF() {
 function PersistedDcf({ loadedState, saveState, ticker }) {
   const debounceRef = useRef(null);
 
+
   function handleStateChange(nextState) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveState(nextState), 1200);
   }
+
 
   return (
     <DcfCalculator

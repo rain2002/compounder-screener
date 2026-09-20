@@ -9,6 +9,7 @@ import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const MAX_HISTORY_YEARS = 10;
 
 
 function defaultFundamentalsYears() {
@@ -176,7 +177,7 @@ function TechnicalCalculator({ initialState, onStateChange, ticker }) {
       .then((data) => {
         if (cancelled) return;
         if (data.years && data.years.length > 0) {
-          setYears(mapApiYearsToFundamentals(data.years));
+          setYears(mapApiYearsToFundamentals(data.years.slice(-MAX_HISTORY_YEARS)));
         }
       })
       .catch(() => {})
@@ -331,7 +332,7 @@ function TechnicalCalculator({ initialState, onStateChange, ticker }) {
           </h3>
         </div>
         <ul className="text-slate-400 text-sm space-y-1.5 leading-relaxed">
-          <li>• Revenue, EBIT, Net Income, OCF, and Capex are auto-populated from ingested EDGAR financials when available. Gross Profit, EBITDA, interest expense, and balance-sheet working-capital lines are not in the current extraction — EBITDA shown is approximated as EBIT (operating income) since EDGAR has no dedicated EBITDA tag. Edit any field directly if you have more precise figures.</li>
+          <li>• Revenue, EBIT, Net Income, OCF, and Capex are auto-populated from ingested EDGAR financials when available (most recent 10 fiscal years). Gross Profit, EBITDA, interest expense, and balance-sheet working-capital lines are not in the current extraction — EBITDA shown is approximated as EBIT (operating income) since EDGAR has no dedicated EBITDA tag. Edit any field directly if you have more precise figures.</li>
           <li>• Financial Forecast above blends 3Y/5Y/10Y revenue CAGR, forecasts margins directly (not derived from raw profit growth), and fades growth toward a long-run rate — this is the primary rule-based forecast (Stage 1).</li>
           <li>• The single-metric forecast below is the legacy view: growth rate is clipped to −20% to +40% per year, confidence derived from YoY growth volatility. It still drives the confidence reading used on the Variance page.</li>
           <li>• Fewer than 3 years of history returns "Insufficient Data" instead of a false-confidence number.</li>
