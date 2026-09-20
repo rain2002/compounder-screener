@@ -15,6 +15,7 @@ export default function CompanyStateSelector({ pageName, children }) {
   const [companyId, setCompanyId] = useState("");
   const [loadedState, setLoadedState] = useState(null);
   const [status, setStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     fetchCompanies();
@@ -23,8 +24,13 @@ export default function CompanyStateSelector({ pageName, children }) {
   }, [market]);
 
   useEffect(() => {
-    if (companyId) loadState(companyId);
-    else setLoadedState(null);
+    if (companyId) {
+      setIsLoading(true);
+      loadState(companyId);
+    } else {
+      setLoadedState(null);
+      setIsLoading(false);
+    }
   }, [companyId]);
 
   async function fetchCompanies() {
@@ -44,6 +50,8 @@ export default function CompanyStateSelector({ pageName, children }) {
       setLoadedState(data.state);
     } catch {
       setLoadedState(null);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -99,7 +107,13 @@ export default function CompanyStateSelector({ pageName, children }) {
         </div>
       )}
 
-      {companyId && children({ companyId, selectedCompany, loadedState, saveState })}
+      {companyId && isLoading && (
+        <div className="card p-8 text-center text-slate-400 text-sm mb-6">
+          Loading saved data...
+        </div>
+      )}
+
+      {companyId && !isLoading && children({ companyId, selectedCompany, loadedState, saveState })}
     </div>
   );
 }
