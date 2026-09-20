@@ -12,12 +12,14 @@ import { api } from "../api/client";
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const MAX_HISTORY_YEARS = 10;
 
 
 function useLivePrice(symbol) {
   const [price, setPrice] = useState(null);
 
   useEffect(() => {
+    setPrice(null);
     if (!symbol) return;
     let active = true;
 
@@ -41,29 +43,17 @@ function useLivePrice(symbol) {
   return price;
 }
 
-function defaultHistoryYears() {
-  const startYear = 2016;
-  const years = [];
-  for (let i = 0; i < 10; i++) {
-    const growthFactor = Math.pow(1.08, i);
-    years.push({
-      year: String(startYear + i),
-      revenue: Math.round(3000 * growthFactor),
-      ebitMargin: 22 + i * 0.3,
-      taxRate: 21,
-      depreciation: Math.round(150 * growthFactor),
-      capex: Math.round(180 * growthFactor),
-      deltaWorkingCapital: Math.round(20 * growthFactor),
-    });
-  }
+function clampHistory(years) {
+  if (!Array.isArray(years)) return blankHistoryYears();
+  if (years.length > MAX_HISTORY_YEARS) return years.slice(years.length - MAX_HISTORY_YEARS);
   return years;
 }
 
 function blankHistoryYears() {
   const currentYear = new Date().getFullYear();
-  const startYear = currentYear - 9;
+  const startYear = currentYear - (MAX_HISTORY_YEARS - 1);
   const years = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < MAX_HISTORY_YEARS; i++) {
     years.push({
       year: String(startYear + i),
       revenue: 0,
@@ -99,22 +89,6 @@ const scenarioStyle = {
 };
 
 
-function defaultDcfState() {
-  return {
-    market: "US",
-    currentPrice: 150,
-    fcf: 1000,
-    wacc: 9,
-    shares: 100,
-    growth: { conservative: 5, normal: 10, optimistic: 15 },
-    terminalGrowth: GDP_CAPS.US,
-    marginOfSafety: 20,
-    historyYears: defaultHistoryYears(),
-    monteCarlo: null,
-    balanceSheet: { totalDebt: 800, cash: 600, totalEquity: 4000 },
-  };
-}
-
 function blankDcfState(market) {
   return {
     market,
@@ -131,27 +105,62 @@ function blankDcfState(market) {
   };
 }
 
+function normalizeState(state, market) {
+  const base = blankDcfState(state?.market || market || "US");
+  if (!state) return base;
+  return {
+    market: state.market || base.market,
+    currentPrice: state.currentPrice ?? base.currentPrice,
+    fcf: state.fcf ?? base.fcf,
+    wacc: state.wacc ?? base.wacc,
+    shares: state.shares ?? base.shares,
+    growth: state.growth || base.growth,
+    terminalGrowth: state.terminalGrowth ?? base.terminalGrowth,
+    marginOfSafety: state.marginOfSafety ?? base.marginOfSafety,
+    historyYears: clampHistory(state.historyYears || base.historyYears),
+    monteCarlo: state.monteCarlo ?? base.monteCarlo,
+    balanceSheet: state.balanceSheet || base.balanceSheet,
+  };
+}
+
 
 function DcfCalculator({ initialState, onStateChange, ticker }) {
-  const s = initialState || defaultDcfState();
-
-  const [market, setMarket] = useState(s.market);
-  const [currentPrice, setCurrentPrice] = useState(s.currentPrice);
-  const [fcf, setFcf] = useState(s.fcf);
-  const [wacc, setWacc] = useState(s.wacc);
-  const [shares, setShares] = useState(s.shares);
-  const [growth, setGrowth] = useState(s.growth);
-  const [terminalGrowth, setTerminalGrowth] = useState(s.terminalGrowth);
-  const [marginOfSafety, setMarginOfSafety] = useState(s.marginOfSafety);
+  const [market, setMarket] = useState(() => normalizeState(initialState).market);
+  const [currentPrice, setCurrentPrice] = useState(() => normalizeState(initialState).currentPrice);
+  const [fcf, setFcf] = useState(() => normalizeState(initialState).fcf);
+  const [wacc, setWacc] = useState(() => normalizeState(initialState).wacc);
+  const [shares, setShares] = useState(() => normalizeState(initialState).shares);
+  const [growth, setGrowth] = useState(() => normalizeState(initialState).growth);
+  const [terminalGrowth, setTerminalGrowth] = useState(() => normalizeState(initialState).terminalGrowth);
+  const [marginOfSafety, setMarginOfSafety] = useState(() => normalizeState(initialState).marginOfSafety);
   const [medianIntrinsicValue, setMedianIntrinsicValue] = useState(null);
-  const [historyYears, setHistoryYears] = useState(s.historyYears);
-  const [monteCarlo, setMonteCarlo] = useState(s.monteCarlo);
-  const [balanceSheet, setBalanceSheet] = useState(s.balanceSheet || defaultDcfState().balanceSheet);
+  const [historyYears, setHistoryYears] = useState(() => normalizeState(initialState).historyYears);
+  const [monteCarlo, setMonteCarlo] = useState(() => normalizeState(initialState).monteCarlo);
+  const [balanceSheet, setBalanceSheet] = useState(() => normalizeState(initialState).balanceSheet);
 
-  const [hydrated, setHydrated] = useState(!!initialState);
+  const [hydrated, setHydrated] = useState(false);
   const [dataUnavailable, setDataUnavailable] = useState(false);
 
   const livePrice = useLivePrice(ticker);
+
+  useEffect(() => {
+    if (initialState) {
+      const normalized = normalizeState(initialState);
+      setMarket(normalized.market);
+      setCurrentPrice(normalized.currentPrice);
+      setFcf(normalized.fcf);
+      setWacc(normalized.wacc);
+      setShares(normalized.shares);
+      setGrowth(normalized.growth);
+      setTerminalGrowth(normalized.terminalGrowth);
+      setMarginOfSafety(normalized.marginOfSafety);
+      setHistoryYears(normalized.historyYears);
+      setMonteCarlo(normalized.monteCarlo);
+      setBalanceSheet(normalized.balanceSheet);
+      setDataUnavailable(false);
+      setHydrated(true);
+    }
+  }, [initialState]);
 
   useEffect(() => {
     if (livePrice !== null && livePrice !== undefined) {
@@ -162,7 +171,6 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
   useEffect(() => {
     if (initialState) {
-      setHydrated(true);
       return;
     }
     if (!ticker) {
@@ -181,7 +189,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
         if (cancelled) return;
 
         if (data.years && data.years.length > 0) {
-          const mapped = data.years.map((y) => ({
+          const mapped = clampHistory(data.years.map((y) => ({
             year: y.year,
             revenue: y.revenue ? Math.round(y.revenue / 1e6) : 0,
             ebitMargin: y.revenue && y.operatingIncome ? (y.operatingIncome / y.revenue) * 100 : 0,
@@ -189,7 +197,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
             depreciation: 0,
             capex: y.capex ? Math.round(y.capex / 1e6) : 0,
             deltaWorkingCapital: 0,
-          }));
+          })));
           setHistoryYears(mapped);
           setDataUnavailable(false);
 
@@ -230,14 +238,14 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticker]);
+  }, [ticker, initialState]);
 
 
   useEffect(() => {
     if (!hydrated) return;
     onStateChange({
       market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety,
-      historyYears, monteCarlo, balanceSheet,
+      historyYears: clampHistory(historyYears), monteCarlo, balanceSheet,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
@@ -321,7 +329,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
       <FcfHistoryBuilder
         years={historyYears}
-        onYearsChange={setHistoryYears}
+        onYearsChange={(y) => setHistoryYears(clampHistory(y))}
         onBaseFcfChange={setFcf}
         onSuggestedGrowthChange={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
       />
