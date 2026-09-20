@@ -20,7 +20,8 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
 
   useEffect(() => {
     let cancelled = false;
-    async function fetchPrediction() {
+    
+    const timer = setTimeout(async () => {
       setLoading(true);
       try {
         const res = await fetch(`${BASE_URL}/ml-growth/predict`, {
@@ -35,9 +36,12 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }
-    fetchPrediction();
-    return () => { cancelled = true; };
+    }, 600);
+
+    return () => { 
+      cancelled = true; 
+      clearTimeout(timer);
+    };
   }, [historyYears, totalDebt, cash, totalEquity]);
 
 

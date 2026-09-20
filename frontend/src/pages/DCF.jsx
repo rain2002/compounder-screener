@@ -144,6 +144,22 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker]);
 
+  useEffect(() => {
+    if (!ticker) return;
+    let cancelled = false;
+    fetch(`${BASE_URL}/quote/${ticker}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data && data.current_price) {
+          setCurrentPrice(data.current_price);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [ticker]);
+
 
   useEffect(() => {
     if (!hydrated) return;
