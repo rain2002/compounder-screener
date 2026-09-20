@@ -97,6 +97,20 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
   const upsideAtMedian = currentPrice && hasResults ? ((sim.p50 - currentPrice) / currentPrice) * 100 : null;
 
 
+  const minBound = hasResults ? Math.min(sim.p10, currentPrice || sim.p10) * 0.9 : 0;
+  const maxBound = hasResults ? Math.max(sim.p90, currentPrice || sim.p90) * 1.1 : 100;
+  const range = maxBound - minBound;
+
+  function toPct(val) {
+    if (!hasResults || !range) return 0;
+    return Math.max(0, Math.min(100, ((val - minBound) / range) * 100));
+  }
+
+  const p10Pct = toPct(sim.p10);
+  const p50Pct = toPct(sim.p50);
+  const p90Pct = toPct(sim.p90);
+  const currentPct = currentPrice ? toPct(currentPrice) : null;
+
   return (
     <div className="card p-6 mb-6">
       <div className="flex items-center gap-2 mb-4">
@@ -130,28 +144,50 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
       )}
 
 
-      <div className="relative h-10 mb-3 rounded-lg overflow-hidden bg-black/30">
-        <div
-          className="absolute inset-y-0 bg-gradient-to-r from-avoid/30 via-watch/30 to-buy/30"
-          style={{ left: "5%", right: "5%" }}
-        />
-        <div className="absolute inset-y-0 w-0.5 bg-accent2" style={{ left: "50%" }} />
-      </div>
+      <div className="relative h-10 mb-10 mt-12 rounded-lg bg-black/30 border border-white/5">
+        {hasResults && (
+          <div
+            className="absolute inset-y-1 rounded bg-gradient-to-r from-avoid/40 via-watch/40 to-buy/40"
+            style={{ left: `${p10Pct}%`, width: `${p90Pct - p10Pct}%` }}
+          />
+        )}
+        
+        {hasResults && (
+          <div className="absolute top-0 bottom-0 w-0.5 bg-avoid z-10" style={{ left: `${p10Pct}%` }}>
+            <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">P10</p>
+              <p className="text-xs font-bold text-avoid">${sim.p10.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
 
+        {hasResults && (
+          <div className="absolute top-0 bottom-0 w-0.5 bg-accent2 z-10 shadow-[0_0_8px_rgba(56,189,248,0.6)]" style={{ left: `${p50Pct}%` }}>
+            <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">Median</p>
+              <p className="text-xs font-bold text-accent2">${sim.p50.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
 
-      <div className="grid grid-cols-5 gap-2 text-center mb-5">
-        <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">P10</p>
-          <p className="text-sm font-semibold text-avoid">{sim.p10 !== null ? `$${sim.p10.toFixed(2)}` : "—"}</p>
-        </div>
-        <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Median (P50)</p>
-          <p className="text-sm font-semibold text-accent2">{sim.p50 !== null ? `$${sim.p50.toFixed(2)}` : "—"}</p>
-        </div>
-        <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">P90</p>
-          <p className="text-sm font-semibold text-buy">{sim.p90 !== null ? `$${sim.p90.toFixed(2)}` : "—"}</p>
-        </div>
+        {hasResults && (
+          <div className="absolute top-0 bottom-0 w-0.5 bg-buy z-10" style={{ left: `${p90Pct}%` }}>
+            <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
+              <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">P90</p>
+              <p className="text-xs font-bold text-buy">${sim.p90.toFixed(2)}</p>
+            </div>
+          </div>
+        )}
+
+        {currentPct !== null && (
+          <div className="absolute top-0 bottom-0 w-0.5 bg-white z-20" style={{ left: `${currentPct}%` }}>
+            <div className="absolute bottom-full mb-1 -translate-x-1/2 text-center w-32">
+              <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">Current Price</p>
+              <p className="text-xs font-bold text-white">${currentPrice.toFixed(2)}</p>
+            </div>
+            <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2 h-2 bg-white rotate-45" />
+          </div>
+        )}
       </div>
 
 
