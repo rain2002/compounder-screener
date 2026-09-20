@@ -6,8 +6,14 @@ from app.models.company import Company
 from app.schemas import CompanyOut
 from sqlalchemy import asc
 from app.models.company_financials import CompanyFinancials
+import math
 
 router = APIRouter(prefix="/companies", tags=["companies"])
+
+def _clean(value):
+    if isinstance(value, float) and (math.isnan(value) or math.isinf(value)):
+        return None
+    return value
 
 
 @router.get("", response_model=list[CompanyOut])
@@ -39,9 +45,9 @@ def get_company_financials(ticker: str, db: Session = Depends(get_db)):
         return {"ticker": ticker.upper(), "years": []}
 
     years = [{
-        "year": str(r.fiscal_year), "revenue": r.revenue, "netIncome": r.net_income,
-        "operatingIncome": r.operating_income, "operatingCashFlow": r.operating_cash_flow,
-        "capex": r.capex, "totalDebt": r.total_debt, "cash": r.cash,
-        "totalEquity": r.total_equity, "sharesOutstanding": r.shares_outstanding, "fcf": r.fcf,
+        "year": str(r.fiscal_year), "revenue": _clean(r.revenue), "netIncome": _clean(r.net_income),
+        "operatingIncome": _clean(r.operating_income), "operatingCashFlow": _clean(r.operating_cash_flow),
+        "capex": _clean(r.capex), "totalDebt": _clean(r.total_debt), "cash": _clean(r.cash),
+        "totalEquity": _clean(r.total_equity), "sharesOutstanding": _clean(r.shares_outstanding), "fcf": _clean(r.fcf),
     } for r in rows]
     return {"ticker": ticker.upper(), "entityName": rows[-1].entity_name, "years": years}
