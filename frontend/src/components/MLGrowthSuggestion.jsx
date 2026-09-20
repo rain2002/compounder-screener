@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
 import Icon from "./Icon.jsx";
 
+
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 
 const confidenceColor = {
   High: "text-buy",
@@ -10,9 +12,11 @@ const confidenceColor = {
   Unavailable: "text-slate-500",
 };
 
+
 export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, totalEquity, onApply }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -36,6 +40,7 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
     return () => { cancelled = true; };
   }, [historyYears, totalDebt, cash, totalEquity]);
 
+
   if (loading) {
     return (
       <div className="card p-6 mb-6">
@@ -44,7 +49,11 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
     );
   }
 
-  if (!result || result.confidence === "Unavailable") {
+
+  const ensembleAvailable = result && result.ensemble_growth !== null && result.ensemble_growth !== undefined;
+
+
+  if (!result || result.confidence === "Unavailable" || !ensembleAvailable) {
     return (
       <div className="card p-6 mb-6 border-dashed">
         <div className="flex items-center gap-2 mb-2">
@@ -54,11 +63,12 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
           </h3>
         </div>
         <p className="text-slate-500 text-xs">
-          {result?.distribution_note || "Pooled US FCF-growth models aren't trained yet, or the backend can't reach them."}
+          {result?.distribution_note || "Pooled US FCF-growth models aren't trained yet, the backend can't reach them, or there isn't enough company data yet to generate a prediction."}
         </p>
       </div>
     );
   }
+
 
   return (
     <div className="card p-6 mb-6 border-2 border-accent/20">
@@ -69,7 +79,7 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
             ML Growth Suggestion (Pooled US Model)
           </h3>
         </div>
-        <span className={`text-xs font-semibold ${confidenceColor[result.confidence]}`}>
+        <span className={`text-xs font-semibold ${confidenceColor[result.confidence] || "text-slate-500"}`}>
           {result.confidence} Confidence
         </span>
       </div>
@@ -79,23 +89,24 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
         assumption above still drives the DCF unless you manually apply this.
       </p>
 
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Ridge</p>
           <p className="stat-value text-lg text-slate-200">
-            {result.ridge_growth !== null ? `${result.ridge_growth.toFixed(1)}%` : "—"}
+            {result.ridge_growth !== null && result.ridge_growth !== undefined ? `${result.ridge_growth.toFixed(1)}%` : "—"}
           </p>
         </div>
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Random Forest</p>
           <p className="stat-value text-lg text-slate-200">
-            {result.rf_growth !== null ? `${result.rf_growth.toFixed(1)}%` : "—"}
+            {result.rf_growth !== null && result.rf_growth !== undefined ? `${result.rf_growth.toFixed(1)}%` : "—"}
           </p>
         </div>
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">XGBoost</p>
           <p className="stat-value text-lg text-slate-200">
-            {result.xgb_growth !== null ? `${result.xgb_growth.toFixed(1)}%` : "—"}
+            {result.xgb_growth !== null && result.xgb_growth !== undefined ? `${result.xgb_growth.toFixed(1)}%` : "—"}
           </p>
         </div>
         <div>
@@ -104,12 +115,14 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
         </div>
       </div>
 
+
       {result.distribution_note && (
         <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-caution/10 border border-caution/30">
           <Icon name="warn" size={14} className="text-caution shrink-0" />
           <p className="text-caution text-xs">{result.distribution_note}</p>
         </div>
       )}
+
 
       <button
         onClick={() => onApply(result.ensemble_growth)}
