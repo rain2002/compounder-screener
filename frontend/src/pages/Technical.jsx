@@ -7,6 +7,10 @@ import FundamentalsChart from "../components/FundamentalsChart.jsx";
 import FinancialForecast from "../components/FinancialForecast.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
+
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+
 function defaultFundamentalsYears() {
   const startYear = 2016;
   const years = [];
@@ -39,6 +43,40 @@ function defaultFundamentalsYears() {
   return years;
 }
 
+
+// Maps the /companies/{ticker}/financials API response (raw $ values, EDGAR
+// field names) into the shape FundamentalsBuilder/FundamentalsChart expect
+// ($M values, camelCase names used throughout this page). EBITDA is
+// approximated as operatingIncome since EDGAR has no dedicated EBITDA tag --
+// flagged in the UI note below so it's not mistaken for a precise figure.
+function mapApiYearsToFundamentals(apiYears) {
+  return apiYears.map((y) => {
+    const revenue = y.revenue ? Math.round(y.revenue / 1e6) : 0;
+    const netIncome = y.netIncome ? Math.round(y.netIncome / 1e6) : 0;
+    const ebit = y.operatingIncome ? Math.round(y.operatingIncome / 1e6) : 0;
+    return {
+      year: y.year,
+      revenue,
+      grossProfit: 0,
+      ebitda: ebit,
+      ebit,
+      interestExpense: 0,
+      netIncome,
+      eps: y.sharesOutstanding ? Math.round((netIncome * 1e6 / y.sharesOutstanding) * 100) / 100 : 0,
+      totalDebt: y.totalDebt ? Math.round(y.totalDebt / 1e6) : 0,
+      cash: y.cash ? Math.round(y.cash / 1e6) : 0,
+      totalEquity: y.totalEquity ? Math.round(y.totalEquity / 1e6) : 0,
+      currentAssets: 0,
+      currentLiabilities: 0,
+      inventory: 0,
+      accountsReceivable: 0,
+      operatingCashFlow: y.operatingCashFlow ? Math.round(y.operatingCashFlow / 1e6) : 0,
+      capex: y.capex ? Math.round(y.capex / 1e6) : 0,
+    };
+  });
+}
+
+
 const METRIC_OPTIONS = [
   { key: "revenue", label: "Revenue" },
   { key: "grossProfit", label: "Gross Profit" },
@@ -48,13 +86,16 @@ const METRIC_OPTIONS = [
   { key: "operatingCashFlow", label: "Operating Cash Flow" },
 ];
 
+
 const GUARDRAILS = { maxGrowthCap: 40, minGrowthFloor: -20 };
+
 
 function trimLeadingZeros(years, key) {
   const firstRealIndex = years.findIndex((y) => y[key] > 0);
   if (firstRealIndex <= 0) return years;
   return years.slice(firstRealIndex);
 }
+
 
 function computeGrowthStats(years, key) {
   const trimmed = trimLeadingZeros(years, key);
@@ -70,6 +111,7 @@ function computeGrowthStats(years, key) {
   return { mean, std: Math.sqrt(variance), count: rates.length };
 }
 
+
 function defaultScenarios() {
   return {
     conservative: { growth: 5, margins: { grossMargin: 50, ebitdaMargin: 20, ebitMargin: 15, netMargin: 10, ocfMargin: 15 } },
@@ -77,6 +119,7 @@ function defaultScenarios() {
     optimistic: { growth: 15, margins: { grossMargin: 60, ebitdaMargin: 30, ebitMargin: 23, netMargin: 16, ocfMargin: 22 } },
   };
 }
+
 
 function defaultTechnicalState() {
   return {
@@ -96,16 +139,18 @@ function defaultTechnicalState() {
   };
 }
 
-function TechnicalCalculator({ initialState, onStateChange }) {
+
+function TechnicalCalculator({ initialState, onStateChange, ticker }) {
   const s = initialState || defaultTechnicalState();
   const ffDefaults = defaultTechnicalState().financialForecast;
   const ff = s.financialForecast || ffDefaults;
 
-  const [ticker, setTicker] = useState(s.ticker);
+
   const [years, setYears] = useState(s.years);
   const [selectedMetric, setSelectedMetric] = useState(s.selectedMetric);
   const [forecastYears, setForecastYears] = useState(s.forecastYears);
   const [manualOverride, setManualOverride] = useState(s.manualOverride);
+
 
   const [ffSector, setFfSector] = useState(ff.sector ?? ffDefaults.sector);
   const [ffScenarios, setFfScenarios] = useState(ff.scenarios ?? ffDefaults.scenarios);
@@ -113,20 +158,43 @@ function TechnicalCalculator({ initialState, onStateChange }) {
   const [ffFadeFactor, setFfFadeFactor] = useState(ff.fadeFactor ?? ffDefaults.fadeFactor);
   const [ffDisplayScenario, setFfDisplayScenario] = useState(ff.displayScenario ?? ffDefaults.displayScenario);
 
+
+  // Auto-populate real financials from EDGAR-derived data when this company
+  // has no saved Technical inputs yet. Never overwrites existing saved state.
+  useEffect(() => {
+    if (initialState) return;
+    if (!ticker) return;
+
+    fetch(`${BASE_URL}/companies/${ticker}/financials`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.years || data.years.length === 0) return;
+        setYears(mapApiYearsToFundamentals(data.years));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticker]);
+
+
   const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
 
+
   const { mean, std, count } = useMemo(() => computeGrowthStats(years, selectedMetric), [years, selectedMetric]);
+
 
   const rawGrowth = manualOverride !== null ? manualOverride : mean;
   const guardrailedGrowth = Math.max(GUARDRAILS.minGrowthFloor, Math.min(GUARDRAILS.maxGrowthCap, rawGrowth));
 
+
   const volatility = mean !== 0 ? Math.abs(std / mean) : std > 10 ? 2 : 0;
   const confidence = count < 3 ? "Insufficient Data" : volatility < 0.3 ? "High" : volatility < 0.7 ? "Moderate" : "Low";
+
 
   const growthStats = useMemo(
     () => ({ mean, std, guardrailedGrowth, confidence, metric: selectedMetric, metricLabel }),
     [mean, std, guardrailedGrowth, confidence, selectedMetric, metricLabel]
   );
+
 
   const financialForecast = useMemo(
     () => ({
@@ -135,19 +203,17 @@ function TechnicalCalculator({ initialState, onStateChange }) {
       forecastYears: ffForecastYears,
       fadeFactor: ffFadeFactor,
       displayScenario: ffDisplayScenario,
-      // NOTE: this snapshot overwrites on every edit (piggybacks the per-company page-state blob).
-      // When Variance's "actual vs. predicted" comparison is built, this should move to an
-      // append-only forecast_snapshots table keyed by (company_id, generated_at) so historical
-      // forecasts aren't lost when the user tweaks assumptions later.
       savedAt: new Date().toISOString(),
     }),
     [ffSector, ffScenarios, ffForecastYears, ffFadeFactor, ffDisplayScenario]
   );
 
+
   useEffect(() => {
     onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast]);
+
 
   const { forecast, forecastBand } = useMemo(() => {
     const lastValue = years[years.length - 1][selectedMetric];
@@ -168,20 +234,17 @@ function TechnicalCalculator({ initialState, onStateChange }) {
     return { forecast: f, forecastBand: b };
   }, [years, selectedMetric, guardrailedGrowth, std, forecastYears]);
 
+
   return (
     <div>
       <div className="card p-6 mb-6">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Ticker</span>
-          <input
-            value={ticker}
-            onChange={(e) => setTicker(e.target.value.toUpperCase())}
-            className="bg-black/30 border border-border rounded-lg px-3 py-2 text-sm font-semibold text-slate-100 w-40 focus:outline-none focus:ring-2 focus:ring-accent/50"
-          />
-        </label>
+        <p className="text-slate-400 text-xs font-medium uppercase tracking-wide mb-1">Ticker</p>
+        <p className="text-lg font-semibold text-slate-100">{ticker || "—"}</p>
       </div>
 
+
       <FundamentalsBuilder years={years} onYearsChange={setYears} />
+
 
       <FinancialForecast
         years={years}
@@ -196,6 +259,7 @@ function TechnicalCalculator({ initialState, onStateChange }) {
         displayScenario={ffDisplayScenario}
         onDisplayScenarioChange={setFfDisplayScenario}
       />
+
 
       <div className="card p-4 mb-6 flex items-center gap-2 flex-wrap">
         <Icon name="check" size={16} className="text-accent2" />
@@ -219,6 +283,7 @@ function TechnicalCalculator({ initialState, onStateChange }) {
         </div>
       </div>
 
+
       <FundamentalsChart
         years={years}
         metricKey={selectedMetric}
@@ -226,6 +291,7 @@ function TechnicalCalculator({ initialState, onStateChange }) {
         forecast={forecast}
         forecastBand={forecastBand}
       />
+
 
       <GuardrailedForecast
         years={years}
@@ -235,6 +301,7 @@ function TechnicalCalculator({ initialState, onStateChange }) {
         onForecastYearsChange={setForecastYears}
       />
 
+
       <div className="card p-6 border-2 border-accent/30">
         <div className="flex items-center gap-2 mb-3">
           <Icon name="warn" size={16} className="text-caution" />
@@ -243,6 +310,7 @@ function TechnicalCalculator({ initialState, onStateChange }) {
           </h3>
         </div>
         <ul className="text-slate-400 text-sm space-y-1.5 leading-relaxed">
+          <li>• Revenue, EBIT, Net Income, OCF, and Capex are auto-populated from ingested EDGAR financials when available. Gross Profit, EBITDA, interest expense, and balance-sheet working-capital lines are not in the current extraction — EBITDA shown is approximated as EBIT (operating income) since EDGAR has no dedicated EBITDA tag. Edit any field directly if you have more precise figures.</li>
           <li>• Financial Forecast above blends 3Y/5Y/10Y revenue CAGR, forecasts margins directly (not derived from raw profit growth), and fades growth toward a long-run rate — this is the primary rule-based forecast (Stage 1).</li>
           <li>• The single-metric forecast below is the legacy view: growth rate is clipped to −20% to +40% per year, confidence derived from YoY growth volatility. It still drives the confidence reading used on the Variance page.</li>
           <li>• Fewer than 3 years of history returns "Insufficient Data" instead of a false-confidence number.</li>
@@ -254,6 +322,7 @@ function TechnicalCalculator({ initialState, onStateChange }) {
   );
 }
 
+
 export default function Technical() {
   return (
     <div>
@@ -262,26 +331,35 @@ export default function Technical() {
         description="Financial Forecast (Stage 1, rule-based) projects Revenue, EBITDA, EBIT, Net Income, and OCF via weighted CAGR + margin scenarios + growth fade. Ratio checklist and legacy single-metric forecast remain below. Select a company from your Watchlist to save and reload its inputs automatically."
       />
       <CompanyStateSelector pageName="technical">
-        {({ companyId, loadedState, saveState }) => (
-          <PersistedTechnical key={companyId} loadedState={loadedState} saveState={saveState} />
+        {({ companyId, selectedCompany, loadedState, saveState }) => (
+          <PersistedTechnical
+            key={companyId}
+            ticker={selectedCompany?.ticker}
+            loadedState={loadedState}
+            saveState={saveState}
+          />
         )}
       </CompanyStateSelector>
     </div>
   );
 }
 
-function PersistedTechnical({ loadedState, saveState }) {
+
+function PersistedTechnical({ loadedState, saveState, ticker }) {
   const debounceRef = useRef(null);
+
 
   function handleStateChange(nextState) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveState(nextState), 1200);
   }
 
+
   return (
     <TechnicalCalculator
-      initialState={loadedState || defaultTechnicalState()}
+      initialState={loadedState || null}
       onStateChange={handleStateChange}
+      ticker={ticker}
     />
   );
 }

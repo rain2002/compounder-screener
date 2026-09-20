@@ -8,7 +8,10 @@ import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
 import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
+
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 
 function defaultHistoryYears() {
   const startYear = 2016;
@@ -28,6 +31,7 @@ function defaultHistoryYears() {
   return years;
 }
 
+
 function computeScenario(fcf, growthRate, terminalGrowth, wacc, years = 5) {
   if (!fcf || !wacc || wacc <= terminalGrowth) return null;
   let pv = 0;
@@ -41,11 +45,13 @@ function computeScenario(fcf, growthRate, terminalGrowth, wacc, years = 5) {
   return pv + pvTerminal;
 }
 
+
 const scenarioStyle = {
   conservative: "border-avoid/30",
   normal: "border-accent/30",
   optimistic: "border-buy/30",
 };
+
 
 function defaultDcfState() {
   return {
@@ -63,8 +69,10 @@ function defaultDcfState() {
   };
 }
 
-function DcfCalculator({ initialState, onStateChange }) {
+
+function DcfCalculator({ initialState, onStateChange, ticker }) {
   const s = initialState || defaultDcfState();
+
 
   const [market, setMarket] = useState(s.market);
   const [currentPrice, setCurrentPrice] = useState(s.currentPrice);
@@ -79,6 +87,44 @@ function DcfCalculator({ initialState, onStateChange }) {
   const [monteCarlo, setMonteCarlo] = useState(s.monteCarlo);
   const [balanceSheet, setBalanceSheet] = useState(s.balanceSheet || defaultDcfState().balanceSheet);
 
+
+  // Auto-populate real financials from EDGAR-derived data when this company
+  // has no saved DCF inputs yet (initialState is null). Never overwrites
+  // existing saved/edited state. Silently keeps synthetic defaults if the
+  // fetch fails or the ticker has no ingested financials.
+  useEffect(() => {
+    if (initialState) return;
+    if (!ticker) return;
+
+    fetch(`${BASE_URL}/companies/${ticker}/financials`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.years || data.years.length === 0) return;
+
+        const mapped = data.years.map((y) => ({
+          year: y.year,
+          revenue: y.revenue ? Math.round(y.revenue / 1e6) : 0,
+          ebitMargin: y.revenue && y.operatingIncome ? (y.operatingIncome / y.revenue) * 100 : 0,
+          taxRate: 21,
+          depreciation: 0,
+          capex: y.capex ? Math.round(y.capex / 1e6) : 0,
+          deltaWorkingCapital: 0,
+        }));
+        setHistoryYears(mapped);
+
+        const last = data.years[data.years.length - 1];
+        if (last.fcf) setFcf(Math.round(last.fcf / 1e6));
+        setBalanceSheet({
+          totalDebt: last.totalDebt ? Math.round(last.totalDebt / 1e6) : 0,
+          cash: last.cash ? Math.round(last.cash / 1e6) : 0,
+          totalEquity: last.totalEquity ? Math.round(last.totalEquity / 1e6) : 0,
+        });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticker]);
+
+
   useEffect(() => {
     onStateChange({
       market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety,
@@ -87,8 +133,10 @@ function DcfCalculator({ initialState, onStateChange }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
 
+
   const cap = GDP_CAPS[market];
   const exceedsCap = terminalGrowth > cap;
+
 
   const scenarios = ["conservative", "normal", "optimistic"].map((key) => {
     const value = computeScenario(fcf, growth[key], terminalGrowth, wacc);
@@ -97,11 +145,13 @@ function DcfCalculator({ initialState, onStateChange }) {
     return { key, growth: growth[key], value, perShare, upside };
   });
 
+
   const adjustedIntrinsicValue = medianIntrinsicValue ? medianIntrinsicValue * (1 - marginOfSafety / 100) : null;
   const currentDiscount = medianIntrinsicValue && currentPrice
     ? ((medianIntrinsicValue - currentPrice) / medianIntrinsicValue) * 100
     : null;
   const meetsTargetCushion = currentDiscount !== null && currentDiscount >= marginOfSafety;
+
 
   return (
     <div>
@@ -139,12 +189,14 @@ function DcfCalculator({ initialState, onStateChange }) {
         </div>
       </div>
 
+
       <FcfHistoryBuilder
         years={historyYears}
         onYearsChange={setHistoryYears}
         onBaseFcfChange={setFcf}
         onSuggestedGrowthChange={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
       />
+
 
       {market === "US" && (
         <MLGrowthSuggestion
@@ -156,7 +208,9 @@ function DcfCalculator({ initialState, onStateChange }) {
         />
       )}
 
+
       <WaccCalculator market={market} onWaccChange={setWacc} />
+
 
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">DCF Inputs</h3>
@@ -166,6 +220,7 @@ function DcfCalculator({ initialState, onStateChange }) {
           <EditableField label="Shares Outstanding" value={shares} onChange={setShares} step="1" suffix="M" />
         </div>
       </div>
+
 
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
@@ -200,6 +255,7 @@ function DcfCalculator({ initialState, onStateChange }) {
         </div>
       </div>
 
+
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
           Growth Assumptions
@@ -229,6 +285,7 @@ function DcfCalculator({ initialState, onStateChange }) {
           />
         </div>
 
+
         <EditableField
           label={`Terminal growth — capped to ${market} GDP growth ~${cap}%`}
           value={terminalGrowth}
@@ -244,6 +301,7 @@ function DcfCalculator({ initialState, onStateChange }) {
           </div>
         )}
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {scenarios.map((s2) => (
@@ -267,6 +325,7 @@ function DcfCalculator({ initialState, onStateChange }) {
         ))}
       </div>
 
+
       <MonteCarloDCF
         fcf={fcf}
         waccMean={wacc}
@@ -278,6 +337,7 @@ function DcfCalculator({ initialState, onStateChange }) {
         onSimulationChange={setMonteCarlo}
       />
 
+
       <div className="card p-6 border-2 border-accent/30">
         <div className="flex items-center gap-2 mb-4">
           <Icon name="check" size={16} className="text-accent2" />
@@ -285,6 +345,7 @@ function DcfCalculator({ initialState, onStateChange }) {
             Evaluation Summary
           </h3>
         </div>
+
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
           <div>
@@ -315,6 +376,7 @@ function DcfCalculator({ initialState, onStateChange }) {
           </div>
         </div>
 
+
         <div className="pt-4 border-t border-border/60 flex items-center justify-between">
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">
@@ -341,6 +403,7 @@ function DcfCalculator({ initialState, onStateChange }) {
   );
 }
 
+
 export default function DCF() {
   return (
     <div>
@@ -349,21 +412,35 @@ export default function DCF() {
         description="Historical FCF trend feeds growth assumptions (or use the pooled ML growth suggestion for US companies), then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value."
       />
       <CompanyStateSelector pageName="dcf">
-        {({ companyId, loadedState, saveState }) => (
-          <PersistedDcf key={companyId} loadedState={loadedState} saveState={saveState} />
+        {({ companyId, selectedCompany, loadedState, saveState }) => (
+          <PersistedDcf
+            key={companyId}
+            ticker={selectedCompany?.ticker}
+            loadedState={loadedState}
+            saveState={saveState}
+          />
         )}
       </CompanyStateSelector>
     </div>
   );
 }
 
-function PersistedDcf({ loadedState, saveState }) {
+
+function PersistedDcf({ loadedState, saveState, ticker }) {
   const debounceRef = useRef(null);
+
 
   function handleStateChange(nextState) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveState(nextState), 1200);
   }
 
-  return <DcfCalculator initialState={loadedState || defaultDcfState()} onStateChange={handleStateChange} />;
+
+  return (
+    <DcfCalculator
+      initialState={loadedState || null}
+      onStateChange={handleStateChange}
+      ticker={ticker}
+    />
+  );
 }
