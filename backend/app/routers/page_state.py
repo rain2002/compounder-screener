@@ -10,7 +10,7 @@ import json
 router = APIRouter(prefix="/page-state", tags=["page-state"])
 
 
-ALLOWED_PAGES = {"dcf", "technical", "variance"}
+ALLOWED_PAGES = {"dcf", "technical", "financial", "variance"}
 
 
 class SaveStateIn(BaseModel):
@@ -21,7 +21,13 @@ class SaveStateIn(BaseModel):
 def load_state(company_id: int, page_name: str, db: Session = Depends(get_db)):
     if page_name not in ALLOWED_PAGES:
         raise HTTPException(status_code=400, detail="Invalid page_name")
+        
     record = page_state_service.get_state(db, company_id, page_name)
+    
+    # Migration fallback: If they ask for 'financial' and it doesn't exist, check for 'technical'
+    if not record and page_name == "financial":
+        record = page_state_service.get_state(db, company_id, "technical")
+        
     if not record:
         return {"state": None}
     return {"state": json.loads(record.state_json), "updated_at": record.updated_at}

@@ -13,10 +13,9 @@ const confidenceColor = {
 };
 
 
-export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, totalEquity, onApply }) {
+export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, totalEquity, targetMetric = "fcf", onApply }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
-
 
   useEffect(() => {
     let cancelled = false;
@@ -27,7 +26,7 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
         const res = await fetch(`${BASE_URL}/ml-growth/predict`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ historyYears, totalDebt, cash, totalEquity }),
+          body: JSON.stringify({ historyYears, totalDebt, cash, totalEquity, targetMetric }),
         });
         const data = await res.json();
         if (!cancelled) setResult(data);
@@ -42,7 +41,7 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
       cancelled = true; 
       clearTimeout(timer);
     };
-  }, [historyYears, totalDebt, cash, totalEquity]);
+  }, [historyYears, totalDebt, cash, totalEquity, targetMetric]);
 
 
   if (loading) {
@@ -88,9 +87,15 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
         </span>
       </div>
       <p className="text-slate-500 text-xs mb-4">
-        Trained on 1,100+ US non-financial companies' historical fundamentals to predict next-year
-        FCF growth. This is a reference suggestion, not an override -- your guardrailed growth
-        assumption above still drives the DCF unless you manually apply this.
+        Trained on 1,100+ US non-financial companies' historical fundamentals.
+        {targetMetric !== "fcf" ? (
+          <span className="text-watch ml-1">
+            (Note: using the base FCF-growth model architecture as a proxy to predict {targetMetric} growth based on its recent trend).
+          </span>
+        ) : (
+          <span className="ml-1">Predicts next-year FCF growth.</span>
+        )}{" "}
+        This is a reference suggestion, not an override -- your current assumption still drives the chart unless you manually apply this.
       </p>
 
 

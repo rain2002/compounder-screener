@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout.jsx";
 import Watchlist from "./pages/Watchlist.jsx";
-import Technical from "./pages/Technical.jsx";
+import Financial from "./pages/Financial.jsx";
 import Sentiment from "./pages/Sentiment.jsx";
 import DCF from "./pages/DCF.jsx";
 import Variance from "./pages/Variance.jsx";
@@ -13,7 +13,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/watchlist" element={<Watchlist />} />
-        <Route path="/technical" element={<Technical />} />
+        <Route path="/financial" element={<Financial />} />
         <Route path="/sentiment" element={<Sentiment />} />
         <Route path="/dcf" element={<DCF />} />
         <Route path="/variance" element={<Variance />} />

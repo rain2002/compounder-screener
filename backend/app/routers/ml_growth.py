@@ -52,14 +52,12 @@ class PredictGrowthIn(BaseModel):
     totalDebt: Optional[float] = None
     cash: Optional[float] = None
     totalEquity: Optional[float] = None
-
-
+    targetMetric: Optional[str] = "fcf"
 
 def _compute_fcf(row: HistoryYear) -> float:
     ebit = row.revenue * (row.ebitMargin / 100)
     nopat = ebit * (1 - row.taxRate / 100)
     return nopat + row.depreciation - row.capex - row.deltaWorkingCapital
-
 
 
 def _safe_pct(curr, prev):
@@ -68,18 +66,14 @@ def _safe_pct(curr, prev):
     return ((curr - prev) / prev) * 100
 
 
-
 def _cagr(first, last, years):
     if first is None or last is None or first <= 0 or last <= 0 or years <= 0:
         return None
     return (pow(last / first, 1 / years) - 1) * 100
 
 
-
 def _clamp_features(features: dict):
-    """Clips each feature into its sane bound. Returns (clamped_features,
-    list of feature names that were out of range) so the caller can warn
-    the user their input data produced implausible ratios."""
+    """Clips each feature into its sane bound."""
     clamped = {}
     flagged = []
     for key, value in features.items():
@@ -95,7 +89,6 @@ def _clamp_features(features: dict):
     return clamped, flagged
 
 
-
 @router.post("/predict")
 def predict_growth(payload: PredictGrowthIn):
     years = payload.historyYears
@@ -106,22 +99,31 @@ def predict_growth(payload: PredictGrowthIn):
             "distribution_note": "Need at least 3 years of history to compute growth features.",
         }
 
-
     fcf_series = [_compute_fcf(y) for y in years]
     revenue_series = [y.revenue for y in years]
     ebit_series = [y.revenue * (y.ebitMargin / 100) for y in years]
     net_income_series = [e * (1 - y.taxRate / 100) for e, y in zip(ebit_series, years)]
-
-
-    last_fcf, prev_fcf = fcf_series[-1], fcf_series[-2]
+    
+    # Map target metrics to their series for the proxy model
+    target_map = {
+        "fcf": fcf_series,
+        "operatingCashFlow": fcf_series, # Approximation if OCF isn't explicitly passed
+        "revenue": revenue_series,
+        "ebitda": ebit_series, # Appx
+        "ebit": ebit_series,
+        "netIncome": net_income_series,
+        "grossProfit": revenue_series # Appx
+    }
+    
+    metric_series = target_map.get(payload.targetMetric, fcf_series)
+    last_target, prev_target = metric_series[-1], metric_series[-2]
+    
     last_rev, prev_rev = revenue_series[-1], revenue_series[-2]
     last_ni, prev_ni = net_income_series[-1], net_income_series[-2]
 
-
     n = len(years)
-    fcf_cagr_3y = _cagr(fcf_series[n - 4], last_fcf, 3) if n >= 4 else None
+    target_cagr_3y = _cagr(metric_series[n - 4], last_target, 3) if n >= 4 else None
     revenue_cagr_3y = _cagr(revenue_series[n - 4], last_rev, 3) if n >= 4 else None
-
 
     invested_capital = None
     roic = None
@@ -134,18 +136,18 @@ def predict_growth(payload: PredictGrowthIn):
         if last_ebit and last_ebit != 0:
             net_debt_to_ebit = (payload.totalDebt - payload.cash) / last_ebit
 
-
+    # We reuse the FCF model architecture but pass the target metric's growth
     raw_features = {
-        "fcf_growth_1y": _safe_pct(last_fcf, prev_fcf),
+        "fcf_growth_1y": _safe_pct(last_target, prev_target),
         "revenue_growth_1y": _safe_pct(last_rev, prev_rev),
         "net_income_growth_1y": _safe_pct(last_ni, prev_ni),
-        "fcf_margin": (last_fcf / last_rev * 100) if last_rev else None,
+        "fcf_margin": (last_target / last_rev * 100) if last_rev else None,
         "net_margin": (last_ni / last_rev * 100) if last_rev else None,
         "operating_margin": (ebit_series[-1] / last_rev * 100) if last_rev else None,
         "roic": roic,
         "net_debt_to_ebit": net_debt_to_ebit,
         "capex_to_revenue": (years[-1].capex / last_rev * 100) if last_rev else None,
-        "fcf_cagr_3y": fcf_cagr_3y,
+        "fcf_cagr_3y": target_cagr_3y,
         "revenue_cagr_3y": revenue_cagr_3y,
     }
 

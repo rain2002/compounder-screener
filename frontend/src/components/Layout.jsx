@@ -5,7 +5,7 @@ const links = [
   { to: "/", label: "Dashboard", icon: "dashboard" },
   { to: "/watchlist", label: "Watchlist", icon: "screener" },
   { to: "/dcf", label: "DCF Calculator", icon: "dcf" },
-  { to: "/technical", label: "Technical", icon: "technical" },
+  { to: "/financial", label: "Financial", icon: "technical" },
   { to: "/sentiment", label: "Sentiment", icon: "sentiment" },
   { to: "/variance", label: "Variance", icon: "variance" },
 ];

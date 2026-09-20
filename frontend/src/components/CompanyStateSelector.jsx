@@ -103,7 +103,7 @@ export default function CompanyStateSelector({ pageName, children }) {
 
       {!companyId && (
         <div className="card p-8 text-center text-slate-400 text-sm mb-6">
-          Select a company from your Watchlist above to save and load its {pageName === "dcf" ? "DCF" : "Technical"} inputs and results here.
+          Select a company from your Watchlist above to save and load its {pageName === "dcf" ? "DCF" : "Financial"} inputs and results here.
         </div>
       )}
 
