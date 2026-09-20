@@ -1,15 +1,23 @@
 import { useState, useMemo } from "react";
 import Icon from "./Icon.jsx";
 
+function makeScenarios(baseGrowth, gm, ebitda, ebit, net, ocf) {
+  return {
+    conservative: { growth: Math.max(0, baseGrowth - 5), margins: { grossMargin: Math.max(0, gm - 5), ebitdaMargin: Math.max(0, ebitda - 4), ebitMargin: Math.max(0, ebit - 4), netMargin: Math.max(0, net - 3), ocfMargin: Math.max(0, ocf - 3) } },
+    normal: { growth: baseGrowth, margins: { grossMargin: gm, ebitdaMargin: ebitda, ebitMargin: ebit, netMargin: net, ocfMargin: ocf } },
+    optimistic: { growth: baseGrowth + 5, margins: { grossMargin: gm + 5, ebitdaMargin: ebitda + 4, ebitMargin: ebit + 4, netMargin: net + 3, ocfMargin: ocf + 3 } },
+  };
+}
+
 export const SECTORS = {
-  general: { label: "General", maxGrowthCap: 40, minGrowthFloor: -20, note: "No sector-specific driver emphasis yet — uses general caps." },
-  software: { label: "Software / IT Services", maxGrowthCap: 45, minGrowthFloor: -15, note: "Watch for growth slowing sharply after maturity — recurring revenue can mask deceleration." },
-  retail: { label: "Retail / Consumer", maxGrowthCap: 30, minGrowthFloor: -25, note: "Thin margins and inventory risk — margin assumptions deserve extra scrutiny here." },
-  industrials: { label: "Industrials", maxGrowthCap: 25, minGrowthFloor: -30, note: "Cyclical — backlog and capacity utilization swing growth more than secular demand." },
-  healthcare: { label: "Healthcare / Pharma", maxGrowthCap: 35, minGrowthFloor: -20, note: "Patent expiry and pipeline risk can cause step-changes rule-based trend won't catch." },
-  semiconductors: { label: "Semiconductors", maxGrowthCap: 50, minGrowthFloor: -35, note: "Very cyclical — ASP and inventory cycles can swing growth wildly year to year." },
-  energy: { label: "Energy / Materials", maxGrowthCap: 40, minGrowthFloor: -40, note: "Commodity-price dependent — revenue growth here is largely price, not volume." },
-  telecom: { label: "Telecom", maxGrowthCap: 20, minGrowthFloor: -15, note: "High CapEx and leverage — check debt trend alongside growth." },
+  general: { label: "General", maxGrowthCap: 40, minGrowthFloor: -20, note: "No sector-specific driver emphasis yet — uses general caps.", templateScenarios: makeScenarios(10, 50, 20, 15, 10, 15) },
+  software: { label: "Software / IT Services", maxGrowthCap: 45, minGrowthFloor: -15, note: "Watch for growth slowing sharply after maturity — recurring revenue can mask deceleration.", templateScenarios: makeScenarios(15, 75, 25, 20, 15, 25) },
+  retail: { label: "Retail / Consumer", maxGrowthCap: 30, minGrowthFloor: -25, note: "Thin margins and inventory risk — margin assumptions deserve extra scrutiny here.", templateScenarios: makeScenarios(5, 35, 10, 7, 4, 8) },
+  industrials: { label: "Industrials", maxGrowthCap: 25, minGrowthFloor: -30, note: "Cyclical — backlog and capacity utilization swing growth more than secular demand.", templateScenarios: makeScenarios(6, 40, 15, 10, 7, 12) },
+  healthcare: { label: "Healthcare / Pharma", maxGrowthCap: 35, minGrowthFloor: -20, note: "Patent expiry and pipeline risk can cause step-changes rule-based trend won't catch.", templateScenarios: makeScenarios(8, 65, 25, 20, 15, 20) },
+  semiconductors: { label: "Semiconductors", maxGrowthCap: 50, minGrowthFloor: -35, note: "Very cyclical — ASP and inventory cycles can swing growth wildly year to year.", templateScenarios: makeScenarios(12, 55, 30, 25, 20, 25) },
+  energy: { label: "Energy / Materials", maxGrowthCap: 40, minGrowthFloor: -40, note: "Commodity-price dependent — revenue growth here is largely price, not volume.", templateScenarios: makeScenarios(4, 30, 20, 15, 10, 15) },
+  telecom: { label: "Telecom", maxGrowthCap: 20, minGrowthFloor: -15, note: "High CapEx and leverage — check debt trend alongside growth.", templateScenarios: makeScenarios(3, 50, 35, 20, 10, 30) },
 };
 
 function cagr(first, last, years) {
@@ -157,7 +165,13 @@ export default function FinancialForecast({ years, sector, onSectorChange, scena
             <span className="text-slate-500 text-xs uppercase tracking-wide">Sector Template</span>
             <select
               value={sector}
-              onChange={(e) => onSectorChange(e.target.value)}
+              onChange={(e) => {
+                const newSector = e.target.value;
+                onSectorChange(newSector);
+                if (SECTORS[newSector]?.templateScenarios) {
+                  onScenariosChange(SECTORS[newSector].templateScenarios);
+                }
+              }}
               className="bg-black/30 border border-border rounded-lg px-3 py-1.5 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-accent/50"
             >
               {Object.entries(SECTORS).map(([key, s]) => (
