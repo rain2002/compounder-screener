@@ -2,17 +2,20 @@ import { useMemo } from "react";
 import Icon from "./Icon.jsx";
 import { formatMoney } from "../utils/units.js";
 
+
 function computeFcf(row) {
   const ebit = row.revenue * (row.ebitMargin / 100);
   const nopat = ebit * (1 - row.taxRate / 100);
   return nopat + row.depreciation - row.capex - row.deltaWorkingCapital;
 }
 
+
 function trimLeadingZeros(series) {
   const firstRealIndex = series.findIndex((v) => v > 0);
   if (firstRealIndex <= 0) return series;
   return series.slice(firstRealIndex);
 }
+
 
 function cagr(series) {
   const trimmed = trimLeadingZeros(series);
@@ -23,6 +26,7 @@ function cagr(series) {
   if (first <= 0 || last <= 0 || n <= 0) return null;
   return (Math.pow(last / first, 1 / n) - 1) * 100;
 }
+
 
 function resequenceYears(years, index, newYearValue) {
   const parsed = parseInt(newYearValue, 10);
@@ -35,21 +39,27 @@ function resequenceYears(years, index, newYearValue) {
   });
 }
 
+
 export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChange, onSuggestedGrowthChange }) {
   const fcfSeries = years.map((y) => ({ ...y, fcf: computeFcf(y) }));
+
 
   const revenues = fcfSeries.map((y) => y.revenue);
   const fcfs = fcfSeries.map((y) => y.fcf);
 
+
   const revenueCagr = useMemo(() => cagr(revenues), [years]);
   const fcfCagr = useMemo(() => cagr(fcfs), [years]);
+
 
   const excludedYears = useMemo(() => {
     const firstReal = revenues.findIndex((v) => v > 0);
     return firstReal > 0 ? firstReal : 0;
   }, [years]);
 
+
   const baseFcf = fcfSeries[fcfSeries.length - 1]?.fcf ?? 0;
+
 
   useMemo(() => {
     onBaseFcfChange(Math.round(baseFcf));
@@ -57,6 +67,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
       onSuggestedGrowthChange(Number(fcfCagr.toFixed(1)));
     }
   }, [baseFcf, fcfCagr]);
+
 
   function updateYear(index, field, value) {
     if (field === "year") {
@@ -67,16 +78,29 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
     onYearsChange(next);
   }
 
+
+  const MAX_YEARS = 10;
+
+
   function addYear() {
     const last = years[years.length - 1];
     const nextYearLabel = (parseInt(last.year, 10) + 1).toString();
-    onYearsChange([...years, { ...last, year: nextYearLabel }]);
+    const updated = [...years, { ...last, year: nextYearLabel }];
+
+
+    if (updated.length > MAX_YEARS) {
+      onYearsChange(updated.slice(updated.length - MAX_YEARS));
+    } else {
+      onYearsChange(updated);
+    }
   }
+
 
   function removeYear(index) {
     if (years.length <= 2) return;
     onYearsChange(years.filter((_, i) => i !== index));
   }
+
 
   const fields = [
     { key: "revenue", label: "Revenue ($M)", step: 10 },
@@ -86,6 +110,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
     { key: "capex", label: "CapEx ($M)", step: 5 },
     { key: "deltaWorkingCapital", label: "Δ Working Capital ($M)", step: 5 },
   ];
+
 
   return (
     <div className="card p-6 mb-6">
@@ -105,6 +130,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
           </button>
           <button
             onClick={addYear}
+            title={years.length >= MAX_YEARS ? "Adding a new year will drop the oldest year (rolling 10-year window)" : "Add a new year"}
             className="text-xs px-2.5 py-1 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors font-medium"
           >
             + Add Year
@@ -112,13 +138,14 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
         </div>
       </div>
       <p className="text-slate-500 text-xs mb-4">
-        Rule of thumb: 10 years of history gives the most reliable trend, but younger companies
-        won't have that much — use however many years of real filings exist. Growth rate below is
-        derived from this trend (CAGR), not guessed. Values entered in $M — displayed as K/M/B/T
-        automatically. Editing any year header auto-resequences every year after it to stay
-        consecutive. Pre-filled with placeholder figures — replace with real 10-K numbers, or wait
-        for the finance connector sync (Phase 2) to auto-populate.
+        Rolling 10-year window: once at 10 years, adding a new year automatically drops the oldest
+        one so the trend always reflects the most recent decade. Growth rate below is derived from
+        this trend (CAGR), not guessed. Values entered in $M — displayed as K/M/B/T automatically.
+        Editing any year header auto-resequences every year after it to stay consecutive. Pre-filled
+        with placeholder figures — replace with real 10-K numbers, or wait for the finance connector
+        sync (Phase 2) to auto-populate.
       </p>
+
 
       {excludedYears > 0 && (
         <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-accent/10 border border-accent/30">
@@ -129,6 +156,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
           </p>
         </div>
       )}
+
 
       <div className="overflow-x-auto -mx-2">
         <table className="w-full text-sm min-w-[700px]">
@@ -180,6 +208,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
           </tbody>
         </table>
       </div>
+
 
       <div className="grid grid-cols-3 gap-4 mt-5 pt-4 border-t border-border/60">
         <div>
