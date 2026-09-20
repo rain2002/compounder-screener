@@ -51,3 +51,7 @@ def get_company_financials(ticker: str, db: Session = Depends(get_db)):
         "totalEquity": _clean(r.total_equity), "sharesOutstanding": _clean(r.shares_outstanding), "fcf": _clean(r.fcf),
     } for r in rows]
     return {"ticker": ticker.upper(), "entityName": rows[-1].entity_name, "years": years}
+
+@router.get("/quote/{symbol}")
+async def get_quote(symbol: str):
+    return await get_live_quote(symbol)

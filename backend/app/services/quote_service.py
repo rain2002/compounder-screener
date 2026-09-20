@@ -1,8 +1,28 @@
 import httpx
-import yfinance as yf
 from app.config import get_settings
+import os
 
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY")
 FINNHUB_BASE = "https://finnhub.io/api/v1"
+
+async def get_live_quote(symbol: str) -> dict:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{FINNHUB_BASE}/quote",
+            params={"symbol": symbol, "token": FINNHUB_API_KEY},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return {
+            "symbol": symbol,
+            "current_price": data.get("c"),
+            "change": data.get("d"),
+            "change_percent": data.get("dp"),
+            "high": data.get("h"),
+            "low": data.get("l"),
+            "open": data.get("o"),
+            "previous_close": data.get("pc"),
+        }
 
 
 def get_us_quote_and_profile(ticker: str) -> dict:
@@ -34,15 +54,22 @@ def get_us_quote_and_profile(ticker: str) -> dict:
 
 
 def get_india_quote_and_profile(ticker: str) -> dict:
-    """Fetch NSE/BSE data from Yahoo Finance through yfinance.
+    """Fetch NSE/BSE data from Yahoo Finance.
     Use .NS for NSE (RELIANCE.NS) and .BO for BSE (RELIANCE.BO).
     """
     ticker = ticker.upper().strip()
     if not ticker.endswith((".NS", ".BO")):
         ticker = f"{ticker}.NS"
 
-    stock = yf.Ticker(ticker)
-    info = stock.info or {}
+    url = f"https://query1.finance.yahoo.com/v7/finance/quote"
+    with httpx.Client(timeout=10) as client:
+        response = client.get(
+            url,
+            params={"symbols": ticker},
+            headers={"User-Agent": "Mozilla/5.0"},
+        )
+        response.raise_for_status()
+        results = response.json().get("quoteResponse", {}).get("result", [])
 
     if not info or (not info.get("longName") and not info.get("shortName")):
         raise ValueError(f"No Yahoo Finance data found for {ticker}")

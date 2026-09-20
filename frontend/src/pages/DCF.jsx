@@ -7,11 +7,39 @@ import MonteCarloDCF from "../components/MonteCarloDCF.jsx";
 import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
 import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
+import { apiClient } from "../api/client";
 
 
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
+
+function useLivePrice(symbol) {
+  const [price, setPrice] = useState(null);
+
+  useEffect(() => {
+    if (!symbol) return;
+    let active = true;
+
+    const fetchPrice = async () => {
+      try {
+        const res = await apiClient.get(`/quote/${symbol}`);
+        if (active) setPrice(res.data.current_price);
+      } catch (err) {
+        console.error("Price fetch failed", err);
+      }
+    };
+
+    fetchPrice();
+    const interval = setInterval(fetchPrice, 30000);
+    return () => {
+      active = false;
+      clearInterval(interval);
+    };
+  }, [symbol]);
+
+  return price;
+}
 
 function defaultHistoryYears() {
   const startYear = 2016;
@@ -73,7 +101,6 @@ function defaultDcfState() {
 function DcfCalculator({ initialState, onStateChange, ticker }) {
   const s = initialState || defaultDcfState();
 
-
   const [market, setMarket] = useState(s.market);
   const [currentPrice, setCurrentPrice] = useState(s.currentPrice);
   const [fcf, setFcf] = useState(s.fcf);
@@ -89,6 +116,14 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
   const [hydrated, setHydrated] = useState(!!initialState);
 
+  // Live price from Finnhub via backend /quote/{symbol}
+  const livePrice = useLivePrice(ticker);
+
+  useEffect(() => {
+    if (livePrice !== null && livePrice !== undefined) {
+      setCurrentPrice(livePrice);
+    }
+  }, [livePrice]);
 
   useEffect(() => {
     if (initialState) {
@@ -183,7 +218,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">
-              Current Share Price
+              Current Share Price {livePrice !== null && <span className="text-buy">(live)</span>}
             </p>
             <div className="flex items-center gap-3">
               <span className="text-slate-500">$</span>
@@ -453,12 +488,10 @@ export default function DCF() {
 function PersistedDcf({ loadedState, saveState, ticker }) {
   const debounceRef = useRef(null);
 
-
   function handleStateChange(nextState) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveState(nextState), 1200);
   }
-
 
   return (
     <DcfCalculator
