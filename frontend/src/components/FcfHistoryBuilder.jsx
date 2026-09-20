@@ -123,7 +123,7 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => removeYear(years.length - 1)}
+            onClick={() => removeYear(0)}
             className="text-xs px-2.5 py-1 rounded-md bg-white/5 text-slate-400 hover:bg-white/10 transition-colors"
           >
             − Remove Year
@@ -139,11 +139,11 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
       </div>
       <p className="text-slate-500 text-xs mb-4">
         Rolling 10-year window: once at 10 years, adding a new year automatically drops the oldest
-        one so the trend always reflects the most recent decade. Growth rate below is derived from
-        this trend (CAGR), not guessed. Values entered in $M — displayed as K/M/B/T automatically.
-        Editing any year header auto-resequences every year after it to stay consecutive. Pre-filled
-        with placeholder figures — replace with real 10-K numbers, or wait for the finance connector
-        sync (Phase 2) to auto-populate.
+        one so the trend always reflects the most recent decade. "Remove Year" always removes the
+        oldest year. Growth rate below is derived from this trend (CAGR), not guessed. Values
+        entered in $M — displayed as K/M/B/T automatically. Editing any year header auto-resequences
+        every year after it to stay consecutive. Pre-filled with placeholder figures — replace with
+        real 10-K numbers, or wait for the finance connector sync (Phase 2) to auto-populate.
       </p>
 
 
