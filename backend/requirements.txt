@@ -12,3 +12,4 @@ pandas==2.2.3
 yfinance==0.2.65
 transformers==4.45.2
 pypdf==5.0.1
+torch
