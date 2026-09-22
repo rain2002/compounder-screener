@@ -21,6 +21,7 @@ export const api = {
     return request(`/companies${qs ? `?${qs}` : ""}`);
   },
   company: (ticker) => request(`/companies/${ticker}`),
+  dashboardAggregate: () => request('/dashboard/aggregate'),
   screenerResults: (rating) =>
     request(`/screener/results${rating ? `?rating=${rating}` : ""}`),
   testScore: (params) => {

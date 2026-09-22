@@ -9,7 +9,8 @@ pydantic-settings==2.5.2
 httpx==0.27.2
 apscheduler==3.10.4
 pandas==2.2.3
-yfinance==0.2.65
 transformers==4.45.2
 pypdf==5.0.1
 torch
+beautifulsoup4
+lxml

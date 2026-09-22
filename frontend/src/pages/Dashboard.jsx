@@ -12,14 +12,14 @@ export default function Dashboard() {
 
   useEffect(() => {
     api.health().then(setHealth).catch((e) => setError(e.message));
-    api.screenerResults().then(setResults).catch(() => {});
+    api.dashboardAggregate().then(setResults).catch((e) => console.error(e));
   }, []);
 
   return (
     <div>
       <PageHeader
         title="Dashboard"
-        description="Aggregates Buffett+Lynch quant score, sentiment trend, DCF margin of safety, and variance width into one rating per stock. Full aggregation logic lands in Phase 7 — this mirrors live screener data for now."
+        description="Aggregates Buffett+Lynch quant score, sentiment trend, DCF margin of safety, and variance width into one rating per stock. Full aggregation logic (Phase 7) is now live."
       />
 
       <div className="flex gap-4 mb-8 flex-wrap">
@@ -34,7 +34,7 @@ export default function Dashboard() {
           value={health?.db_connected ? "Connected" : "—"}
           tone={health?.db_connected ? "good" : "bad"}
         />
-        <StatCard label="Screener Results" value={results.length} />
+        <StatCard label="Watchlist Analyzed" value={results.length} />
         <StatCard label="Environment" value={health?.environment || "—"} tone="neutral" />
       </div>
 
@@ -53,32 +53,50 @@ export default function Dashboard() {
       {results.length > 0 ? (
         <div className="card overflow-hidden">
           <div className="px-6 py-4 border-b border-border/60">
-            <h3 className="font-semibold text-slate-200 text-sm">Recent Screener Results</h3>
+            <h3 className="font-semibold text-slate-200 text-sm">Aggregated Watchlist Ratings</h3>
           </div>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-slate-500 text-xs uppercase tracking-wide">
-                <th className="px-6 py-3 font-medium">Ticker</th>
-                <th className="px-6 py-3 font-medium">Rating</th>
-              </tr>
-            </thead>
-            <tbody>
-              {results.slice(0, 10).map((r, i) => (
-                <tr key={r.ticker} className={i % 2 === 0 ? "" : "bg-white/[0.02]"}>
-                  <td className="px-6 py-3 font-semibold text-slate-100">{r.ticker}</td>
-                  <td className="px-6 py-3">
-                    <RatingBadge rating={r.rating} />
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-slate-500 text-xs uppercase tracking-wide">
+                  <th className="px-6 py-3 font-medium">Ticker</th>
+                  <th className="px-6 py-3 font-medium">Base Rating</th>
+                  <th className="px-6 py-3 font-medium">Sentiment</th>
+                  <th className="px-6 py-3 font-medium">DCF MoS</th>
+                  <th className="px-6 py-3 font-medium">Variance Cap</th>
+                  <th className="px-6 py-3 font-medium">Final Rating</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {results.map((r, i) => (
+                  <tr key={r.ticker} className={i % 2 === 0 ? "" : "bg-white/[0.02]"}>
+                    <td className="px-6 py-3 font-semibold text-slate-100">{r.ticker}</td>
+                    <td className="px-6 py-3 text-slate-400">{r.base_rating}</td>
+                    <td className={`px-6 py-3 ${r.sentiment === 'Positive' ? 'text-buy' : r.sentiment === 'Negative' ? 'text-avoid' : 'text-slate-400'}`}>{r.sentiment}</td>
+                    <td className="px-6 py-3 text-slate-400">
+                      {r.mos_pct !== null ? (
+                        <span className={r.mos_pct >= 15 ? "text-buy" : r.mos_pct <= -15 ? "text-avoid" : ""}>
+                          {r.mos_pct.toFixed(1)}%
+                        </span>
+                      ) : "—"}
+                    </td>
+                    <td className="px-6 py-3 text-slate-400">
+                      {r.capped ? <span className="text-watch flex items-center gap-1"><Icon name="warn" size={14} /> Yes</span> : "No"}
+                    </td>
+                    <td className="px-6 py-3">
+                      <RatingBadge rating={r.rating} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
         !error && (
           <div className="card p-10 text-center">
             <p className="text-slate-500 text-sm">
-              No screener data yet. Once the pipeline runs, results will appear here.
+              No watchlist data yet. Add companies to the Watchlist to see aggregated ratings.
             </p>
           </div>
         )

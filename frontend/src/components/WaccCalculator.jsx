@@ -17,6 +17,11 @@ export default function WaccCalculator({ market, onWaccChange }) {
   const [marketValueDebt, setMarketValueDebt] = useState(2000);
   const [autoSync, setAutoSync] = useState(true);
 
+  useEffect(() => {
+    setRiskFreeRate(DEFAULTS[market]?.riskFreeRate ?? 4.2);
+    setEquityRiskPremium(DEFAULTS[market]?.equityRiskPremium ?? 4.5);
+  }, [market]);
+
   const costOfEquity = riskFreeRate + beta * equityRiskPremium;
   const afterTaxCostOfDebt = costOfDebt * (1 - taxRate / 100);
   const totalCapital = marketValueEquity + marketValueDebt;

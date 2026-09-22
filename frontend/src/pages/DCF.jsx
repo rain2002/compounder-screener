@@ -152,6 +152,10 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
       .then((data) => {
         if (!cancelled && data && data.current_price) {
           setCurrentPrice(data.current_price);
+          if (data.market_cap) {
+            const computedShares = Math.round(data.market_cap / data.current_price / 1e6);
+            if (computedShares > 0) setShares(computedShares);
+          }
         }
       })
       .catch(() => {});
@@ -173,6 +177,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
   const cap = GDP_CAPS[market];
   const exceedsCap = terminalGrowth > cap;
+  const cur = market === "INDIA" ? "?" : "$";
 
 
   const scenarios = ["conservative", "normal", "optimistic"].map((key) => {
@@ -204,7 +209,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
               Current Share Price
             </p>
             <div className="flex items-center gap-3">
-              <span className="text-slate-500">$</span>
+              <span className="text-slate-500">{cur}</span>
               <input
                 type="number"
                 step="0.01"
@@ -257,7 +262,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
       <div className="card p-6 mb-6">
         <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">DCF Inputs</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <EditableField label="Base Year FCF (from history above)" value={fcf} onChange={setFcf} step="10" suffix="$M" />
+          <EditableField label="Base Year FCF (from history above)" value={fcf} onChange={setFcf} step="10" suffix={`${cur}M`} />
           <EditableField label="WACC (auto-synced, editable)" value={wacc} onChange={setWacc} suffix="%" />
           <EditableField label="Shares Outstanding" value={shares} onChange={setShares} step="1" suffix="M" />
         </div>
@@ -278,21 +283,21 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
             value={balanceSheet.totalDebt}
             onChange={(v) => setBalanceSheet({ ...balanceSheet, totalDebt: v })}
             step="10"
-            suffix="$M"
+            suffix={`${cur}M`}
           />
           <EditableField
             label="Cash & Equivalents"
             value={balanceSheet.cash}
             onChange={(v) => setBalanceSheet({ ...balanceSheet, cash: v })}
             step="10"
-            suffix="$M"
+            suffix={`${cur}M`}
           />
           <EditableField
             label="Total Equity"
             value={balanceSheet.totalEquity}
             onChange={(v) => setBalanceSheet({ ...balanceSheet, totalEquity: v })}
             step="10"
-            suffix="$M"
+            suffix={`${cur}M`}
           />
         </div>
       </div>
@@ -353,10 +358,10 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
             </p>
             <p className="text-slate-400 text-xs mb-3">{s2.growth.toFixed(1)}% growth</p>
             <p className="stat-value text-2xl text-white mb-1">
-              {s2.perShare ? `$${s2.perShare.toFixed(2)}` : "—"}
+              {s2.perShare ? `${cur}${s2.perShare.toFixed(2)}` : "—"}
             </p>
             <p className="text-slate-500 text-sm mb-2">
-              {s2.value ? `$${s2.value.toFixed(0)}M total` : "—"}
+              {s2.value ? `${cur}${s2.value.toFixed(0)}M total` : "—"}
             </p>
             {s2.upside !== null && (
               <p className={`text-sm font-semibold ${s2.upside >= 0 ? "text-buy" : "text-avoid"}`}>
@@ -369,6 +374,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
 
 
       <MonteCarloDCF
+        market={market}
         fcf={fcf}
         waccMean={wacc}
         terminalGrowth={terminalGrowth}
@@ -392,12 +398,12 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Current Price</p>
-            <p className="stat-value text-xl text-slate-200">${currentPrice.toFixed(2)}</p>
+            <p className="stat-value text-xl text-slate-200">{cur}{currentPrice.toFixed(2)}</p>
           </div>
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Raw Intrinsic Value (Median)</p>
             <p className="stat-value text-xl text-accent2">
-              {medianIntrinsicValue ? `$${medianIntrinsicValue.toFixed(2)}` : "—"}
+              {medianIntrinsicValue ? `${cur}${medianIntrinsicValue.toFixed(2)}` : "—"}
             </p>
           </div>
           <div>
@@ -413,7 +419,7 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
               Adjusted Intrinsic Value (Intrinsic × (1 − MOS))
             </p>
             <p className="stat-value text-xl text-buy">
-              {adjustedIntrinsicValue ? `$${adjustedIntrinsicValue.toFixed(2)}` : "—"}
+              {adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}
             </p>
           </div>
         </div>
@@ -433,9 +439,9 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
               {medianIntrinsicValue === null
                 ? "Waiting on Monte Carlo simulation to compute intrinsic value."
                 : meetsTargetCushion
-                ? `Current price ($${currentPrice.toFixed(2)}) sits below the MOS-adjusted intrinsic value ($${adjustedIntrinsicValue.toFixed(2)}) — even after discounting for model uncertainty, the price looks attractive.`
+                ? `Current price (${cur}${currentPrice.toFixed(2)}) sits below the MOS-adjusted intrinsic value (${cur}${adjustedIntrinsicValue.toFixed(2)}) — even after discounting for model uncertainty, the price looks attractive.`
                 : currentDiscount >= 0
-                ? `Current price is below raw intrinsic value but hasn't cleared your ${marginOfSafety}% cushion. Adjusted intrinsic value: $${adjustedIntrinsicValue.toFixed(2)}.`
+                ? `Current price is below raw intrinsic value but hasn't cleared your ${marginOfSafety}% cushion. Adjusted intrinsic value: ${cur}${adjustedIntrinsicValue.toFixed(2)}.`
                 : `Current price exceeds raw intrinsic value — no cushion at this price even before applying margin of safety.`}
             </p>
           </div>

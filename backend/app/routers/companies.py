@@ -45,6 +45,22 @@ def get_company_financials(ticker: str, db: Session = Depends(get_db)):
         .all()
     )
     if not rows:
+        is_india = False
+        if ticker.endswith(".NS") or ticker.endswith(".BO"):
+            is_india = True
+        else:
+            from app.models.watchlist import WatchlistCompany
+            w = db.query(WatchlistCompany).filter(WatchlistCompany.ticker == ticker.upper()).first()
+            if w and w.market.upper() == "INDIA":
+                is_india = True
+
+        if is_india:
+            from app.services.screener_in_service import fetch_financials
+            try:
+                scraped = fetch_financials(ticker)
+                return {"ticker": ticker.upper(), "entityName": ticker.upper(), "years": scraped}
+            except Exception as e:
+                print(f"Screener fetch failed: {e}")
         return {"ticker": ticker.upper(), "years": []}
 
     years = [{

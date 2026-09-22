@@ -50,7 +50,8 @@ function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminal
 }
 
 
-export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, growthMean, currentPrice, onMedianChange, onSimulationChange }) {
+export default function MonteCarloDCF({
+  market = "US", fcf, waccMean, terminalGrowth, shares, growthMean, currentPrice, onMedianChange, onSimulationChange }) {
   const [growthStd, setGrowthStd] = useState(4);
   const [waccStd, setWaccStd] = useState(1.5);
   const [trials, setTrials] = useState(3000);
@@ -156,7 +157,7 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
           <div className="absolute top-0 bottom-0 w-0.5 bg-avoid z-10" style={{ left: `${p10Pct}%` }}>
             <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
               <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">P10</p>
-              <p className="text-xs font-bold text-avoid">${sim.p10.toFixed(2)}</p>
+              <p className="text-xs font-bold text-avoid">{cur}{sim.p10.toFixed(2)}</p>
             </div>
           </div>
         )}
@@ -165,7 +166,7 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
           <div className="absolute top-0 bottom-0 w-0.5 bg-accent2 z-10 shadow-[0_0_8px_rgba(56,189,248,0.6)]" style={{ left: `${p50Pct}%` }}>
             <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
               <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">Median</p>
-              <p className="text-xs font-bold text-accent2">${sim.p50.toFixed(2)}</p>
+              <p className="text-xs font-bold text-accent2">{cur}{sim.p50.toFixed(2)}</p>
             </div>
           </div>
         )}
@@ -174,7 +175,7 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
           <div className="absolute top-0 bottom-0 w-0.5 bg-buy z-10" style={{ left: `${p90Pct}%` }}>
             <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
               <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">P90</p>
-              <p className="text-xs font-bold text-buy">${sim.p90.toFixed(2)}</p>
+              <p className="text-xs font-bold text-buy">{cur}{sim.p90.toFixed(2)}</p>
             </div>
           </div>
         )}
@@ -183,7 +184,7 @@ export default function MonteCarloDCF({ fcf, waccMean, terminalGrowth, shares, g
           <div className="absolute top-0 bottom-0 w-0.5 bg-white z-20" style={{ left: `${currentPct}%` }}>
             <div className="absolute bottom-full mb-1 -translate-x-1/2 text-center w-32">
               <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">Current Price</p>
-              <p className="text-xs font-bold text-white">${currentPrice.toFixed(2)}</p>
+              <p className="text-xs font-bold text-white">{cur}{currentPrice.toFixed(2)}</p>
             </div>
             <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2 h-2 bg-white rotate-45" />
           </div>
