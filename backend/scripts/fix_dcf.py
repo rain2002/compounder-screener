@@ -10,8 +10,8 @@ content = content.replace("const exceedsCap = terminalGrowth > cap;", "const exc
 # Replace suffix="$M" with suffix={`${cur}M`}
 content = content.replace("suffix=\"$M\"", "suffix={`${cur}M`}")
 
-# Replace >$</span with >{cur}</span
-content = content.replace(">$\</span>", ">{cur}</span>")
+# Replace >$</span> with >{cur}</span>
+content = content.replace(">$</span>", ">{cur}</span>")
 
 # Replace `$${var}` with `${cur}${var}`
 content = re.sub(r"`\$(\$\{.*?\})`", r"`${cur}\1`", content)
