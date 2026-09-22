@@ -51,7 +51,17 @@ function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminal
 
 
 export default function MonteCarloDCF({
-  market = "US", fcf, waccMean, terminalGrowth, shares, growthMean, currentPrice, onMedianChange, onSimulationChange }) {
+  market = "US",
+  fcf,
+  waccMean,
+  terminalGrowth,
+  shares,
+  growthMean,
+  currentPrice,
+  onMedianChange,
+  onSimulationChange,
+}) {
+  const cur = market?.toUpperCase() === "INDIA" ? "₹" : "$";
   const [growthStd, setGrowthStd] = useState(4);
   const [waccStd, setWaccStd] = useState(1.5);
   const [trials, setTrials] = useState(3000);
@@ -184,7 +194,7 @@ export default function MonteCarloDCF({
           <div className="absolute top-0 bottom-0 w-0.5 bg-white z-20" style={{ left: `${currentPct}%` }}>
             <div className="absolute bottom-full mb-1 -translate-x-1/2 text-center w-32">
               <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">Current Price</p>
-              <p className="text-xs font-bold text-white">{cur}{currentPrice.toFixed(2)}</p>
+              <p className="text-xs font-bold text-white">{cur}{currentPrice != null ? Number(currentPrice).toFixed(2) : "—"}</p>
             </div>
             <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2 h-2 bg-white rotate-45" />
           </div>
@@ -196,7 +206,7 @@ export default function MonteCarloDCF({
         <div>
           <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">80% Confidence Range</p>
           <p className="text-sm font-semibold text-slate-200">
-            {hasResults ? `$${sim.p10.toFixed(2)} – $${sim.p90.toFixed(2)} / share` : "—"}
+            {hasResults ? `${cur}${sim.p10.toFixed(2)} – ${cur}${sim.p90.toFixed(2)} / share` : "—"}
           </p>
         </div>
         {upsideAtMedian !== null && (

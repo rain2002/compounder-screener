@@ -8,9 +8,10 @@ const DEFAULTS = {
 };
 
 export default function WaccCalculator({ market, onWaccChange }) {
-  const [riskFreeRate, setRiskFreeRate] = useState(DEFAULTS[market]?.riskFreeRate ?? 4.2);
+  const mKey = market?.toUpperCase() || "US";
+  const [riskFreeRate, setRiskFreeRate] = useState(DEFAULTS[mKey]?.riskFreeRate ?? 4.2);
   const [beta, setBeta] = useState(1.1);
-  const [equityRiskPremium, setEquityRiskPremium] = useState(DEFAULTS[market]?.equityRiskPremium ?? 4.5);
+  const [equityRiskPremium, setEquityRiskPremium] = useState(DEFAULTS[mKey]?.equityRiskPremium ?? 4.5);
   const [costOfDebt, setCostOfDebt] = useState(5.5);
   const [taxRate, setTaxRate] = useState(21);
   const [marketValueEquity, setMarketValueEquity] = useState(8000);
@@ -18,8 +19,9 @@ export default function WaccCalculator({ market, onWaccChange }) {
   const [autoSync, setAutoSync] = useState(true);
 
   useEffect(() => {
-    setRiskFreeRate(DEFAULTS[market]?.riskFreeRate ?? 4.2);
-    setEquityRiskPremium(DEFAULTS[market]?.equityRiskPremium ?? 4.5);
+    const key = market?.toUpperCase() || "US";
+    setRiskFreeRate(DEFAULTS[key]?.riskFreeRate ?? 4.2);
+    setEquityRiskPremium(DEFAULTS[key]?.equityRiskPremium ?? 4.5);
   }, [market]);
 
   const costOfEquity = riskFreeRate + beta * equityRiskPremium;

@@ -71,8 +71,9 @@ function defaultDcfState() {
 }
 
 
-function DcfCalculator({ initialState, onStateChange, ticker }) {
-  const s = initialState || defaultDcfState();
+function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany }) {
+  const initialMarket = initialState?.market || (selectedCompany?.market?.toUpperCase() === "INDIA" ? "INDIA" : "US");
+  const s = initialState || { ...defaultDcfState(), market: initialMarket };
 
 
   const [market, setMarket] = useState(s.market);
@@ -175,9 +176,10 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
   }, [hydrated, market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
 
 
-  const cap = GDP_CAPS[market];
+  const mKey = market?.toUpperCase() === "INDIA" ? "INDIA" : "US";
+  const cap = GDP_CAPS[mKey] ?? 2.5;
   const exceedsCap = terminalGrowth > cap;
-  const cur = market === "INDIA" ? "?" : "$";
+  const cur = mKey === "INDIA" ? "₹" : "$";
 
 
   const scenarios = ["conservative", "normal", "optimistic"].map((key) => {
@@ -245,15 +247,13 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
       />
 
 
-      {market === "US" && (
-        <MLGrowthSuggestion
-          historyYears={historyYears}
-          totalDebt={balanceSheet.totalDebt}
-          cash={balanceSheet.cash}
-          totalEquity={balanceSheet.totalEquity}
-          onApply={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
-        />
-      )}
+      <MLGrowthSuggestion
+        historyYears={historyYears}
+        totalDebt={balanceSheet.totalDebt}
+        cash={balanceSheet.cash}
+        totalEquity={balanceSheet.totalEquity}
+        onApply={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
+      />
 
 
       <WaccCalculator market={market} onWaccChange={setWacc} />
@@ -398,7 +398,9 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Current Price</p>
-            <p className="stat-value text-xl text-slate-200">{cur}{currentPrice.toFixed(2)}</p>
+            <p className="stat-value text-xl text-slate-200">
+              {currentPrice != null ? `${cur}${Number(currentPrice).toFixed(2)}` : "—"}
+            </p>
           </div>
           <div>
             <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Raw Intrinsic Value (Median)</p>
@@ -439,9 +441,9 @@ function DcfCalculator({ initialState, onStateChange, ticker }) {
               {medianIntrinsicValue === null
                 ? "Waiting on Monte Carlo simulation to compute intrinsic value."
                 : meetsTargetCushion
-                ? `Current price (${cur}${currentPrice.toFixed(2)}) sits below the MOS-adjusted intrinsic value (${cur}${adjustedIntrinsicValue.toFixed(2)}) — even after discounting for model uncertainty, the price looks attractive.`
+                ? `Current price (${currentPrice != null ? `${cur}${Number(currentPrice).toFixed(2)}` : "—"}) sits below the MOS-adjusted intrinsic value (${adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}) — even after discounting for model uncertainty, the price looks attractive.`
                 : currentDiscount >= 0
-                ? `Current price is below raw intrinsic value but hasn't cleared your ${marginOfSafety}% cushion. Adjusted intrinsic value: ${cur}${adjustedIntrinsicValue.toFixed(2)}.`
+                ? `Current price is below raw intrinsic value but hasn't cleared your ${marginOfSafety}% cushion. Adjusted intrinsic value: ${adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}.`
                 : `Current price exceeds raw intrinsic value — no cushion at this price even before applying margin of safety.`}
             </p>
           </div>
@@ -464,6 +466,7 @@ export default function DCF() {
           <PersistedDcf
             key={companyId}
             ticker={selectedCompany?.ticker}
+            selectedCompany={selectedCompany}
             loadedState={loadedState}
             saveState={saveState}
           />
@@ -474,7 +477,7 @@ export default function DCF() {
 }
 
 
-function PersistedDcf({ loadedState, saveState, ticker }) {
+function PersistedDcf({ loadedState, saveState, ticker, selectedCompany }) {
   const debounceRef = useRef(null);
 
 
@@ -489,6 +492,7 @@ function PersistedDcf({ loadedState, saveState, ticker }) {
       initialState={loadedState || null}
       onStateChange={handleStateChange}
       ticker={ticker}
+      selectedCompany={selectedCompany}
     />
   );
 }
