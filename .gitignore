@@ -23,3 +23,7 @@ training/data/raw/
 training/data/processed/
 training/models/
 training_env/
+
+# Local storage
+backend/uploads/
+*.db
