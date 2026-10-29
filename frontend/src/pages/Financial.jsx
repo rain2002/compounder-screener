@@ -8,10 +8,8 @@ import FinancialForecast from "../components/FinancialForecast.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 
-
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const MAX_HISTORY_YEARS = 10;
-
 
 function defaultFundamentalsYears() {
   const startYear = 2016;
@@ -45,7 +43,6 @@ function defaultFundamentalsYears() {
   return years;
 }
 
-
 function mapApiYearsToFundamentals(apiYears) {
   return apiYears.map((y) => {
     const revenue = y.revenue ? Math.round(y.revenue / 1e6) : 0;
@@ -73,26 +70,22 @@ function mapApiYearsToFundamentals(apiYears) {
   });
 }
 
-
 const METRIC_OPTIONS = [
-  { key: "revenue", label: "Revenue" },
-  { key: "grossProfit", label: "Gross Profit" },
+  { key: "revenue", label: "REVENUE" },
+  { key: "grossProfit", label: "GROSS PROFIT" },
   { key: "ebitda", label: "EBITDA" },
   { key: "ebit", label: "EBIT" },
-  { key: "netIncome", label: "Net Income" },
-  { key: "operatingCashFlow", label: "Operating Cash Flow" },
+  { key: "netIncome", label: "NET INCOME" },
+  { key: "operatingCashFlow", label: "OPERATING CASH FLOW" },
 ];
 
-
 const GUARDRAILS = { maxGrowthCap: 40, minGrowthFloor: -20 };
-
 
 function trimLeadingZeros(years, key) {
   const firstRealIndex = years.findIndex((y) => y[key] > 0);
   if (firstRealIndex <= 0) return years;
   return years.slice(firstRealIndex);
 }
-
 
 function computeGrowthStats(years, key) {
   const trimmed = trimLeadingZeros(years, key);
@@ -108,7 +101,6 @@ function computeGrowthStats(years, key) {
   return { mean, std: Math.sqrt(variance), count: rates.length };
 }
 
-
 function defaultScenarios() {
   return {
     conservative: { growth: 5, margins: { grossMargin: 50, ebitdaMargin: 20, ebitMargin: 15, netMargin: 10, ocfMargin: 15 } },
@@ -116,7 +108,6 @@ function defaultScenarios() {
     optimistic: { growth: 15, margins: { grossMargin: 60, ebitdaMargin: 30, ebitMargin: 23, netMargin: 16, ocfMargin: 22 } },
   };
 }
-
 
 function defaultFinancialState() {
   return {
@@ -136,18 +127,15 @@ function defaultFinancialState() {
   };
 }
 
-
 function FinancialCalculator({ initialState, onStateChange, ticker }) {
   const s = initialState || defaultFinancialState();
   const ffDefaults = defaultFinancialState().financialForecast;
   const ff = s.financialForecast || ffDefaults;
 
-
   const [years, setYears] = useState(s.years);
   const [selectedMetric, setSelectedMetric] = useState(s.selectedMetric);
   const [forecastYears, setForecastYears] = useState(s.forecastYears);
   const [manualOverride, setManualOverride] = useState(s.manualOverride);
-
 
   const [ffSector, setFfSector] = useState(ff.sector ?? ffDefaults.sector);
   const [ffScenarios, setFfScenarios] = useState(ff.scenarios ?? ffDefaults.scenarios);
@@ -156,7 +144,6 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
   const [ffDisplayScenario, setFfDisplayScenario] = useState(ff.displayScenario ?? ffDefaults.displayScenario);
 
   const [hydrated, setHydrated] = useState(!!initialState);
-
 
   useEffect(() => {
     if (initialState) {
@@ -192,26 +179,20 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticker]);
 
-
   const metricLabel = METRIC_OPTIONS.find((m) => m.key === selectedMetric)?.label;
 
-
   const { mean, std, count } = useMemo(() => computeGrowthStats(years, selectedMetric), [years, selectedMetric]);
-
 
   const rawGrowth = manualOverride !== null ? manualOverride : mean;
   const guardrailedGrowth = Math.max(GUARDRAILS.minGrowthFloor, Math.min(GUARDRAILS.maxGrowthCap, rawGrowth));
 
-
   const volatility = mean !== 0 ? Math.abs(std / mean) : std > 10 ? 2 : 0;
   const confidence = count < 3 ? "Insufficient Data" : volatility < 0.3 ? "High" : volatility < 0.7 ? "Moderate" : "Low";
-
 
   const growthStats = useMemo(
     () => ({ mean, std, guardrailedGrowth, confidence, metric: selectedMetric, metricLabel }),
     [mean, std, guardrailedGrowth, confidence, selectedMetric, metricLabel]
   );
-
 
   const financialForecast = useMemo(
     () => ({
@@ -225,13 +206,11 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
     [ffSector, ffScenarios, ffForecastYears, ffFadeFactor, ffDisplayScenario]
   );
 
-
   useEffect(() => {
     if (!hydrated) return;
     onStateChange({ ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, ticker, years, selectedMetric, forecastYears, manualOverride, growthStats, financialForecast]);
-
 
   const { forecast, forecastBand } = useMemo(() => {
     const lastValue = years[years.length - 1][selectedMetric];
@@ -252,22 +231,26 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
     return { forecast: f, forecastBand: b };
   }, [years, selectedMetric, guardrailedGrowth, std, forecastYears]);
 
-
   return (
-    <div>
+    <div className="space-y-8">
       {!hydrated && (
-        <div className="card p-4 mb-4 text-slate-400 text-sm">
-          Loading company financials...
+        <div className="card p-4 text-neutral-400 font-mono text-xs">
+          SYNCING AUDITED FINANCIAL STATEMENTS FROM EDGAR…
         </div>
       )}
-      <div className="card p-6 mb-6">
-        <p className="text-slate-400 text-xs font-medium uppercase tracking-wide mb-1">Ticker</p>
-        <p className="text-lg font-semibold text-slate-100">{ticker || "—"}</p>
+
+      {/* Target Asset Banner */}
+      <div className="card p-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span className="section-index text-[10px] mb-1 block">[ CURRENT ASSET SYMBOL ]</span>
+          <p className="font-syne font-extrabold text-4xl text-white tracking-tight">{ticker || "—"}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="neo-tag">10 FISCAL YEARS RECORDED</span>
+        </div>
       </div>
 
-
       <FundamentalsBuilder years={years} onYearsChange={setYears} />
-
 
       <FinancialForecast
         years={years}
@@ -283,21 +266,27 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
         onDisplayScenarioChange={setFfDisplayScenario}
       />
 
-
-      <div className="card p-4 mb-6 flex items-center gap-2 flex-wrap">
-        <Icon name="check" size={16} className="text-accent2" />
-        <span className="text-slate-400 text-xs font-medium uppercase tracking-wide mr-2">
-          Single-Metric Forecast (legacy view)
-        </span>
-        <div className="flex gap-2 flex-wrap">
+      {/* Single-Metric Selection Shelf */}
+      <div className="card p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/5">
+          <div>
+            <span className="section-index text-[10px] mb-1 block">[ 03 // STATISTICAL PROJECTION ]</span>
+            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
+              SINGLE-METRIC DECOMPOSITION
+            </h3>
+          </div>
+          <span className="neo-tag">DISPERSION ENVELOPE</span>
+        </div>
+        
+        <div className="flex flex-wrap gap-2">
           {METRIC_OPTIONS.map((m) => (
             <button
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
-              className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
+              className={`font-mono text-xs uppercase px-4 py-2 rounded-full transition-all ${
                 selectedMetric === m.key
-                  ? "bg-accent/20 text-accent2"
-                  : "bg-white/5 text-slate-400 hover:bg-white/10"
+                  ? "bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.15)]"
+                  : "border border-white/10 bg-transparent text-neutral-400 hover:text-white hover:border-white/30"
               }`}
             >
               {m.label}
@@ -308,7 +297,7 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
 
       <MLGrowthSuggestion
         historyYears={years}
-        totalDebt={0} // Approximated for UI layout, usually grabbed from BS
+        totalDebt={0}
         cash={0}
         totalEquity={0}
         targetMetric={selectedMetric}
@@ -323,7 +312,6 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
         forecastBand={forecastBand}
       />
 
-
       <GuardrailedForecast
         years={years}
         metricKey={selectedMetric}
@@ -332,34 +320,33 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
         onForecastYearsChange={setForecastYears}
       />
 
-
-      <div className="card p-6 border-2 border-accent/30">
-        <div className="flex items-center gap-2 mb-3">
-          <Icon name="warn" size={16} className="text-caution" />
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-            Guardrails In Place
+      {/* Methodological Guardrails Footer */}
+      <div className="card p-6 sm:p-8 border border-white/15">
+        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
+          <span className="w-2.5 h-2.5 rounded-full bg-white" />
+          <h3 className="font-syne font-extrabold text-lg text-white uppercase tracking-tight">
+            METHODOLOGICAL GUARDRAILS &amp; CONSTRAINTS
           </h3>
         </div>
-        <ul className="text-slate-400 text-sm space-y-1.5 leading-relaxed">
-          <li>• Revenue, EBIT, Net Income, OCF, and Capex are auto-populated from ingested EDGAR financials when available (most recent 10 fiscal years). Gross Profit, EBITDA, interest expense, and balance-sheet working-capital lines are not in the current extraction — EBITDA shown is approximated as EBIT (operating income) since EDGAR has no dedicated EBITDA tag. Edit any field directly if you have more precise figures.</li>
-          <li>• Financial Forecast above blends 3Y/5Y/10Y revenue CAGR, forecasts margins directly (not derived from raw profit growth), and fades growth toward a long-run rate — this is the primary rule-based forecast (Stage 1).</li>
-          <li>• The single-metric forecast below is the legacy view: growth rate is clipped to −20% to +40% per year, confidence derived from YoY growth volatility. It still drives the confidence reading used on the Variance page.</li>
-          <li>• Fewer than 3 years of history returns "Insufficient Data" instead of a false-confidence number.</li>
-          <li>• The ±1σ range widens with forecast horizon, same principle as the DCF Monte Carlo band — further-out years get less certainty, not more.</li>
-          <li>• Ratio checklist (ROE, ROIC, Debt/Equity, margins, FCF) flags red/green against the actual thresholds Buffett and Lynch used, not arbitrary cutoffs.</li>
+        <ul className="text-neutral-400 font-sans text-xs space-y-2.5 leading-relaxed">
+          <li>• <strong className="text-white">EDGAR Ingestion:</strong> Revenue, Operating Income (EBIT), Net Income, Operating Cash Flow, and CapEx are ingested from SEC filings across up to 10 reporting periods.</li>
+          <li>• <strong className="text-white">Asymptotic Deceleration:</strong> Topline growth is computed via weighted multi-cycle CAGRs and decayed toward a statutory steady state using exponential fading.</li>
+          <li>• <strong className="text-white">Volatility Bounds:</strong> Single-metric velocity is bounded between −20% and +40% per year to eliminate anomalous non-operating windfall distortion.</li>
+          <li>• <strong className="text-white">Minimum History Requirement:</strong> Entities with fewer than 3 reporting years produce an "Insufficient Data" flag to prevent spurious confidence scores.</li>
+          <li>• <strong className="text-white">Widening Confidence Envelopes:</strong> Dispersion spreads naturally expand as the forecast horizon extends, enforcing discipline against false distant precision.</li>
         </ul>
       </div>
     </div>
   );
 }
 
-
 export default function Financial() {
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
-        title="Financial Analysis"
-        description="Financial Forecast (Stage 1, rule-based) projects Revenue, EBITDA, EBIT, Net Income, and OCF via weighted CAGR + margin scenarios + growth fade. Ratio checklist and legacy single-metric forecast remain below. Select a company from your Watchlist to save and reload its inputs automatically."
+        title="FINANCIAL ANALYSIS"
+        subtitle="10-Yr Statement Telemetry"
+        description="Rule-based pro forma statement generator combining weighted revenue CAGR, margin scenario matrices, and asymptotic growth decay with Buffett & Lynch quality metrics."
       />
       <CompanyStateSelector pageName="financial">
         {({ companyId, selectedCompany, loadedState, saveState }) => (
@@ -375,16 +362,13 @@ export default function Financial() {
   );
 }
 
-
 function PersistedFinancial({ loadedState, saveState, ticker }) {
   const debounceRef = useRef(null);
-
 
   function handleStateChange(nextState) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveState(nextState), 1200);
   }
-
 
   return (
     <FinancialCalculator

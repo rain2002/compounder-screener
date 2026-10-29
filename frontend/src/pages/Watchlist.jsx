@@ -18,9 +18,9 @@ function formatMarketCap(value, market) {
   const amount = Number(value);
   if (market === "India") {
     const crore = amount / 10_000_000;
-    if (crore >= 100_000) return `\u20b9${(crore / 100_000).toFixed(2)} Lakh Cr`;
-    if (crore >= 1) return `\u20b9${crore.toLocaleString("en-IN", { maximumFractionDigits: 2 })} Cr`;
-    return `\u20b9${amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+    if (crore >= 100_000) return `₹${(crore / 100_000).toFixed(2)} Lakh Cr`;
+    if (crore >= 1) return `₹${crore.toLocaleString("en-IN", { maximumFractionDigits: 2 })} Cr`;
+    return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
   }
   if (amount >= 1_000_000) return `$${(amount / 1_000_000).toFixed(2)}T`;
   if (amount >= 1_000) return `$${(amount / 1_000).toFixed(2)}B`;
@@ -113,7 +113,7 @@ export default function Watchlist() {
   }
 
   async function deleteCompany(company) {
-    const ok = window.confirm(`Remove ${company.ticker} from watchlist? Uploaded 10-K filings will be permanently removed.`);
+    const ok = window.confirm(`Remove ${company.ticker} from watchlist? Filings will be deleted from disk.`);
     if (!ok) return;
     const res = await fetch(`${BASE_URL}/watchlist/${company.id}`, { method: "DELETE" });
     if (!res.ok) {
@@ -163,78 +163,79 @@ export default function Watchlist() {
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => companies[i] || null);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <PageHeader
-        title="Watchlist"
-        subtitle="Universe Tracking"
-        description="Up to 10 high-conviction companies per market. Company metadata and quotes are fetched automatically. Store up to 10 annual reports per company for deep NLP sentiment extraction."
+        title="WATCHLIST"
+        subtitle="02 // PORTFOLIO UNIVERSE"
+        description="Curated high-conviction universe tracking. Company financials and real-time quotes are synchronized automatically. Each slot stores up to 10 annual reports for NLP sentiment extraction."
       />
 
-      {/* Apple Segmented Controls & Actions Rail */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-2 rounded-2xl bg-[#161617]/80 border border-white/[0.08] backdrop-blur-xl">
-        <div className="flex items-center gap-2">
-          {/* Segmented Pill Selector (Apple style) */}
-          <div className="inline-flex rounded-full bg-black/60 p-1 border border-white/[0.08]">
+      {/* Neozen Control Strip */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-[#111111] border border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="inline-flex rounded-full bg-black border border-white/10 p-1">
             <button
               onClick={() => setMarket("US")}
-              className={`px-5 py-1.5 rounded-full text-xs font-semibold tracking-tight transition-all ${
+              className={`px-5 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-all ${
                 market === "US"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-[#86868b] hover:text-white"
+                  ? "bg-white text-black font-bold"
+                  : "text-neutral-400 hover:text-white"
               }`}
             >
-              US Equities
+              US EQUITIES
             </button>
             <button
               onClick={() => setMarket("India")}
-              className={`px-5 py-1.5 rounded-full text-xs font-semibold tracking-tight transition-all ${
+              className={`px-5 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-all ${
                 market === "India"
-                  ? "bg-white text-black shadow-sm"
-                  : "text-[#86868b] hover:text-white"
+                  ? "bg-white text-black font-bold"
+                  : "text-neutral-400 hover:text-white"
               }`}
             >
-              India Equities
+              INDIA EQUITIES
             </button>
           </div>
 
-          <span className="text-xs text-[#86868b] pl-2 font-medium">
-            {companies.length} / {MAX_SLOTS} slots occupied
+          <span className="font-mono text-xs text-neutral-500 pl-2">
+            [ {companies.length} / {MAX_SLOTS} SLOTS ]
           </span>
         </div>
 
         <button
           onClick={() => refreshLivePrices(companies)}
           disabled={refreshing || companies.length === 0}
-          className="apple-btn-glass inline-flex items-center gap-2 px-4 py-2 text-xs disabled:opacity-40"
+          className="neo-btn-ghost text-xs disabled:opacity-40"
         >
-          <Icon name="refresh" size={13} className={refreshing ? "animate-spin text-[#2997ff]" : ""} />
-          <span>{refreshing ? "Updating quotes…" : "Refresh live quotes"}</span>
+          <Icon name="refresh" size={13} className={refreshing ? "animate-spin" : ""} />
+          <span>{refreshing ? "UPDATING..." : "REFRESH QUOTES"}</span>
         </button>
       </div>
 
-      {/* Apple Store Style Add Company Card */}
-      <div className="card-glass rounded-3xl p-7 border border-white/[0.08]">
+      {/* Neozen Add Stock Module */}
+      <div className="card p-7 bg-[#111111] border border-white/10">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">Add Company to Portfolio</h3>
-            <p className="text-xs text-[#86868b] mt-0.5">
+            <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 block">
+              ACTION // ADD TARGET
+            </span>
+            <h3 className="font-syne font-extrabold text-xl uppercase tracking-tight text-white mt-1">
+              Add Company to Universe
+            </h3>
+            <p className="font-mono text-xs text-neutral-400 mt-1">
               {market === "US"
-                ? "Enter any US ticker (e.g. AAPL, MSFT, GOOGL, NVDA) to fetch SEC filings & financial statements."
-                : "Enter an NSE/BSE ticker (e.g. RELIANCE.NS, TCS.NS, INFY.NS)."}
+                ? "Enter US ticker (e.g. AAPL, MSFT, GOOGL, NVDA) to sync fundamentals."
+                : "Enter Indian NSE/BSE symbol (e.g. RELIANCE.NS, TCS.NS, INFY.NS)."}
             </p>
-          </div>
-          <div className="w-8 h-8 rounded-full bg-white/[0.05] flex items-center justify-center text-[#86868b]">
-            <Icon name="screener" size={16} />
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-4 items-end pt-2">
+        <div className="flex flex-wrap gap-4 items-end pt-3">
           <label className="flex flex-col gap-1.5 min-w-[160px]">
-            <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Ticker Symbol</span>
+            <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">TICKER SYMBOL</span>
             <input
               value={ticker}
               onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              className="bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-white text-sm font-semibold placeholder:text-[#6e6e73] focus:outline-none focus:border-[#2997ff] focus:ring-1 focus:ring-[#2997ff] transition-all"
+              className="bg-black/60 border border-white/10 rounded-lg px-3.5 py-2.5 font-mono text-white text-sm focus:outline-none focus:border-white transition-all uppercase placeholder:normal-case placeholder:text-neutral-600"
               placeholder={market === "US" ? "AAPL" : "RELIANCE.NS"}
             />
           </label>
@@ -242,40 +243,40 @@ export default function Watchlist() {
           {market === "India" && (
             <>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Company Name (opt)</span>
+                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">COMPANY NAME</span>
                 <input
                   value={indiaForm.name}
                   onChange={(e) => setIndiaForm({ ...indiaForm, name: e.target.value })}
-                  className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white text-sm placeholder:text-[#6e6e73] focus:outline-none focus:border-[#2997ff] transition-all"
+                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm focus:outline-none focus:border-white transition-all"
                   placeholder="e.g. Infosys Ltd"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Price ₹</span>
+                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">PRICE ₹</span>
                 <input
                   type="number"
                   value={indiaForm.price}
                   onChange={(e) => setIndiaForm({ ...indiaForm, price: e.target.value })}
-                  className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white text-sm w-28 focus:outline-none focus:border-[#2997ff] transition-all"
+                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm w-28 focus:outline-none focus:border-white transition-all"
                   placeholder="0.00"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Mkt Cap ₹</span>
+                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">MKT CAP ₹</span>
                 <input
                   type="number"
                   value={indiaForm.market_cap}
                   onChange={(e) => setIndiaForm({ ...indiaForm, market_cap: e.target.value })}
-                  className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white text-sm w-32 focus:outline-none focus:border-[#2997ff] transition-all"
+                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm w-32 focus:outline-none focus:border-white transition-all"
                   placeholder="0"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Sector</span>
+                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">SECTOR</span>
                 <input
                   value={indiaForm.sector}
                   onChange={(e) => setIndiaForm({ ...indiaForm, sector: e.target.value })}
-                  className="bg-black/50 border border-white/10 rounded-xl px-3 py-2 text-white text-sm focus:outline-none focus:border-[#2997ff] transition-all"
+                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm focus:outline-none focus:border-white transition-all"
                   placeholder="Technology"
                 />
               </label>
@@ -285,86 +286,88 @@ export default function Watchlist() {
           <button
             onClick={addCompany}
             disabled={loading}
-            className="apple-btn-white px-6 py-2.5 text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1.5 shadow-sm"
+            className="neo-btn-primary h-11"
           >
-            <span>{loading ? "Adding Stock…" : "Add Company"}</span>
+            <span>{loading ? "ADDING..." : "ADD TARGET"}</span>
             <Icon name="arrowRight" size={13} />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 rounded-xl bg-[#ff453a]/10 border border-[#ff453a]/20 text-[#ff453a] text-xs font-medium">
+          <div className="mt-4 p-3 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/20 font-mono text-xs text-[#ef4444]">
             {error}
           </div>
         )}
       </div>
 
-      {/* Grid of Company Slot Cards (Apple Glass Shelf) */}
+      {/* Grid of Company Slots */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {slots.map((company, idx) => (
           <div
             key={idx}
-            className={`card-glass rounded-3xl p-6 min-h-[180px] transition-all duration-300 ${
-              company ? "border border-white/[0.08] hover:border-white/[0.18]" : "border border-white/[0.04] bg-white/[0.01]"
+            className={`card p-6 min-h-[190px] transition-all bg-[#111111] border ${
+              company ? "border-white/10 hover:border-white/30" : "border-white/[0.04] opacity-50"
             }`}
           >
             {company ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl font-bold text-white tracking-tight">{company.ticker}</span>
-                      <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-white/[0.08] text-[#86868b]">
-                        Slot {company.slot}
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-syne font-extrabold text-2xl uppercase tracking-tight text-white">
+                        {company.ticker}
+                      </span>
+                      <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.04]">
+                        SLOT 0{company.slot}
                       </span>
                     </div>
-                    <p className="text-xs text-[#86868b] mt-0.5 font-medium">{company.name || "—"}</p>
+                    <p className="font-mono text-xs text-neutral-400 mt-1 uppercase">
+                      {company.name || "—"}
+                    </p>
                   </div>
 
                   <button
                     onClick={() => deleteCompany(company)}
-                    className="text-xs px-3 py-1.5 rounded-full bg-[#ff453a]/15 text-[#ff453a] hover:bg-[#ff453a]/25 border border-[#ff453a]/20 font-medium transition-colors"
+                    className="font-mono text-[11px] uppercase tracking-wider text-[#ef4444] hover:text-white px-2.5 py-1 rounded-full border border-[#ef4444]/30 hover:bg-[#ef4444] transition-all"
                   >
-                    Remove
+                    REMOVE
                   </button>
                 </div>
 
-                {/* Price & Fundamentals Telemetry */}
-                <div className="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-black/40 border border-white/[0.06] text-xs">
+                {/* Metrics Bar */}
+                <div className="grid grid-cols-3 gap-2 p-3.5 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs">
                   <div>
-                    <span className="text-[#86868b] text-[10px] uppercase font-semibold block">Market Price</span>
-                    <span className="font-bold text-white mt-0.5 block">
+                    <span className="text-neutral-500 text-[10px] uppercase tracking-widest block">PRICE</span>
+                    <span className="font-bold text-white mt-1 block font-syne text-sm">
                       {formatPrice(livePrices[company.ticker] ?? company.price, company.market)}
                     </span>
                     {livePrices[company.ticker] !== undefined && (
-                      <span className="text-[#30d158] text-[10px] font-medium flex items-center gap-0.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#30d158]" /> live
-                      </span>
+                      <span className="text-[#22c55e] text-[9px] uppercase tracking-wider">● LIVE</span>
                     )}
                   </div>
                   <div>
-                    <span className="text-[#86868b] text-[10px] uppercase font-semibold block">Market Cap</span>
-                    <span className="font-bold text-white mt-0.5 block">
+                    <span className="text-neutral-500 text-[10px] uppercase tracking-widest block">MKT CAP</span>
+                    <span className="font-bold text-white mt-1 block font-syne text-sm">
                       {formatMarketCap(company.market_cap, company.market)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-[#86868b] text-[10px] uppercase font-semibold block">Sector</span>
-                    <span className="font-bold text-white mt-0.5 block truncate" title={company.sector}>
-                      {company.sector ?? "General"}
+                    <span className="text-neutral-500 text-[10px] uppercase tracking-widest block">SECTOR</span>
+                    <span className="font-bold text-white mt-1 block truncate text-xs" title={company.sector}>
+                      {company.sector ? company.sector.toUpperCase() : "GENERAL"}
                     </span>
                   </div>
                 </div>
 
-                {/* Annual Report Filings (PDFs) */}
+                {/* Annual Report Filings */}
                 <div className="pt-2">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-semibold text-[#86868b] uppercase tracking-wider">
-                      Annual Reports ({company.filings.length}/{MAX_FILINGS})
+                    <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
+                      10-K FILINGS ({company.filings.length}/{MAX_FILINGS})
                     </span>
-                    <label className="text-xs text-[#2997ff] hover:underline cursor-pointer font-medium inline-flex items-center gap-1">
+                    <label className="font-mono text-xs text-white hover:underline cursor-pointer uppercase tracking-wider inline-flex items-center gap-1">
                       <Icon name="upload" size={12} />
-                      <span>Upload PDF</span>
+                      <span>UPLOAD PDF</span>
                       <input
                         type="file"
                         accept=".pdf"
@@ -380,14 +383,14 @@ export default function Watchlist() {
                       {company.filings.map((filing) => (
                         <li
                           key={filing.id}
-                          className="flex items-center justify-between bg-black/40 border border-white/[0.06] rounded-xl px-3 py-2 text-xs"
+                          className="flex items-center justify-between bg-black/40 border border-white/[0.06] rounded-lg px-3 py-2 text-xs font-mono"
                         >
-                          <span className="text-white truncate max-w-[180px] font-mono text-[11px]" title={filing.file_name}>
-                            📄 {filing.file_name}
+                          <span className="text-neutral-300 truncate max-w-[180px] text-[11px]" title={filing.file_name}>
+                            [PDF] {filing.file_name}
                           </span>
                           <div className="flex items-center gap-2 shrink-0">
-                            <label className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.08] text-[#2997ff] hover:bg-white/[0.14] font-medium cursor-pointer transition-colors">
-                              Replace
+                            <label className="text-[10px] px-2 py-0.5 rounded-full border border-white/20 text-neutral-300 hover:text-white hover:border-white cursor-pointer uppercase tracking-wider transition-colors">
+                              REPLACE
                               <input
                                 type="file"
                                 accept=".pdf"
@@ -397,25 +400,24 @@ export default function Watchlist() {
                             </label>
                             <button
                               onClick={() => deleteFiling(filing.id)}
-                              className="text-[11px] px-2.5 py-1 rounded-full bg-[#ff453a]/15 text-[#ff453a] hover:bg-[#ff453a]/25 transition-colors font-medium"
+                              className="text-[10px] px-2 py-0.5 rounded-full border border-[#ef4444]/30 text-[#ef4444] hover:bg-[#ef4444] hover:text-white uppercase tracking-wider transition-colors"
                             >
-                              Delete
+                              DEL
                             </button>
                           </div>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-[11px] text-[#6e6e73] italic">No 10-K PDFs attached yet. Upload filings to unlock NLP sentiment analysis.</p>
+                    <p className="font-mono text-[10px] text-neutral-600 uppercase">
+                      No 10-K PDFs attached. Upload filings for NLP sentiment extraction.
+                    </p>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center py-8 text-center space-y-2">
-                <div className="w-10 h-10 rounded-full border border-dashed border-white/10 flex items-center justify-center text-[#6e6e73]">
-                  <span className="text-xs font-semibold">{idx + 1}</span>
-                </div>
-                <p className="text-xs font-medium text-[#6e6e73]">Available Slot</p>
+              <div className="h-full flex flex-col items-center justify-center py-8 text-center space-y-2 font-mono">
+                <span className="text-xs text-neutral-600">[ 0{idx + 1} AVAILABLE ]</span>
               </div>
             )}
           </div>

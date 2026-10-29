@@ -2,14 +2,12 @@ import { useMemo, useState, useEffect } from "react";
 import EditableField from "./EditableField.jsx";
 import Icon from "./Icon.jsx";
 
-
 function randNormal(mean, std) {
   const u1 = Math.random();
   const u2 = Math.random();
   const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
   return mean + z * std;
 }
-
 
 function percentile(sorted, p) {
   if (!sorted || sorted.length === 0) return null;
@@ -19,7 +17,6 @@ function percentile(sorted, p) {
   if (lo === hi) return sorted[lo];
   return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
 }
-
 
 function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminalGrowth, shares, trials, years = 5 }) {
   const results = [];
@@ -49,7 +46,6 @@ function runSimulation({ fcf, growthMean, growthStd, waccMean, waccStd, terminal
   };
 }
 
-
 export default function MonteCarloDCF({
   market = "US",
   fcf,
@@ -66,7 +62,6 @@ export default function MonteCarloDCF({
   const [waccStd, setWaccStd] = useState(1.5);
   const [trials, setTrials] = useState(3000);
 
-
   const sim = useMemo(
     () =>
       runSimulation({
@@ -82,13 +77,11 @@ export default function MonteCarloDCF({
     [fcf, growthMean, growthStd, waccMean, waccStd, terminalGrowth, shares, trials]
   );
 
-
   const hasResults = sim.p10 !== null && sim.p50 !== null && sim.p90 !== null;
   const spreadWidth = hasResults ? sim.p90 - sim.p10 : 0;
   const relativeSpread = hasResults && sim.p50 ? (spreadWidth / sim.p50) * 100 : 0;
   const confidence = !hasResults ? "Unavailable" : relativeSpread < 40 ? "High" : relativeSpread < 80 ? "Moderate" : "Low";
-  const confidenceColor = !hasResults ? "text-slate-500" : relativeSpread < 40 ? "text-buy" : relativeSpread < 80 ? "text-watch" : "text-avoid";
-
+  const confidenceColor = !hasResults ? "text-neutral-500" : relativeSpread < 40 ? "text-buy" : relativeSpread < 80 ? "text-watch" : "text-avoid";
 
   useEffect(() => {
     if (onMedianChange) onMedianChange(hasResults ? sim.p50 : null);
@@ -104,9 +97,7 @@ export default function MonteCarloDCF({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sim.p10, sim.p50, sim.p90, relativeSpread, confidence]);
 
-
   const upsideAtMedian = currentPrice && hasResults ? ((sim.p50 - currentPrice) / currentPrice) * 100 : null;
-
 
   const minBound = hasResults ? Math.min(sim.p10, currentPrice || sim.p10) * 0.9 : 0;
   const maxBound = hasResults ? Math.max(sim.p90, currentPrice || sim.p90) * 1.1 : 100;
@@ -123,103 +114,103 @@ export default function MonteCarloDCF({
   const currentPct = currentPrice ? toPct(currentPrice) : null;
 
   return (
-    <div className="card p-6 mb-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Icon name="variance" size={16} className="text-accent2" />
-        <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-          Monte Carlo Simulation
-        </h3>
+    <div className="card p-6 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+        <div>
+          <span className="section-index text-[10px] mb-1 block">[ 05 // PROBABILISTIC DCF ]</span>
+          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
+            MONTE CARLO UNCERTAINTY DISTRIBUTION
+          </h3>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="neo-tag">
+            {trials.toLocaleString()} RANDOMIZED TRIALS
+          </span>
+        </div>
       </div>
-      <p className="text-slate-500 text-xs mb-5">
-        Runs {trials.toLocaleString()} randomized trials varying growth rate and WACC around your
-        Normal scenario inputs. This removes single-point-estimate bias — instead of one "confident"
-        number, you get a probability-weighted range of outcomes.
+
+      <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed max-w-3xl">
+        Eliminates single-point-estimate bias by varying growth velocity and discount hurdle across a normal distribution. Yields a statistical probability curve (P10–P90) rather than an overly confident static target.
       </p>
 
-
-      <div className="grid grid-cols-3 gap-4 mb-5">
-        <EditableField label="Growth Std Dev" value={growthStd} onChange={setGrowthStd} suffix="%" />
-        <EditableField label="WACC Std Dev" value={waccStd} onChange={setWaccStd} suffix="%" />
-        <EditableField label="Trials" value={trials} onChange={setTrials} step="500" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <EditableField label="Growth Std Dev (σ)" value={growthStd} onChange={setGrowthStd} suffix="%" />
+        <EditableField label="WACC Std Dev (σ)" value={waccStd} onChange={setWaccStd} suffix="%" />
+        <EditableField label="Simulation Trials" value={trials} onChange={setTrials} step="500" />
       </div>
 
-
       {!hasResults && (
-        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-caution/10 border border-caution/30">
-          <Icon name="warn" size={14} className="text-caution shrink-0" />
-          <p className="text-caution text-xs">
-            Not enough data to run a simulation — Base Year FCF and Shares Outstanding must both be
-            non-zero. Fill in real figures above (or the DCF Inputs section) to see results here.
+        <div className="flex items-center gap-2 mb-6 p-4 rounded-xl bg-watch/10 border border-watch/30">
+          <Icon name="warn" size={16} className="text-watch shrink-0" />
+          <p className="font-mono text-xs text-watch">
+            BASE YEAR FCF AND SHARES OUTSTANDING MUST BE POSITIVE TO COMMENCE MONTE CARLO RUN.
           </p>
         </div>
       )}
 
-
-      <div className="relative h-10 mb-10 mt-12 rounded-lg bg-black/30 border border-white/5">
+      {/* Distribution Track */}
+      <div className="relative h-12 mb-14 mt-12 rounded-full bg-neutral-900 border border-white/10 px-4">
         {hasResults && (
           <div
-            className="absolute inset-y-1 rounded bg-gradient-to-r from-avoid/40 via-watch/40 to-buy/40"
-            style={{ left: `${p10Pct}%`, width: `${p90Pct - p10Pct}%` }}
+            className="absolute inset-y-1.5 rounded-full bg-gradient-to-r from-avoid/30 via-white/20 to-buy/30 border border-white/10"
+            style={{ left: `${p10Pct}%`, width: `${Math.max(1, p90Pct - p10Pct)}%` }}
           />
         )}
         
         {hasResults && (
-          <div className="absolute top-0 bottom-0 w-0.5 bg-avoid z-10" style={{ left: `${p10Pct}%` }}>
-            <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">P10</p>
-              <p className="text-xs font-bold text-avoid">{cur}{sim.p10.toFixed(2)}</p>
+          <div className="absolute top-0 bottom-0 w-0.5 bg-neutral-400 z-10" style={{ left: `${p10Pct}%` }}>
+            <div className="absolute top-full mt-2 -translate-x-1/2 text-center w-28">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-500">P10 (BEAR)</p>
+              <p className="font-syne font-bold text-xs text-neutral-300">{cur}{sim.p10.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {hasResults && (
-          <div className="absolute top-0 bottom-0 w-0.5 bg-accent2 z-10 shadow-[0_0_8px_rgba(56,189,248,0.6)]" style={{ left: `${p50Pct}%` }}>
-            <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">Median</p>
-              <p className="text-xs font-bold text-accent2">{cur}{sim.p50.toFixed(2)}</p>
+          <div className="absolute top-0 bottom-0 w-0.5 bg-white z-10 shadow-[0_0_12px_rgba(255,255,255,0.8)]" style={{ left: `${p50Pct}%` }}>
+            <div className="absolute top-full mt-2 -translate-x-1/2 text-center w-28">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-white">MEDIAN (P50)</p>
+              <p className="font-syne font-bold text-sm text-white">{cur}{sim.p50.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {hasResults && (
           <div className="absolute top-0 bottom-0 w-0.5 bg-buy z-10" style={{ left: `${p90Pct}%` }}>
-            <div className="absolute top-full mt-1 -translate-x-1/2 text-center w-24">
-              <p className="text-[10px] uppercase tracking-wide text-slate-500 font-medium">P90</p>
-              <p className="text-xs font-bold text-buy">{cur}{sim.p90.toFixed(2)}</p>
+            <div className="absolute top-full mt-2 -translate-x-1/2 text-center w-28">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-500">P90 (BULL)</p>
+              <p className="font-syne font-bold text-xs text-neutral-300">{cur}{sim.p90.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {currentPct !== null && (
           <div className="absolute top-0 bottom-0 w-0.5 bg-white z-20" style={{ left: `${currentPct}%` }}>
-            <div className="absolute bottom-full mb-1 -translate-x-1/2 text-center w-32">
-              <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">Current Price</p>
-              <p className="text-xs font-bold text-white">{cur}{currentPrice != null ? Number(currentPrice).toFixed(2) : "—"}</p>
+            <div className="absolute bottom-full mb-2 -translate-x-1/2 text-center w-32">
+              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-400">MARKET PRICE</p>
+              <p className="font-syne font-bold text-xs text-white">{cur}{currentPrice != null ? Number(currentPrice).toFixed(2) : "—"}</p>
             </div>
-            <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2 h-2 bg-white rotate-45" />
+            <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2.5 h-2.5 bg-white rotate-45" />
           </div>
         )}
       </div>
 
-
-      <div className="flex items-center justify-between pt-4 border-t border-border/60">
-        <div>
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">80% Confidence Range</p>
-          <p className="text-sm font-semibold text-slate-200">
-            {hasResults ? `${cur}${sim.p10.toFixed(2)} – ${cur}${sim.p90.toFixed(2)} / share` : "—"}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-5 border-t border-white/10">
+        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">80% Confidence Interval</p>
+          <p className="font-syne font-bold text-lg text-white">
+            {hasResults ? `${cur}${sim.p10.toFixed(2)} – ${cur}${sim.p90.toFixed(2)}` : "—"}
           </p>
         </div>
-        {upsideAtMedian !== null && (
-          <div className="text-right">
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Upside at Median</p>
-            <p className={`text-sm font-semibold ${upsideAtMedian >= 0 ? "text-buy" : "text-avoid"}`}>
-              {upsideAtMedian >= 0 ? "+" : ""}{upsideAtMedian.toFixed(1)}%
-            </p>
-          </div>
-        )}
-        <div className="text-right">
-          <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Forecast Confidence</p>
-          <p className={`text-sm font-semibold ${confidenceColor}`}>{confidence}</p>
+        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Median Intrinsic Upside</p>
+          <p className={`font-syne font-bold text-2xl ${upsideAtMedian !== null && upsideAtMedian >= 0 ? "text-buy" : "text-avoid"}`}>
+            {upsideAtMedian !== null ? `${upsideAtMedian >= 0 ? "+" : ""}${upsideAtMedian.toFixed(1)}%` : "—"}
+          </p>
+        </div>
+        <div className="p-4 rounded-xl bg-white/[0.04] border border-white/15">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-white mb-1">Model Precision Tier</p>
+          <p className={`font-syne font-bold text-2xl ${confidenceColor}`}>{confidence.toUpperCase()}</p>
         </div>
       </div>
     </div>

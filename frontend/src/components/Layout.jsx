@@ -3,12 +3,12 @@ import { NavLink, useLocation } from "react-router-dom";
 import Icon from "./Icon.jsx";
 
 const navItems = [
-  { to: "/", label: "Dashboard", sub: "Overview", icon: "dashboard" },
-  { to: "/watchlist", label: "Watchlist", sub: "Universe", icon: "screener" },
-  { to: "/dcf", label: "DCF Model", sub: "Valuation", icon: "dcf" },
-  { to: "/financial", label: "Financials", sub: "10-Yr Statements", icon: "technical" },
-  { to: "/sentiment", label: "Sentiment", sub: "10-K NLP", icon: "sentiment" },
-  { to: "/variance", label: "Variance", sub: "Risk Bounds", icon: "variance" },
+  { to: "/", index: "01", label: "Dashboard", sub: "Executive Overview", icon: "dashboard" },
+  { to: "/watchlist", index: "02", label: "Watchlist", sub: "Universe & Filings", icon: "screener" },
+  { to: "/dcf", index: "03", label: "DCF Model", sub: "Monte Carlo Valuation", icon: "dcf" },
+  { to: "/financial", index: "04", label: "Financials", sub: "10-Yr Statements", icon: "technical" },
+  { to: "/sentiment", index: "05", label: "Sentiment", sub: "10-K FinBERT NLP", icon: "sentiment" },
+  { to: "/variance", index: "06", label: "Variance", sub: "Risk Envelope", icon: "variance" },
 ];
 
 export default function Layout({ children }) {
@@ -21,57 +21,65 @@ export default function Layout({ children }) {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-black text-[#f5f5f7] flex flex-col selection:bg-[#0071e3]/30 selection:text-white">
-      {/* 1. Apple Store Global Translucent Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-black/75 border-b border-white/[0.08] transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+    <div className="min-h-screen bg-[#080808] text-[#ededed] flex flex-col selection:bg-white selection:text-black">
+      {/* 1. Neozen Fixed Navigation Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#080808]/90 border-b border-white/[0.08] transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           {/* Brand Mark */}
           <NavLink
             to="/"
-            className="flex items-center gap-2.5 text-white hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 text-white hover:opacity-80 transition-opacity"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0071e3] to-[#2997ff] flex items-center justify-center text-white shadow-sm shadow-[#2997ff]/20">
-              <Icon name="compounder" size={15} />
+            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-syne font-extrabold text-sm shadow-sm">
+              <Icon name="compounder" size={17} />
             </div>
-            <div className="flex items-center gap-2">
-              <span className="font-semibold text-sm tracking-tight text-white">Compounder</span>
-              <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[#86868b] border border-white/[0.06]">
-                Pro Screener
+            <div className="flex items-baseline gap-2">
+              <span className="font-syne font-extrabold text-base uppercase tracking-tight text-white">
+                COMPOUNDER
+              </span>
+              <span className="font-mono text-[10px] text-neutral-400 tracking-widest uppercase hidden sm:inline">
+                // PRO SCREENER
               </span>
             </div>
           </NavLink>
 
-          {/* Desktop Nav Links */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Nav Items (Neozen Numbered System) */}
+          <nav className="hidden lg:flex items-center gap-1.5">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `px-3 py-1.5 rounded-full text-xs font-medium tracking-tight transition-all duration-200 ${
+                  `px-3.5 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${
                     isActive
-                      ? "bg-white/10 text-white shadow-sm font-semibold border border-white/10"
-                      : "text-[#86868b] hover:text-[#f5f5f7] hover:bg-white/[0.04]"
+                      ? "bg-white text-black font-semibold shadow-sm"
+                      : "text-neutral-400 hover:text-white hover:bg-white/[0.05]"
                   }`
                 }
               >
-                {item.label}
+                {({ isActive }) => (
+                  <>
+                    <span className={isActive ? "text-neutral-500 font-bold" : "text-neutral-600"}>
+                      {item.index}
+                    </span>
+                    <span>{item.label}</span>
+                  </>
+                )}
               </NavLink>
             ))}
           </nav>
 
-          {/* Right Utilities */}
+          {/* Right Status Indicator */}
           <div className="flex items-center gap-3">
-            {/* Live Engine Status Pill */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-[#1c1c1e]/80 border border-white/[0.08] text-[11px] text-[#a1a1a6]">
-              <span className="w-2 h-2 rounded-full bg-[#30d158] shadow-[0_0_8px_#30d158] animate-pulse" />
-              <span>FastAPI 8000</span>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 font-mono text-[11px] text-neutral-300">
+              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
+              <span>[ SYSTEM: ONLINE ]</span>
             </div>
 
             {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 rounded-lg text-[#86868b] hover:text-white hover:bg-white/10 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Toggle Navigation"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -87,79 +95,55 @@ export default function Layout({ children }) {
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/[0.08] bg-[#161617]/95 backdrop-blur-2xl px-4 py-4 space-y-1">
+          <div className="lg:hidden border-t border-white/[0.08] bg-[#0d0d0d]/95 backdrop-blur-2xl px-4 py-4 space-y-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  `flex items-center justify-between px-4 py-3 rounded-xl font-mono text-xs uppercase tracking-wider transition-all ${
                     isActive
-                      ? "bg-white/10 text-white font-semibold"
-                      : "text-[#86868b] hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-white text-black font-bold"
+                      : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
                   }`
                 }
               >
                 <div className="flex items-center gap-3">
-                  <Icon name={item.icon} size={17} />
-                  <span>{item.label}</span>
+                  <span className="text-neutral-500">{item.index}</span>
+                  <span className="font-syne font-bold text-sm tracking-normal">{item.label}</span>
                 </div>
-                <span className="text-xs text-[#86868b]">{item.sub}</span>
+                <span className="text-[10px] text-neutral-400">{item.sub}</span>
               </NavLink>
             ))}
           </div>
         )}
       </header>
 
-      {/* 2. Apple Store Sub-ribbon Announcement Strip */}
-      <div className="bg-[#121214] border-b border-white/[0.04] py-2 px-4 text-center text-xs text-[#86868b]">
-        <div className="max-w-7xl mx-auto flex items-center justify-center gap-2">
-          <span>Buffett Quality & Lynch GARP Screener</span>
-          <span className="text-white/20">•</span>
-          <span className="hidden sm:inline">10-Yr SEC 10-K NLP & Monte Carlo DCF Analysis</span>
-          <NavLink to="/watchlist" className="text-[#2997ff] hover:underline ml-1 font-medium inline-flex items-center gap-0.5">
-            Explore Watchlist <Icon name="chevronRight" size={12} />
-          </NavLink>
-        </div>
-      </div>
-
-      {/* 3. Apple Store Category Shelf (Visual Product Rail) */}
-      <div className="border-b border-white/[0.06] bg-gradient-to-b from-black to-[#09090b] py-6 overflow-x-auto no-scrollbar">
+      {/* 2. Neozen Category Ribbon Shelf */}
+      <div className="border-b border-white/[0.08] bg-[#0c0c0c] py-4 overflow-x-auto no-scrollbar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between sm:justify-start gap-4 sm:gap-8 min-w-max">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-max">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex flex-col items-center gap-2 group transition-all cursor-pointer ${
-                    isActive ? "opacity-100" : "opacity-70 hover:opacity-100"
+                  `flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-200 ${
+                    isActive
+                      ? "bg-white/[0.08] border-white/40 text-white shadow-sm"
+                      : "bg-[#111111] border-white/[0.08] text-neutral-400 hover:border-white/20 hover:text-white"
                   }`
                 }
               >
                 {({ isActive }) => (
                   <>
-                    <div
-                      className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-105 shadow-apple ${
-                        isActive
-                          ? "bg-gradient-to-b from-[#2c2c2e] to-[#1c1c1e] ring-2 ring-[#2997ff] text-[#2997ff] shadow-[0_0_20px_rgba(41,151,255,0.25)]"
-                          : "bg-[#1c1c1e]/80 border border-white/[0.08] text-[#a1a1a6] group-hover:text-white group-hover:border-white/[0.18]"
-                      }`}
-                    >
-                      <Icon name={item.icon} size={22} />
-                    </div>
-                    <div className="text-center">
-                      <p
-                        className={`text-xs font-medium tracking-tight leading-tight ${
-                          isActive ? "text-white font-semibold" : "text-[#86868b] group-hover:text-white"
-                        }`}
-                      >
-                        {item.label}
-                      </p>
-                      <p className="text-[10px] text-[#6e6e73] leading-tight mt-0.5">
-                        {item.sub}
-                      </p>
-                    </div>
+                    <span className="font-mono text-[10px] text-neutral-500 font-semibold">
+                      {item.index}
+                    </span>
+                    <Icon name={item.icon} size={15} className={isActive ? "text-white" : "text-neutral-500"} />
+                    <span className="font-syne font-bold text-xs uppercase tracking-tight">
+                      {item.label}
+                    </span>
                   </>
                 )}
               </NavLink>
@@ -168,39 +152,56 @@ export default function Layout({ children }) {
         </div>
       </div>
 
-      {/* 4. Main Page Canvas */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+      {/* 3. Main Page Canvas */}
+      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
         <div className="fade-in">
           {children}
         </div>
       </main>
 
-      {/* 5. Apple Store Minimal Dark Footer */}
-      <footer className="border-t border-white/[0.08] bg-[#0c0c0e] text-[#86868b] text-xs py-10 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="space-y-2 pb-6 border-b border-white/[0.06] text-[11px] leading-relaxed text-[#6e6e73]">
-            <p>
-              1. <strong>Valuation & Methodology:</strong> DCF valuations utilize 5-year discrete cash flow forecasting with conservative terminal growth rates strictly capped to real GDP bounds (2.5% for US, 7.0% for India).
-            </p>
-            <p>
-              2. <strong>Machine Learning Forecasts:</strong> ML growth projections are derived from pooled XGBoost and Random Forest ensembles trained on historical SEC 10-K XBRL datasets.
-            </p>
-            <p>
-              3. <strong>Disclaimer:</strong> Compounder Screener is an analytical research platform and does not constitute financial, investment, or trading advice.
+      {/* 4. Neozen Monochromatic Editorial Footer */}
+      <footer className="border-t border-white/[0.08] bg-[#090909] text-neutral-400 text-xs py-14 mt-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-8 border-b border-white/[0.08]">
+            <div>
+              <span className="font-mono text-xs uppercase tracking-widest text-neutral-500 block mb-2">
+                [ ARCHITECTURAL FINANCIAL SCREENER ]
+              </span>
+              <h2 className="font-syne font-extrabold text-2xl sm:text-3xl uppercase tracking-tight text-white">
+                COMPOUNDER // VALUATION SUITE
+              </h2>
+            </div>
+            <p className="font-mono text-xs text-neutral-500 uppercase tracking-widest">
+              US &amp; INDIA EQUITIES • BUFFETT + LYNCH + ML
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-            <div className="flex items-center gap-2">
-              <Icon name="compounder" size={14} className="text-[#2997ff]" />
-              <span>Copyright © 2026 Compounder Screener Inc. All rights reserved.</span>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-mono text-[11px] leading-relaxed text-neutral-500">
+            <div>
+              <span className="text-white block font-bold uppercase mb-1">01 / METHODOLOGY</span>
+              5-year discrete cash flow modeling with terminal growth bounded by real GDP caps (US: 2.5%, India: 7.0%).
             </div>
-            <div className="flex items-center gap-4 text-xs">
-              <NavLink to="/watchlist" className="hover:text-white transition-colors">Watchlist</NavLink>
-              <NavLink to="/dcf" className="hover:text-white transition-colors">DCF Valuation</NavLink>
-              <NavLink to="/financial" className="hover:text-white transition-colors">Financials</NavLink>
-              <NavLink to="/sentiment" className="hover:text-white transition-colors">NLP Sentiment</NavLink>
-              <NavLink to="/variance" className="hover:text-white transition-colors">Risk Variance</NavLink>
+            <div>
+              <span className="text-white block font-bold uppercase mb-1">02 / MACHINE LEARNING</span>
+              Pooled multi-model XGBoost &amp; Random Forest ensemble calibrated on SEC 10-K XBRL financial filings.
+            </div>
+            <div>
+              <span className="text-white block font-bold uppercase mb-1">03 / FRAUD PROTECTION</span>
+              Beneish M-Score 8-ratio probabilistic forensic filter to weed out accounting manipulation before scoring.
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/[0.06] font-mono text-[11px]">
+            <div className="flex items-center gap-2">
+              <Icon name="compounder" size={14} className="text-neutral-400" />
+              <span>COPYRIGHT © 2026 COMPOUNDER SCREENER. ALL RIGHTS RESERVED.</span>
+            </div>
+            <div className="flex items-center gap-5 text-neutral-400">
+              <NavLink to="/watchlist" className="hover:text-white transition-colors">WATCHLIST</NavLink>
+              <NavLink to="/dcf" className="hover:text-white transition-colors">DCF MODEL</NavLink>
+              <NavLink to="/financial" className="hover:text-white transition-colors">FINANCIALS</NavLink>
+              <NavLink to="/sentiment" className="hover:text-white transition-colors">SENTIMENT</NavLink>
+              <NavLink to="/variance" className="hover:text-white transition-colors">VARIANCE</NavLink>
             </div>
           </div>
         </div>

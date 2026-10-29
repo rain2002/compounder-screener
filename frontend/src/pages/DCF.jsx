@@ -8,11 +8,9 @@ import FcfHistoryBuilder from "../components/FcfHistoryBuilder.jsx";
 import MLGrowthSuggestion from "../components/MLGrowthSuggestion.jsx";
 import CompanyStateSelector from "../components/CompanyStateSelector.jsx";
 
-
 const GDP_CAPS = { US: 2.5, INDIA: 7.0 };
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 const MAX_HISTORY_YEARS = 10;
-
 
 function defaultHistoryYears() {
   const startYear = 2016;
@@ -32,7 +30,6 @@ function defaultHistoryYears() {
   return years;
 }
 
-
 function computeScenario(fcf, growthRate, terminalGrowth, wacc, years = 5) {
   if (!fcf || !wacc || wacc <= terminalGrowth) return null;
   let pv = 0;
@@ -45,14 +42,6 @@ function computeScenario(fcf, growthRate, terminalGrowth, wacc, years = 5) {
   const pvTerminal = terminalValue / Math.pow(1 + wacc / 100, years);
   return pv + pvTerminal;
 }
-
-
-const scenarioStyle = {
-  conservative: "border-avoid/30",
-  normal: "border-accent/30",
-  optimistic: "border-buy/30",
-};
-
 
 function defaultDcfState() {
   return {
@@ -70,11 +59,9 @@ function defaultDcfState() {
   };
 }
 
-
 function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany }) {
   const initialMarket = initialState?.market || (selectedCompany?.market?.toUpperCase() === "INDIA" ? "INDIA" : "US");
   const s = initialState || { ...defaultDcfState(), market: initialMarket };
-
 
   const [market, setMarket] = useState(s.market);
   const [currentPrice, setCurrentPrice] = useState(s.currentPrice);
@@ -90,7 +77,6 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
   const [balanceSheet, setBalanceSheet] = useState(s.balanceSheet || defaultDcfState().balanceSheet);
 
   const [hydrated, setHydrated] = useState(!!initialState);
-
 
   useEffect(() => {
     if (initialState) {
@@ -165,7 +151,6 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
     };
   }, [ticker]);
 
-
   useEffect(() => {
     if (!hydrated) return;
     onStateChange({
@@ -175,12 +160,10 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, market, currentPrice, fcf, wacc, shares, growth, terminalGrowth, marginOfSafety, historyYears, monteCarlo, balanceSheet]);
 
-
   const mKey = market?.toUpperCase() === "INDIA" ? "INDIA" : "US";
   const cap = GDP_CAPS[mKey] ?? 2.5;
   const exceedsCap = terminalGrowth > cap;
   const cur = mKey === "INDIA" ? "₹" : "$";
-
 
   const scenarios = ["conservative", "normal", "optimistic"].map((key) => {
     const value = computeScenario(fcf, growth[key], terminalGrowth, wacc);
@@ -189,55 +172,51 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
     return { key, growth: growth[key], value, perShare, upside };
   });
 
-
   const adjustedIntrinsicValue = medianIntrinsicValue ? medianIntrinsicValue * (1 - marginOfSafety / 100) : null;
   const currentDiscount = medianIntrinsicValue && currentPrice
     ? ((medianIntrinsicValue - currentPrice) / medianIntrinsicValue) * 100
     : null;
   const meetsTargetCushion = currentDiscount !== null && currentDiscount >= marginOfSafety;
 
-
   return (
-    <div>
+    <div className="space-y-8">
       {!hydrated && (
-        <div className="card p-4 mb-4 text-slate-400 text-sm">
-          Loading company financials...
+        <div className="card p-4 text-neutral-400 font-mono text-xs">
+          SYNCING INGESTED FILINGS &amp; CAPITAL TELEMETRY…
         </div>
       )}
-      <div className="card p-6 mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">
-              Current Share Price
-            </p>
-            <div className="flex items-center gap-3">
-              <span className="text-slate-500">{cur}</span>
-              <input
-                type="number"
-                step="0.01"
-                value={currentPrice}
-                onChange={(e) => setCurrentPrice(parseFloat(e.target.value) || 0)}
-                className="bg-transparent text-3xl font-bold text-white w-40 focus:outline-none border-b border-transparent focus:border-accent"
-              />
-            </div>
+
+      {/* Hero Quote Header */}
+      <div className="card p-6 flex flex-wrap items-center justify-between gap-6">
+        <div>
+          <span className="section-index text-[10px] mb-1 block">[ CURRENT TICKER VALUE ]</span>
+          <div className="flex items-center gap-3">
+            <span className="font-syne font-bold text-3xl text-neutral-500">{cur}</span>
+            <input
+              type="number"
+              step="0.01"
+              value={currentPrice}
+              onChange={(e) => setCurrentPrice(parseFloat(e.target.value) || 0)}
+              className="bg-transparent text-4xl sm:text-5xl font-syne font-extrabold text-white w-48 sm:w-64 focus:outline-none border-b border-white/20 focus:border-white transition-all"
+            />
           </div>
-          <label className="flex flex-col gap-1.5">
-            <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market</span>
-            <select
-              value={market}
-              onChange={(e) => {
-                setMarket(e.target.value);
-                setTerminalGrowth(GDP_CAPS[e.target.value]);
-              }}
-              className="bg-slate-800 border border-slate-700 rounded px-2 py-1"
-            >
-              <option value="US">US</option>
-              <option value="INDIA">India</option>
-            </select>
-          </label>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="section-index text-[10px]">MACRO JURISDICTION</span>
+          <select
+            value={market}
+            onChange={(e) => {
+              setMarket(e.target.value);
+              setTerminalGrowth(GDP_CAPS[e.target.value]);
+            }}
+            className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-white cursor-pointer"
+          >
+            <option value="US">US (2.5% Long-Term GDP Cap)</option>
+            <option value="INDIA">India (7.0% Long-Term GDP Cap)</option>
+          </select>
         </div>
       </div>
-
 
       <FcfHistoryBuilder
         years={historyYears}
@@ -245,7 +224,6 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
         onBaseFcfChange={setFcf}
         onSuggestedGrowthChange={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
       />
-
 
       <MLGrowthSuggestion
         historyYears={historyYears}
@@ -255,31 +233,41 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
         onApply={(g) => setGrowth((prev) => ({ ...prev, normal: g }))}
       />
 
-
       <WaccCalculator market={market} onWaccChange={setWacc} />
 
-
-      <div className="card p-6 mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">DCF Inputs</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <EditableField label="Base Year FCF (from history above)" value={fcf} onChange={setFcf} step="10" suffix={`${cur}M`} />
-          <EditableField label="WACC (auto-synced, editable)" value={wacc} onChange={setWacc} suffix="%" />
-          <EditableField label="Shares Outstanding" value={shares} onChange={setShares} step="1" suffix="M" />
+      {/* Core Model Parameters */}
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
+          <div>
+            <span className="section-index text-[10px] mb-1 block">[ 03 // BASE PARAMETERS ]</span>
+            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
+              DCF CORE VALUATION INPUTS
+            </h3>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <EditableField label="Base Year FCF" value={fcf} onChange={setFcf} step="10" suffix={`${cur}M`} />
+          <EditableField label="WACC Hurdle" value={wacc} onChange={setWacc} suffix="%" />
+          <EditableField label="Diluted Shares" value={shares} onChange={setShares} step="1" suffix="M" />
         </div>
       </div>
 
-
-      <div className="card p-6 mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
-          Balance Sheet (for ML growth features)
-        </h3>
-        <p className="text-slate-500 text-xs mb-4">
-          Total Debt, Cash, and Total Equity feed the ROIC and leverage ratios the pooled ML model
-          uses above. Not used anywhere else in the DCF math.
+      {/* Balance Sheet Telemetry */}
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-2 pb-3 border-b border-white/5">
+          <div>
+            <span className="section-index text-[10px] mb-1 block">[ 03.1 // BALANCE SHEET TELEMETRY ]</span>
+            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
+              CAPITAL STRUCTURE &amp; LEVERAGE (FOR ML ENSEMBLE)
+            </h3>
+          </div>
+        </div>
+        <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed">
+          Feeds invested capital, cash cushion, and net leverage into the pooled predictive ensemble.
         </p>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <EditableField
-            label="Total Debt"
+            label="Total Outstanding Debt"
             value={balanceSheet.totalDebt}
             onChange={(v) => setBalanceSheet({ ...balanceSheet, totalDebt: v })}
             step="10"
@@ -293,7 +281,7 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
             suffix={`${cur}M`}
           />
           <EditableField
-            label="Total Equity"
+            label="Total Stockholders' Equity"
             value={balanceSheet.totalEquity}
             onChange={(v) => setBalanceSheet({ ...balanceSheet, totalEquity: v })}
             step="10"
@@ -302,76 +290,89 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
         </div>
       </div>
 
-
-      <div className="card p-6 mb-6">
-        <h3 className="text-sm font-semibold text-slate-300 mb-4 uppercase tracking-wide">
-          Growth Assumptions
-        </h3>
-        <p className="text-slate-500 text-xs mb-4">
-          "Normal" is pre-filled from your historical FCF CAGR above — override any of the three
-          if you think the trend won't hold, or apply the ML ensemble suggestion above.
+      {/* Growth Assumptions */}
+      <div className="card p-6">
+        <div className="flex items-center justify-between mb-2 pb-3 border-b border-white/5">
+          <div>
+            <span className="section-index text-[10px] mb-1 block">[ 04 // GROWTH ASSUMPTIONS ]</span>
+            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
+              MULTI-SCENARIO VELOCITY &amp; TERMINAL CAP
+            </h3>
+          </div>
+        </div>
+        <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed">
+          Normal growth defaults to your historical 10-Yr FCF CAGR or can be seeded via the ML Ensemble above.
         </p>
-        <div className="grid grid-cols-3 gap-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
           <EditableField
-            label="Conservative"
+            label="Conservative Growth"
             value={growth.conservative}
             onChange={(v) => setGrowth({ ...growth, conservative: v })}
             suffix="%"
           />
           <EditableField
-            label="Normal (from FCF CAGR or ML)"
+            label="Normal Baseline Growth"
             value={growth.normal}
             onChange={(v) => setGrowth({ ...growth, normal: v })}
             suffix="%"
           />
           <EditableField
-            label="Optimistic"
+            label="Optimistic Growth"
             value={growth.optimistic}
             onChange={(v) => setGrowth({ ...growth, optimistic: v })}
             suffix="%"
           />
         </div>
 
-
-        <EditableField
-          label={`Terminal growth — capped to ${market} GDP growth ~${cap}%`}
-          value={terminalGrowth}
-          onChange={setTerminalGrowth}
-          suffix="%"
-        />
-        {exceedsCap && (
-          <div className="flex items-center gap-2 mt-2.5">
-            <Icon name="warn" size={16} className="text-caution" />
-            <p className="text-caution text-xs font-medium">
-              Exceeds the {market} long-term GDP growth cap of {cap}%
-            </p>
-          </div>
-        )}
-      </div>
-
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {scenarios.map((s2) => (
-          <div key={s2.key} className={`card ${scenarioStyle[s2.key]} p-5`}>
-            <p className="text-slate-500 text-xs font-medium uppercase tracking-wide mb-1">
-              {s2.key}
-            </p>
-            <p className="text-slate-400 text-xs mb-3">{s2.growth.toFixed(1)}% growth</p>
-            <p className="stat-value text-2xl text-white mb-1">
-              {s2.perShare ? `${cur}${s2.perShare.toFixed(2)}` : "—"}
-            </p>
-            <p className="text-slate-500 text-sm mb-2">
-              {s2.value ? `${cur}${s2.value.toFixed(0)}M total` : "—"}
-            </p>
-            {s2.upside !== null && (
-              <p className={`text-sm font-semibold ${s2.upside >= 0 ? "text-buy" : "text-avoid"}`}>
-                {s2.upside >= 0 ? "+" : ""}{s2.upside.toFixed(1)}% {s2.upside >= 0 ? "upside" : "downside"}
+        <div className="pt-4 border-t border-white/5">
+          <EditableField
+            label={`Terminal Growth Rate (Capped to ${market} GDP ~${cap}%)`}
+            value={terminalGrowth}
+            onChange={setTerminalGrowth}
+            suffix="%"
+          />
+          {exceedsCap && (
+            <div className="flex items-center gap-2 mt-3 p-3 rounded-xl bg-watch/10 border border-watch/30">
+              <Icon name="warn" size={16} className="text-watch shrink-0" />
+              <p className="font-mono text-xs text-watch">
+                EXCEEDS {market} STATUTORY LONG-TERM GDP CAP OF {cap}%. PERPETUITY WILL OVERSTATE VALUE.
               </p>
-            )}
-          </div>
-        ))}
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* 3 Scenario Cards */}
+      <div>
+        <span className="section-index text-[10px] mb-3 block">[ 04.1 // SCENARIO VALUATION MATRIX ]</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {scenarios.map((s2) => (
+            <div key={s2.key} className="card p-6 border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">
+                    {s2.key} CASE
+                  </span>
+                  <span className="neo-tag">{s2.growth.toFixed(1)}% CAGR</span>
+                </div>
+                <p className="font-syne font-extrabold text-3xl text-white mb-1">
+                  {s2.perShare ? `${cur}${s2.perShare.toFixed(2)}` : "—"}
+                </p>
+                <p className="font-mono text-xs text-neutral-400 mb-4">
+                  {s2.value ? `${cur}${s2.value.toFixed(0)}M ENTERPRISE VALUE` : "—"}
+                </p>
+              </div>
+              {s2.upside !== null && (
+                <div className="pt-3 border-t border-white/5">
+                  <p className={`font-mono text-xs font-bold uppercase tracking-wide ${s2.upside >= 0 ? "text-buy" : "text-avoid"}`}>
+                    {s2.upside >= 0 ? "+" : ""}{s2.upside.toFixed(1)}% {s2.upside >= 0 ? "UPSIDE" : "DOWNSIDE"}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <MonteCarloDCF
         market={market}
@@ -385,67 +386,61 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
         onSimulationChange={setMonteCarlo}
       />
 
-
-      <div className="card p-6 border-2 border-accent/30">
-        <div className="flex items-center gap-2 mb-4">
-          <Icon name="check" size={16} className="text-accent2" />
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-            Evaluation Summary
+      {/* Synthesis Card */}
+      <div className="card p-6 sm:p-8 border-2 border-white/20">
+        <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/10">
+          <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse" />
+          <h3 className="font-syne font-extrabold text-xl text-white uppercase tracking-tight">
+            FINAL VALUATION SYNTHESIS &amp; MARGIN OF SAFETY
           </h3>
         </div>
 
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Current Price</p>
-            <p className="stat-value text-xl text-slate-200">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Current Trading Price</p>
+            <p className="font-syne font-bold text-2xl text-white">
               {currentPrice != null ? `${cur}${Number(currentPrice).toFixed(2)}` : "—"}
             </p>
           </div>
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">Raw Intrinsic Value (Median)</p>
-            <p className="stat-value text-xl text-accent2">
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Raw Median Intrinsic Value</p>
+            <p className="font-syne font-bold text-2xl text-white">
               {medianIntrinsicValue ? `${cur}${medianIntrinsicValue.toFixed(2)}` : "—"}
             </p>
           </div>
-          <div>
+          <div className="p-4 rounded-xl bg-black/40 border border-white/5">
             <EditableField
-              label="Margin of Safety"
+              label="Margin of Safety (MOS)"
               value={marginOfSafety}
               onChange={setMarginOfSafety}
               suffix="%"
             />
           </div>
-          <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">
-              Adjusted Intrinsic Value (Intrinsic × (1 − MOS))
-            </p>
-            <p className="stat-value text-xl text-buy">
+          <div className="p-4 rounded-xl bg-white/[0.04] border border-white/15">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-white mb-1">Adjusted Target (Intrinsic × [1 - MOS])</p>
+            <p className="font-syne font-bold text-2xl text-buy">
               {adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}
             </p>
           </div>
         </div>
 
-
-        <div className="pt-4 border-t border-border/60 flex items-center justify-between">
+        <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">
-              Current Price vs. Raw Intrinsic Value
+            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">
+              CURRENT VALUATION SPREAD
             </p>
-            <p className={`stat-value text-2xl ${meetsTargetCushion ? "text-buy" : "text-avoid"}`}>
-              {currentDiscount !== null ? `${currentDiscount >= 0 ? "+" : ""}${currentDiscount.toFixed(1)}% below intrinsic` : "—"}
+            <p className={`font-syne font-extrabold text-3xl ${meetsTargetCushion ? "text-buy" : "text-avoid"}`}>
+              {currentDiscount !== null ? `${currentDiscount >= 0 ? "+" : ""}${currentDiscount.toFixed(1)}% BELOW INTRINSIC` : "—"}
             </p>
           </div>
-          <div className="text-right max-w-sm">
-            <p className="text-slate-400 text-sm leading-relaxed">
-              {medianIntrinsicValue === null
-                ? "Waiting on Monte Carlo simulation to compute intrinsic value."
-                : meetsTargetCushion
-                ? `Current price (${currentPrice != null ? `${cur}${Number(currentPrice).toFixed(2)}` : "—"}) sits below the MOS-adjusted intrinsic value (${adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}) — even after discounting for model uncertainty, the price looks attractive.`
-                : currentDiscount >= 0
-                ? `Current price is below raw intrinsic value but hasn't cleared your ${marginOfSafety}% cushion. Adjusted intrinsic value: ${adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}.`
-                : `Current price exceeds raw intrinsic value — no cushion at this price even before applying margin of safety.`}
-            </p>
+          <div className="max-w-md text-xs font-sans text-neutral-300 leading-relaxed bg-black/40 p-4 rounded-xl border border-white/5">
+            {medianIntrinsicValue === null
+              ? "Awaiting Monte Carlo randomized iteration cycle to synthesize target intrinsic envelope."
+              : meetsTargetCushion
+              ? `Current price (${currentPrice != null ? `${cur}${Number(currentPrice).toFixed(2)}` : "—"}) trades below the strict MOS-adjusted hurdle (${adjustedIntrinsicValue ? `${cur}${adjustedIntrinsicValue.toFixed(2)}` : "—"}). Attractive quantitative risk-reward.`
+              : currentDiscount >= 0
+              ? `Trading at a discount to raw intrinsic value (${medianIntrinsicValue ? `${cur}${medianIntrinsicValue.toFixed(2)}` : "—"}), but hasn't satisfied the full ${marginOfSafety}% safety cushion.`
+              : `Current market price exceeds raw median intrinsic value — no margin of safety available at present levels.`}
           </div>
         </div>
       </div>
@@ -453,13 +448,13 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
   );
 }
 
-
 export default function DCF() {
   return (
-    <div>
+    <div className="space-y-8">
       <PageHeader
-        title="DCF Calculator"
-        description="Historical FCF trend feeds growth assumptions (or use the pooled ML growth suggestion for US companies), then flows through WACC, 3 scenarios, and Monte Carlo uncertainty — ending in an MOS-adjusted intrinsic value."
+        title="DCF VALUATION ENGINE"
+        subtitle="10-Yr Cash Flow Simulation"
+        description="Historical FCF trend seeds forward growth velocity, flows through CAPM WACC hurdle calculations, and computes an MOS-adjusted intrinsic target through 3,000-trial Monte Carlo uncertainty modeling."
       />
       <CompanyStateSelector pageName="dcf">
         {({ companyId, selectedCompany, loadedState, saveState }) => (
@@ -476,16 +471,13 @@ export default function DCF() {
   );
 }
 
-
 function PersistedDcf({ loadedState, saveState, ticker, selectedCompany }) {
   const debounceRef = useRef(null);
-
 
   function handleStateChange(nextState) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => saveState(nextState), 1200);
   }
-
 
   return (
     <DcfCalculator

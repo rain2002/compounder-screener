@@ -3,10 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 /**
- * Reusable Market -> Company dropdown pair that loads/saves a JSON state
- * blob per company for a given page ("dcf" or "technical"). Renders the
- * dropdowns and exposes the loaded state + a save callback to the parent
- * via render props.
+ * Neozen Architectural Company State Selector
+ * Allows switching between US / India equites and company profiles with
+ * persistent auto-saving and JetBrains Mono indicators.
  */
 export default function CompanyStateSelector({ pageName, children }) {
   const [market, setMarket] = useState("US");
@@ -63,10 +62,10 @@ export default function CompanyStateSelector({ pageName, children }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ state: stateValue }),
         });
-        setStatus("Saved");
-        setTimeout(() => setStatus(""), 1500);
+        setStatus("STATE SYNCED");
+        setTimeout(() => setStatus(""), 1600);
       } catch {
-        setStatus("Save failed");
+        setStatus("SYNC FAILED");
       }
     },
     [companyId, pageName]
@@ -76,53 +75,70 @@ export default function CompanyStateSelector({ pageName, children }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-4 mb-6 items-end p-4 rounded-2xl bg-[#161617]/80 border border-white/[0.08] backdrop-blur-xl">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Market</span>
-          <select
-            value={market}
-            onChange={(e) => setMarket(e.target.value)}
-            className="bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white font-medium focus:outline-none focus:border-[#2997ff]"
-          >
-            <option value="US">US Equities</option>
-            <option value="India">India Equities</option>
-          </select>
-        </label>
+      {/* Control Console */}
+      <div className="card p-4 sm:p-5 mb-8 flex flex-wrap gap-4 sm:gap-6 items-end justify-between">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="flex flex-col gap-1.5">
+            <span className="section-index text-[10px]">MARKET DOMAIN</span>
+            <select
+              value={market}
+              onChange={(e) => setMarket(e.target.value)}
+              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-pointer"
+            >
+              <option value="US">US EQUITIES (NASDAQ / NYSE)</option>
+              <option value="India">INDIA EQUITIES (NSE / BSE)</option>
+            </select>
+          </div>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Selected Company</span>
-          <select
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-            className="bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white font-medium min-w-[240px] focus:outline-none focus:border-[#2997ff]"
-          >
-            <option value="">Select a company from Watchlist…</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.ticker} {c.name ? `— ${c.name}` : ""}
-              </option>
-            ))}
-          </select>
-        </label>
+          <div className="flex flex-col gap-1.5">
+            <span className="section-index text-[10px]">ACTIVE ENTITY</span>
+            <select
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white min-w-[260px] focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-pointer"
+            >
+              <option value="">SELECT TARGET FROM WATCHLIST…</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.ticker} {c.name ? `— ${c.name}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-        {status && (
-          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30">
-            {status}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {status && (
+            <span className="font-mono text-[10px] tracking-widest text-buy uppercase px-3 py-1 rounded-full border border-buy/30 bg-buy/10">
+              ● {status}
+            </span>
+          )}
+          {selectedCompany && (
+            <span className="neo-tag">
+              PROFILE: {selectedCompany.ticker}
+            </span>
+          )}
+        </div>
       </div>
 
       {!companyId && (
-        <div className="card-glass rounded-3xl p-10 text-center border border-white/[0.08] space-y-2 mb-6">
-          <p className="text-sm text-[#86868b]">
-            Select a stock from your Watchlist above to automatically load its {pageName === "dcf" ? "DCF Valuation" : "Financial Statements"} inputs and sync projections.
+        <div className="card p-12 text-center border-dashed border-white/15 my-6">
+          <p className="section-index text-xs mb-2">TARGET UNASSIGNED</p>
+          <h4 className="font-syne font-bold text-lg text-white uppercase mb-2">
+            SELECT A WATCHLIST ENTITY TO INITIALIZE TELEMETRY
+          </h4>
+          <p className="text-neutral-400 font-sans text-xs max-w-md mx-auto leading-relaxed">
+            Choose an asset from the active universe above to synchronize {pageName === "dcf" ? "discounted cash flow trajectories, Monte Carlo simulations, and WACC matrices" : "10-year historical statements, multi-scenario CAGRs, and guardrailed forecasts"}.
           </p>
         </div>
       )}
 
       {companyId && isLoading && (
-        <div className="card-glass rounded-3xl p-10 text-center border border-white/[0.08] text-sm text-[#86868b] mb-6">
-          Loading company telemetry &amp; models…
+        <div className="card p-12 text-center border-white/10 my-6">
+          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
+          <p className="font-mono text-xs uppercase tracking-widest text-neutral-400">
+            LOADING MODEL TELEMETRY &amp; PROJECTIONS…
+          </p>
         </div>
       )}
 

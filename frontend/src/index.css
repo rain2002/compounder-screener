@@ -1,124 +1,150 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 * {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .font-syne {
+  font-family: 'Syne', sans-serif;
+  letter-spacing: -0.02em;
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
 }
 
 html, body, #root {
   max-width: 100%;
   overflow-x: hidden;
-  background-color: #000000;
-  color: #f5f5f7;
+  background-color: #080808;
+  color: #ededed;
 }
 
-/* Apple Store Dark Mode Background Ambient Glow */
+/* Neozen Architectural Grid Background */
 body {
-  background: 
-    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(41, 151, 255, 0.1), transparent 70%),
-    radial-gradient(ellipse 60% 30% at 80% 20%, rgba(191, 90, 242, 0.05), transparent 60%),
-    #000000;
+  background-color: #080808;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
   min-height: 100vh;
 }
 
-/* Apple Store Card System */
+/* Neozen Card System */
 .card {
-  background: #161617;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 .card-glass {
-  background: rgba(28, 28, 30, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+  background: rgba(18, 18, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 
-.card-hover {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
-              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
-              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.card-hover:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+/* Neozen Structural Border Divider */
+.neo-divider {
+  border-color: rgba(255, 255, 255, 0.08);
 }
 
-/* Apple Store Pill Buttons */
-.apple-btn-primary {
-  background-color: #0071e3;
-  color: #ffffff;
-  border-radius: 9999px;
-  font-weight: 500;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.apple-btn-primary:hover {
-  background-color: #0077ed;
-  transform: scale(1.02);
-}
-
-.apple-btn-white {
-  background-color: #f5f5f7;
-  color: #000000;
-  border-radius: 9999px;
-  font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.apple-btn-white:hover {
+/* Neozen Buttons */
+.neo-btn-primary {
   background-color: #ffffff;
+  color: #000000;
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-radius: 9999px;
+  padding: 0.6rem 1.4rem;
+  font-size: 0.75rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.neo-btn-primary:hover {
+  background-color: #d4d4d4;
   transform: scale(1.02);
-  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25);
 }
 
-.apple-btn-glass {
-  background-color: rgba(255, 255, 255, 0.08);
-  color: #2997ff;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 9999px;
-  font-weight: 500;
-  backdrop-filter: blur(12px);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.apple-btn-glass:hover {
-  background-color: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.18);
+.neo-btn-ghost {
+  background-color: transparent;
   color: #ffffff;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  padding: 0.55rem 1.25rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.neo-btn-ghost:hover {
+  border-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+/* Neozen Monochromatic Tag */
+.neo-tag {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #a3a3a3;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .stat-value {
-  font-weight: 700;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
   letter-spacing: -0.03em;
 }
 
-/* Apple Smooth Scrollbar */
+/* Custom Minimal Scrollbar */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.15);
-  border-radius: 9999px;
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.3);
 }
 
-/* Horizontal scroll rail */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -127,11 +153,20 @@ body {
   scrollbar-width: none;
 }
 
+/* Section Header Indices (Neozen style) */
+.section-index {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: #737373;
+  text-transform: uppercase;
+}
+
 /* Subtle fade in animation */
 .fade-in {
-  animation: appleFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: neoFadeIn 0.25s ease-out;
 }
-@keyframes appleFadeIn {
-  from { opacity: 0; transform: translateY(6px); }
+@keyframes neoFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }

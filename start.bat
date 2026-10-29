@@ -10,10 +10,10 @@ echo =================================================================
 echo.
 
 :: 1. Trigger FastAPI Backend in background
-start "Compounder Backend (8000)" /min cmd /c "cd /d D:\compounder-screener\backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000"
+start "Compounder Backend (8000)" /min cmd /c "D:\compounder-screener\scripts\run_backend.cmd"
 
 :: 2. Trigger Vite Frontend at the same time in background
-start "Compounder Frontend (5173)" /min cmd /c "cd /d D:\compounder-screener\frontend && npm run dev -- --host 127.0.0.1 --port 5173"
+start "Compounder Frontend (5173)" /min cmd /c "D:\compounder-screener\scripts\run_frontend.cmd"
 
 echo [OK] Both Backend and Frontend triggered simultaneously!
 echo Waiting for services to initialize...

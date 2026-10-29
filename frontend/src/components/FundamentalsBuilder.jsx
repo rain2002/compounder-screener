@@ -20,23 +20,23 @@ function cagr(years, key) {
 
 const STATEMENTS = {
   income: {
-    label: "Income Statement",
+    label: "INCOME STATEMENT",
     metrics: [
       { key: "revenue", label: "Revenue", step: 10 },
       { key: "grossProfit", label: "Gross Profit", step: 10 },
       { key: "ebitda", label: "EBITDA", step: 5 },
-      { key: "ebit", label: "EBIT", step: 5 },
+      { key: "ebit", label: "EBIT (Operating Income)", step: 5 },
       { key: "interestExpense", label: "Interest Expense", step: 1 },
       { key: "netIncome", label: "Net Income", step: 5 },
       { key: "eps", label: "EPS ($)", step: 0.05, noScale: true },
     ],
   },
   balance: {
-    label: "Balance Sheet",
+    label: "BALANCE SHEET",
     metrics: [
       { key: "totalDebt", label: "Total Debt", step: 10 },
       { key: "cash", label: "Cash & Equivalents", step: 10 },
-      { key: "totalEquity", label: "Total Equity", step: 10 },
+      { key: "totalEquity", label: "Total Stockholders' Equity", step: 10 },
       { key: "currentAssets", label: "Current Assets", step: 10 },
       { key: "currentLiabilities", label: "Current Liabilities", step: 10 },
       { key: "inventory", label: "Inventory", step: 5 },
@@ -44,10 +44,10 @@ const STATEMENTS = {
     ],
   },
   cashflow: {
-    label: "Cash Flow Statement",
+    label: "CASH FLOW STATEMENT",
     metrics: [
       { key: "operatingCashFlow", label: "Operating Cash Flow", step: 10 },
-      { key: "capex", label: "CapEx", step: 5 },
+      { key: "capex", label: "Capital Expenditures (CapEx)", step: 5 },
     ],
   },
 };
@@ -128,48 +128,47 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
   const activeMetrics = STATEMENTS[activeTab].metrics;
 
   return (
-    <div className="card p-6 mb-6">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Icon name="dcf" size={16} className="text-accent2" />
-          <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-            Fundamentals History ({years.length}-Year)
+    <div className="card p-6 mb-8">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+        <div>
+          <span className="section-index text-[10px] mb-1 block">[ 01 // FINANCIAL STATEMENTS ]</span>
+          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
+            10-YEAR HISTORICAL FUNDAMENTALS
           </h3>
         </div>
-        <div className="flex gap-2">
-          <button onClick={removeYear} className="text-xs px-2.5 py-1 rounded-md bg-white/5 text-slate-400 hover:bg-white/10 transition-colors">
-            − Remove Year
+        <div className="flex items-center gap-2">
+          <button onClick={removeYear} className="neo-btn-ghost text-xs py-1.5 px-3">
+            − REMOVE YEAR
           </button>
-          <button onClick={addYear} className="text-xs px-2.5 py-1 rounded-md bg-accent/15 text-accent2 hover:bg-accent/25 transition-colors font-medium">
-            + Add Year
+          <button onClick={addYear} className="neo-btn-primary text-xs py-1.5 px-4">
+            + ADD YEAR
           </button>
         </div>
       </div>
-      <p className="text-slate-500 text-xs mb-4">
-        Covers the metrics Buffett and Lynch both check across all 3 statements — not just income
-        statement basics. Values entered in $M — displayed as K/M/B/T automatically. Editing any
-        year header auto-resequences every year after it to stay consecutive. Pre-filled with
-        placeholder figures — replace with real 10-K numbers, or wait for the finance connector
-        sync (Phase 2).
+
+      <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed max-w-3xl">
+        Buffett and Lynch compounder framework across 10 fiscal cycles. Ingests EDGAR 10-K / 10-Q reports, normalizes working capital, and auto-calculates ROE, ROIC, and Cash Conversion.
       </p>
 
       {excludedYears > 0 && (
-        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-accent/10 border border-accent/30">
-          <Icon name="check" size={16} className="text-accent2 shrink-0" />
-          <p className="text-accent2 text-xs">
-            {excludedYears} leading year(s) with zero revenue detected (pre-founding) — CAGRs below
-            automatically exclude these and use only real reporting years.
+        <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
+          <Icon name="check" size={14} className="text-white shrink-0" />
+          <p className="font-mono text-xs text-neutral-300">
+            {excludedYears} PRE-FOUNDING REPORTING YEAR(S) OMITTED FROM COMPOUND ANNUAL GROWTH RATES.
           </p>
         </div>
       )}
 
-      <div className="flex gap-2 mb-4">
+      {/* Statement Tabs */}
+      <div className="flex flex-wrap gap-2 mb-6">
         {Object.entries(STATEMENTS).map(([key, s]) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`text-xs px-3 py-1.5 rounded-md font-medium transition-colors ${
-              activeTab === key ? "bg-accent/20 text-accent2" : "bg-white/5 text-slate-400 hover:bg-white/10"
+            className={`font-mono text-xs uppercase px-4 py-2 rounded-full transition-all ${
+              activeTab === key
+                ? "bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.15)]"
+                : "border border-white/10 bg-transparent text-neutral-400 hover:text-white hover:border-white/30"
             }`}
           >
             {s.label}
@@ -177,17 +176,20 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
         ))}
       </div>
 
-      <div className="overflow-x-auto -mx-2 mb-5">
-        <table className="w-full text-sm min-w-[700px]">
+      {/* Statement Table */}
+      <div className="overflow-x-auto -mx-2 mb-6">
+        <table className="w-full text-xs min-w-[720px]">
           <thead>
-            <tr className="text-left text-slate-500 text-xs uppercase tracking-wide border-b border-border/60">
-              <th className="px-2 py-2 font-medium sticky left-0 bg-surface">Metric</th>
+            <tr className="border-b border-white/10">
+              <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-widest text-neutral-400 sticky left-0 bg-[#111111] z-10">
+                LINE ITEM
+              </th>
               {years.map((y, i) => (
-                <th key={i} className="px-2 py-2 font-medium text-center min-w-[90px]">
+                <th key={i} className="px-2 py-2 text-center min-w-[95px]">
                   <input
                     value={y.year}
                     onChange={(e) => updateYear(i, "year", e.target.value)}
-                    className="w-16 bg-transparent text-center text-slate-200 font-semibold focus:outline-none focus:bg-black/30 rounded px-1"
+                    className="w-16 bg-neutral-900 border border-white/10 rounded-full text-center text-white font-mono text-xs py-0.5 focus:outline-none focus:border-white"
                   />
                 </th>
               ))}
@@ -195,31 +197,33 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
           </thead>
           <tbody>
             {activeMetrics.map((m) => (
-              <tr key={m.key} className="border-b border-border/30">
-                <td className="px-2 py-2 text-slate-500 text-xs sticky left-0 bg-base whitespace-nowrap">
-                  {m.label} {!m.noScale && <span className="text-slate-600">($M)</span>}
+              <tr key={m.key} className="border-b border-white/5 hover:bg-white/[0.02]">
+                <td className="px-3 py-2 font-mono text-neutral-400 sticky left-0 bg-[#111111] z-10 whitespace-nowrap">
+                  {m.label} {!m.noScale && <span className="text-neutral-500">($M)</span>}
                 </td>
                 {years.map((y, i) => (
-                  <td key={i} className="px-1 py-1.5">
+                  <td key={i} className="px-1.5 py-1.5 text-center">
                     <input
                       type="number"
                       step={m.step}
                       value={y[m.key]}
                       onChange={(e) => updateYear(i, m.key, parseFloat(e.target.value) || 0)}
-                      className="w-full bg-black/30 border border-border rounded px-1.5 py-1 text-slate-200 text-xs text-center focus:outline-none focus:ring-1 focus:ring-accent/50"
+                      className="w-full bg-neutral-900/80 border border-white/5 rounded-full px-2 py-1 text-white font-mono text-xs text-center focus:outline-none focus:border-white transition-all"
                     />
                   </td>
                 ))}
               </tr>
             ))}
             {activeTab === "cashflow" && (
-              <tr className="bg-accent/5">
-                <td className="px-2 py-2.5 text-slate-200 text-xs font-semibold sticky left-0 bg-accent/5">
-                  Free Cash Flow (OCF − CapEx)
+              <tr className="bg-white/[0.03] border-t border-white/10">
+                <td className="px-3 py-3 font-mono font-bold text-white uppercase sticky left-0 bg-[#161616] z-10">
+                  FREE CASH FLOW (OCF − CAPEX)
                 </td>
                 {derived.map((d, i) => (
-                  <td key={i} className="px-2 py-2.5 text-center text-accent2 font-semibold text-xs">
-                    {formatMoney(d.fcf)}
+                  <td key={i} className="px-2 py-3 text-center">
+                    <span className="font-mono text-xs font-bold text-white">
+                      {formatMoney(d.fcf)}
+                    </span>
                   </td>
                 ))}
               </tr>
@@ -228,34 +232,34 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
         </table>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-border/60 mb-5">
+      {/* CAGR Highlights */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 pt-5 border-t border-white/10">
         {activeMetrics.slice(0, 4).map((m) => (
-          <div key={m.key}>
-            <p className="text-slate-500 text-xs uppercase tracking-wide mb-1">{m.label} CAGR</p>
-            <p className="stat-value text-lg text-accent2">
+          <div key={m.key} className="p-3.5 rounded-xl bg-black/40 border border-white/5">
+            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">{m.label} CAGR</p>
+            <p className="font-syne font-bold text-xl text-white">
               {cagrs[m.key] !== null ? `${cagrs[m.key].toFixed(1)}%` : "—"}
             </p>
           </div>
         ))}
       </div>
 
-      <div className="pt-4 border-t border-border/60">
-        <p className="text-slate-400 text-xs font-medium uppercase tracking-wide mb-3">
-          Buffett + Lynch Ratio Checklist (Most Recent Year)
-        </p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <RatioCell label="ROE" value={`${lastDerived.roe.toFixed(1)}%`} good={lastDerived.roe >= 15} />
-          <RatioCell label="ROIC" value={`${lastDerived.roic.toFixed(1)}%`} good={lastDerived.roic >= 15} />
-          <RatioCell label="Debt/Equity" value={lastDerived.debtToEquity.toFixed(2)} good={lastDerived.debtToEquity <= 0.5} />
-          <RatioCell label="Debt/EBITDA" value={lastDerived.debtToEbitda.toFixed(2)} good={lastDerived.debtToEbitda <= 3} />
-          <RatioCell label="Current Ratio" value={lastDerived.currentRatio.toFixed(2)} good={lastDerived.currentRatio > 1} />
-          <RatioCell label="Interest Coverage" value={`${lastDerived.interestCoverage.toFixed(1)}x`} good={lastDerived.interestCoverage >= 5} />
-          <RatioCell label="Gross Margin" value={`${lastDerived.grossMargin.toFixed(1)}%`} good={lastDerived.grossMargin >= firstDerived.grossMargin} />
+      {/* Buffett + Lynch Checklist */}
+      <div className="pt-6 border-t border-white/10">
+        <span className="section-index text-[10px] mb-3 block">[ 01.1 // MOAT &amp; CAPITAL ALLOCATION CHECKLIST ]</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+          <RatioCell label="ROE (>15%)" value={`${lastDerived.roe.toFixed(1)}%`} good={lastDerived.roe >= 15} />
+          <RatioCell label="ROIC (>15%)" value={`${lastDerived.roic.toFixed(1)}%`} good={lastDerived.roic >= 15} />
+          <RatioCell label="Debt / Equity (<0.5)" value={lastDerived.debtToEquity.toFixed(2)} good={lastDerived.debtToEquity <= 0.5} />
+          <RatioCell label="Debt / EBITDA (<3.0)" value={lastDerived.debtToEbitda.toFixed(2)} good={lastDerived.debtToEbitda <= 3} />
+          <RatioCell label="Current Ratio (>1.0)" value={lastDerived.currentRatio.toFixed(2)} good={lastDerived.currentRatio > 1} />
+          <RatioCell label="Interest Coverage (>5x)" value={`${lastDerived.interestCoverage.toFixed(1)}x`} good={lastDerived.interestCoverage >= 5} />
+          <RatioCell label="Gross Margin Trend" value={`${lastDerived.grossMargin.toFixed(1)}%`} good={lastDerived.grossMargin >= firstDerived.grossMargin} />
           <RatioCell label="Operating Margin" value={`${lastDerived.operatingMargin.toFixed(1)}%`} good={lastDerived.operatingMargin >= firstDerived.operatingMargin} />
-          <RatioCell label="Net Margin" value={`${lastDerived.netMargin.toFixed(1)}%`} good={lastDerived.netMargin >= firstDerived.netMargin} />
-          <RatioCell label="Cash Conversion" value={`${lastDerived.cashConversion.toFixed(2)}x`} good={lastDerived.cashConversion >= 1} />
-          <RatioCell label="FCF" value={formatMoney(lastDerived.fcf)} good={lastDerived.fcf > 0} />
-          <RatioCell label="FCF CAGR" value={cagrs.fcf !== null ? `${cagrs.fcf.toFixed(1)}%` : "—"} good={cagrs.fcf > 0} />
+          <RatioCell label="Net Margin Trend" value={`${lastDerived.netMargin.toFixed(1)}%`} good={lastDerived.netMargin >= firstDerived.netMargin} />
+          <RatioCell label="Cash Conversion (>1.0x)" value={`${lastDerived.cashConversion.toFixed(2)}x`} good={lastDerived.cashConversion >= 1} />
+          <RatioCell label="FCF Generative" value={formatMoney(lastDerived.fcf)} good={lastDerived.fcf > 0} />
+          <RatioCell label="FCF 10-Yr CAGR" value={cagrs.fcf !== null ? `${cagrs.fcf.toFixed(1)}%` : "—"} good={cagrs.fcf > 0} />
         </div>
       </div>
     </div>
@@ -264,9 +268,12 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
 
 function RatioCell({ label, value, good }) {
   return (
-    <div className={`rounded-lg border p-2.5 ${good ? "border-buy/30 bg-buy/5" : "border-caution/30 bg-caution/5"}`}>
-      <p className="text-slate-500 text-xs mb-0.5">{label}</p>
-      <p className={`text-sm font-semibold ${good ? "text-buy" : "text-caution"}`}>{value}</p>
+    <div className={`p-3 rounded-xl border ${good ? "border-buy/20 bg-buy/[0.04]" : "border-watch/20 bg-watch/[0.04]"}`}>
+      <div className="flex items-center justify-between mb-1">
+        <span className="font-mono text-[9px] uppercase tracking-widest text-neutral-400">{label}</span>
+        <span className={`w-1.5 h-1.5 rounded-full ${good ? "bg-buy" : "bg-watch"}`} />
+      </div>
+      <p className={`font-syne font-bold text-base ${good ? "text-buy" : "text-watch"}`}>{value}</p>
     </div>
   );
 }
