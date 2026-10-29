@@ -25,9 +25,9 @@ export default function Dashboard() {
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2">
           <div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight">
-              Store.{" "}
+              Compounder.{" "}
               <span className="text-[#86868b]">
-                The best way to screen the stocks you love.
+                The premier way to screen the stocks you love.
               </span>
             </h1>
             <p className="text-[#86868b] text-base sm:text-lg mt-3 max-w-2xl leading-relaxed">

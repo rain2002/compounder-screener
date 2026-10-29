@@ -30,13 +30,13 @@ export default function Layout({ children }) {
             to="/"
             className="flex items-center gap-2.5 text-white hover:opacity-80 transition-opacity"
           >
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-white/10 to-white/[0.02] border border-white/10 flex items-center justify-center text-white">
-              <Icon name="apple" size={15} />
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#0071e3] to-[#2997ff] flex items-center justify-center text-white shadow-sm shadow-[#2997ff]/20">
+              <Icon name="compounder" size={15} />
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-sm tracking-tight text-white">Compounder</span>
               <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded-full bg-white/[0.08] text-[#86868b] border border-white/[0.06]">
-                Store Pro
+                Pro Screener
               </span>
             </div>
           </NavLink>
@@ -192,7 +192,7 @@ export default function Layout({ children }) {
 
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
             <div className="flex items-center gap-2">
-              <Icon name="apple" size={14} className="text-[#86868b]" />
+              <Icon name="compounder" size={14} className="text-[#2997ff]" />
               <span>Copyright © 2026 Compounder Screener Inc. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-4 text-xs">
