@@ -4,58 +4,134 @@
 @tailwind components;
 @tailwind utilities;
 
-
 * {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Helvetica Neue", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html, body, #root {
   max-width: 100%;
   overflow-x: hidden;
+  background-color: #000000;
+  color: #f5f5f7;
 }
 
-html, body {
-  background-color: #0a0e17;
-  color: #e2e8f0;
+/* Apple Store Dark Mode Background Ambient Glow */
+body {
+  background: 
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(41, 151, 255, 0.1), transparent 70%),
+    radial-gradient(ellipse 60% 30% at 80% 20%, rgba(191, 90, 242, 0.05), transparent 60%),
+    #000000;
+  min-height: 100vh;
 }
 
+/* Apple Store Card System */
+.card {
+  background: #161617;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.card-glass {
+  background: rgba(28, 28, 30, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+}
+
+.card-hover {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.25s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.7);
+}
+
+/* Apple Store Pill Buttons */
+.apple-btn-primary {
+  background-color: #0071e3;
+  color: #ffffff;
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-btn-primary:hover {
+  background-color: #0077ed;
+  transform: scale(1.02);
+}
+
+.apple-btn-white {
+  background-color: #f5f5f7;
+  color: #000000;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-btn-white:hover {
+  background-color: #ffffff;
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.25);
+}
+
+.apple-btn-glass {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #2997ff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9999px;
+  font-weight: 500;
+  backdrop-filter: blur(12px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.apple-btn-glass:hover {
+  background-color: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.stat-value {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+/* Apple Smooth Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2d3548;
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #3d4560;
+  background: rgba(255, 255, 255, 0.25);
 }
 
-.card {
-  background: linear-gradient(180deg, #131a2b 0%, #10151f 100%);
-  border: 1px solid #1f2740;
-  border-radius: 14px;
+/* Horizontal scroll rail */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.card-hover {
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
-.card-hover:hover {
-  border-color: #364268;
-}
-
-.stat-value {
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
+/* Subtle fade in animation */
 .fade-in {
-  animation: fadeIn 0.25s ease;
+  animation: appleFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
+@keyframes appleFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }
 }

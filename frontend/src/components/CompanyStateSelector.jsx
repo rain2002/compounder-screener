@@ -6,8 +6,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
  * Reusable Market -> Company dropdown pair that loads/saves a JSON state
  * blob per company for a given page ("dcf" or "technical"). Renders the
  * dropdowns and exposes the loaded state + a save callback to the parent
- * via render props, so DCF.jsx/Technical.jsx don't need internal rewrites -
- * they just wrap their existing state in what this component loads/saves.
+ * via render props.
  */
 export default function CompanyStateSelector({ pageName, children }) {
   const [market, setMarket] = useState("US");
@@ -77,39 +76,53 @@ export default function CompanyStateSelector({ pageName, children }) {
 
   return (
     <div>
-      <div className="flex flex-wrap gap-4 mb-6 items-end">
+      <div className="flex flex-wrap gap-4 mb-6 items-end p-4 rounded-2xl bg-[#161617]/80 border border-white/[0.08] backdrop-blur-xl">
         <label className="flex flex-col gap-1.5">
-          <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Market</span>
-          <select value={market} onChange={(e) => setMarket(e.target.value)} className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm">
-            <option value="US">US</option>
-            <option value="India">India</option>
+          <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Market</span>
+          <select
+            value={market}
+            onChange={(e) => setMarket(e.target.value)}
+            className="bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white font-medium focus:outline-none focus:border-[#2997ff]"
+          >
+            <option value="US">US Equities</option>
+            <option value="India">India Equities</option>
           </select>
         </label>
+
         <label className="flex flex-col gap-1.5">
-          <span className="text-slate-400 text-xs font-medium uppercase tracking-wide">Company</span>
+          <span className="text-[#86868b] text-[11px] font-semibold uppercase tracking-wider">Selected Company</span>
           <select
             value={companyId}
             onChange={(e) => setCompanyId(e.target.value)}
-            className="bg-slate-800 border border-slate-700 rounded px-3 py-1.5 text-sm min-w-[220px]"
+            className="bg-black/50 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white font-medium min-w-[240px] focus:outline-none focus:border-[#2997ff]"
           >
-            <option value="">Select a company...</option>
+            <option value="">Select a company from Watchlist…</option>
             {companies.map((c) => (
-              <option key={c.id} value={c.id}>{c.ticker} {c.name ? `- ${c.name}` : ""}</option>
+              <option key={c.id} value={c.id}>
+                {c.ticker} {c.name ? `— ${c.name}` : ""}
+              </option>
             ))}
           </select>
         </label>
-        {status && <span className="text-xs text-accent2">{status}</span>}
+
+        {status && (
+          <span className="text-xs font-semibold px-3 py-1 rounded-full bg-[#30d158]/15 text-[#30d158] border border-[#30d158]/30">
+            {status}
+          </span>
+        )}
       </div>
 
       {!companyId && (
-        <div className="card p-8 text-center text-slate-400 text-sm mb-6">
-          Select a company from your Watchlist above to save and load its {pageName === "dcf" ? "DCF" : "Financial"} inputs and results here.
+        <div className="card-glass rounded-3xl p-10 text-center border border-white/[0.08] space-y-2 mb-6">
+          <p className="text-sm text-[#86868b]">
+            Select a stock from your Watchlist above to automatically load its {pageName === "dcf" ? "DCF Valuation" : "Financial Statements"} inputs and sync projections.
+          </p>
         </div>
       )}
 
       {companyId && isLoading && (
-        <div className="card p-8 text-center text-slate-400 text-sm mb-6">
-          Loading saved data...
+        <div className="card-glass rounded-3xl p-10 text-center border border-white/[0.08] text-sm text-[#86868b] mb-6">
+          Loading company telemetry &amp; models…
         </div>
       )}
 

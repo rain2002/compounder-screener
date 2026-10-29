@@ -27,3 +27,4 @@ training_env/
 # Local storage
 backend/uploads/
 *.db
+logs/
