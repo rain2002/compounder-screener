@@ -3,12 +3,12 @@ import { NavLink, useLocation } from "react-router-dom";
 import Icon from "./Icon.jsx";
 
 const navItems = [
-  { to: "/", index: "01", label: "Dashboard", sub: "Executive Overview", icon: "dashboard" },
-  { to: "/watchlist", index: "02", label: "Watchlist", sub: "Universe & Filings", icon: "screener" },
-  { to: "/dcf", index: "03", label: "DCF Model", sub: "Monte Carlo Valuation", icon: "dcf" },
-  { to: "/financial", index: "04", label: "Financials", sub: "10-Yr Statements", icon: "technical" },
-  { to: "/sentiment", index: "05", label: "Sentiment", sub: "10-K FinBERT NLP", icon: "sentiment" },
-  { to: "/variance", index: "06", label: "Variance", sub: "Risk Envelope", icon: "variance" },
+  { to: "/", label: "Dashboard", icon: "dashboard" },
+  { to: "/watchlist", label: "Watchlist", icon: "screener" },
+  { to: "/dcf", label: "DCF Model", icon: "dcf" },
+  { to: "/financial", label: "Financials", icon: "technical" },
+  { to: "/sentiment", label: "Sentiment", icon: "sentiment" },
+  { to: "/variance", label: "Variance", icon: "variance" },
 ];
 
 export default function Layout({ children }) {
@@ -21,65 +21,58 @@ export default function Layout({ children }) {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen bg-[#080808] text-[#ededed] flex flex-col selection:bg-white selection:text-black">
-      {/* 1. Neozen Fixed Navigation Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#080808]/90 border-b border-white/[0.08] transition-all">
+    <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col selection:bg-zinc-800 selection:text-white">
+      {/* Navigation Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#09090b]/85 border-b border-white/[0.08] transition-all">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Brand Mark */}
+          {/* Brand */}
           <NavLink
             to="/"
-            className="flex items-center gap-3 text-white hover:opacity-80 transition-opacity"
+            className="flex items-center gap-3 text-white hover:opacity-90 transition-opacity"
           >
-            <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-syne font-extrabold text-sm shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-white/[0.08] border border-white/15 flex items-center justify-center text-white shadow-sm">
               <Icon name="compounder" size={17} />
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-syne font-extrabold text-base uppercase tracking-tight text-white">
-                COMPOUNDER
+            <div className="flex items-center gap-2">
+              <span className="font-semibold text-base text-zinc-100 tracking-tight">
+                Compounder
               </span>
-              <span className="font-mono text-[10px] text-neutral-400 tracking-widest uppercase hidden sm:inline">
-                // PRO SCREENER
+              <span className="text-[11px] font-medium text-zinc-400 px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 hidden sm:inline-block">
+                Screener
               </span>
             </div>
           </NavLink>
 
-          {/* Desktop Nav Items (Neozen Numbered System) */}
-          <nav className="hidden lg:flex items-center gap-1.5">
+          {/* Desktop Nav Items */}
+          <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `px-3.5 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-all duration-200 flex items-center gap-1.5 ${
+                  `px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 flex items-center gap-1.5 ${
                     isActive
-                      ? "bg-white text-black font-semibold shadow-sm"
-                      : "text-neutral-400 hover:text-white hover:bg-white/[0.05]"
+                      ? "bg-white/[0.1] text-white border border-white/10 shadow-sm"
+                      : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
                   }`
                 }
               >
-                {({ isActive }) => (
-                  <>
-                    <span className={isActive ? "text-neutral-500 font-bold" : "text-neutral-600"}>
-                      {item.index}
-                    </span>
-                    <span>{item.label}</span>
-                  </>
-                )}
+                <span>{item.label}</span>
               </NavLink>
             ))}
           </nav>
 
-          {/* Right Status Indicator */}
+          {/* Right Status */}
           <div className="flex items-center gap-3">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 font-mono text-[11px] text-neutral-300">
-              <span className="w-2 h-2 rounded-full bg-[#22c55e] animate-pulse" />
-              <span>[ SYSTEM: ONLINE ]</span>
+            <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/10 text-xs text-zinc-400">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Engine</span>
             </div>
 
             {/* Mobile Hamburger Toggle */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+              className="lg:hidden p-2 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
               aria-label="Toggle Navigation"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -95,114 +88,57 @@ export default function Layout({ children }) {
 
         {/* Mobile Navigation Drawer */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-white/[0.08] bg-[#0d0d0d]/95 backdrop-blur-2xl px-4 py-4 space-y-1">
+          <div className="lg:hidden border-t border-white/[0.08] bg-[#0c0c0e]/95 backdrop-blur-2xl px-4 py-4 space-y-1">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 className={({ isActive }) =>
-                  `flex items-center justify-between px-4 py-3 rounded-xl font-mono text-xs uppercase tracking-wider transition-all ${
+                  `block px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive
-                      ? "bg-white text-black font-bold"
-                      : "text-neutral-400 hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-white/[0.1] text-white"
+                      : "text-zinc-400 hover:text-white hover:bg-white/[0.04]"
                   }`
                 }
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-neutral-500">{item.index}</span>
-                  <span className="font-syne font-bold text-sm tracking-normal">{item.label}</span>
-                </div>
-                <span className="text-[10px] text-neutral-400">{item.sub}</span>
+                {item.label}
               </NavLink>
             ))}
           </div>
         )}
       </header>
 
-      {/* 2. Neozen Category Ribbon Shelf */}
-      <div className="border-b border-white/[0.08] bg-[#0c0c0c] py-4 overflow-x-auto no-scrollbar">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-max">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-4 py-2.5 rounded-xl border transition-all duration-200 ${
-                    isActive
-                      ? "bg-white/[0.08] border-white/40 text-white shadow-sm"
-                      : "bg-[#111111] border-white/[0.08] text-neutral-400 hover:border-white/20 hover:text-white"
-                  }`
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span className="font-mono text-[10px] text-neutral-500 font-semibold">
-                      {item.index}
-                    </span>
-                    <Icon name={item.icon} size={15} className={isActive ? "text-white" : "text-neutral-500"} />
-                    <span className="font-syne font-bold text-xs uppercase tracking-tight">
-                      {item.label}
-                    </span>
-                  </>
-                )}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Main Page Canvas */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
-        <div className="fade-in">
-          {children}
-        </div>
+      {/* Main Content Viewport */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        {children}
       </main>
 
-      {/* 4. Neozen Monochromatic Editorial Footer */}
-      <footer className="border-t border-white/[0.08] bg-[#090909] text-neutral-400 text-xs py-14 mt-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 pb-8 border-b border-white/[0.08]">
-            <div>
-              <span className="font-mono text-xs uppercase tracking-widest text-neutral-500 block mb-2">
-                [ ARCHITECTURAL FINANCIAL SCREENER ]
-              </span>
-              <h2 className="font-syne font-extrabold text-2xl sm:text-3xl uppercase tracking-tight text-white">
-                COMPOUNDER // VALUATION SUITE
-              </h2>
+      {/* Refined Footer */}
+      <footer className="border-t border-white/[0.08] bg-[#09090b] mt-16 py-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-white/[0.06]">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-lg bg-white/[0.08] border border-white/15 flex items-center justify-center text-white">
+                <Icon name="compounder" size={15} />
+              </div>
+              <span className="font-semibold text-sm text-zinc-200">Compounder Screener</span>
             </div>
-            <p className="font-mono text-xs text-neutral-500 uppercase tracking-widest">
-              US &amp; INDIA EQUITIES • BUFFETT + LYNCH + ML
+            <div className="flex flex-wrap gap-6 text-xs text-zinc-400">
+              <NavLink to="/" className="hover:text-zinc-200 transition-colors">Dashboard</NavLink>
+              <NavLink to="/watchlist" className="hover:text-zinc-200 transition-colors">Watchlist</NavLink>
+              <NavLink to="/dcf" className="hover:text-zinc-200 transition-colors">DCF Valuation</NavLink>
+              <NavLink to="/financial" className="hover:text-zinc-200 transition-colors">Financials</NavLink>
+              <NavLink to="/variance" className="hover:text-zinc-200 transition-colors">Variance</NavLink>
+              <NavLink to="/sentiment" className="hover:text-zinc-200 transition-colors">Sentiment</NavLink>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-6 text-xs text-zinc-500">
+            <p>© 2026 Raja Nithin. All rights reserved.</p>
+            <p className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>Licensed under GNU AGPLv3 • Open Source</span>
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-mono text-[11px] leading-relaxed text-neutral-500">
-            <div>
-              <span className="text-white block font-bold uppercase mb-1">01 / METHODOLOGY</span>
-              5-year discrete cash flow modeling with terminal growth bounded by real GDP caps (US: 2.5%, India: 7.0%).
-            </div>
-            <div>
-              <span className="text-white block font-bold uppercase mb-1">02 / MACHINE LEARNING</span>
-              Pooled multi-model XGBoost &amp; Random Forest ensemble calibrated on SEC 10-K XBRL financial filings.
-            </div>
-            <div>
-              <span className="text-white block font-bold uppercase mb-1">03 / FRAUD PROTECTION</span>
-              Beneish M-Score 8-ratio probabilistic forensic filter to weed out accounting manipulation before scoring.
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-white/[0.06] font-mono text-[11px]">
-            <div className="flex items-center gap-2">
-              <Icon name="compounder" size={14} className="text-neutral-400" />
-              <span>COPYRIGHT © 2026 COMPOUNDER SCREENER. ALL RIGHTS RESERVED.</span>
-            </div>
-            <div className="flex items-center gap-5 text-neutral-400">
-              <NavLink to="/watchlist" className="hover:text-white transition-colors">WATCHLIST</NavLink>
-              <NavLink to="/dcf" className="hover:text-white transition-colors">DCF MODEL</NavLink>
-              <NavLink to="/financial" className="hover:text-white transition-colors">FINANCIALS</NavLink>
-              <NavLink to="/sentiment" className="hover:text-white transition-colors">SENTIMENT</NavLink>
-              <NavLink to="/variance" className="hover:text-white transition-colors">VARIANCE</NavLink>
-            </div>
           </div>
         </div>
       </footer>

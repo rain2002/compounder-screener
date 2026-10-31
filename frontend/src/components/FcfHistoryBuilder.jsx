@@ -96,57 +96,55 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
   ];
 
   return (
-    <div className="card p-6 mb-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+    <div className="card p-6 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="section-index text-[10px] mb-1 block">[ 01 // TRAILING CASH FLOWS ]</span>
-          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-            HISTORICAL FCF BUILD-UP ({years.length}-YEAR WINDOW)
+          <h3 className="text-base font-semibold text-white">
+            Historical Free Cash Flow ({years.length}-Year Build-Up)
           </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Deducts tax-adjusted operating expenses, restores non-cash D&amp;A, and deducts CapEx to calculate Owner Earnings.
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => removeYear(0)}
-            className="neo-btn-ghost text-xs py-1.5 px-3"
+            className="btn-secondary text-xs py-1 px-3"
           >
-            − DROP OLDEST
+            − Drop Oldest
           </button>
           <button
             onClick={addYear}
             title={years.length >= MAX_YEARS ? "Rolling 10-year window: adds year and drops oldest" : "Add year"}
-            className="neo-btn-primary text-xs py-1.5 px-4"
+            className="btn-primary text-xs py-1 px-3"
           >
-            + ADD YEAR
+            + Add Year
           </button>
         </div>
       </div>
 
-      <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed max-w-3xl">
-        Rolling 10-year historical trajectory. EBIT is adjusted for statutory taxes, non-cash depreciation is restored, and capital expenditures plus balance sheet working capital requirements are deducted to derive True Owner Cash Flow.
-      </p>
-
       {excludedYears > 0 && (
-        <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
-          <Icon name="check" size={14} className="text-white shrink-0" />
-          <p className="font-mono text-xs text-neutral-300">
-            {excludedYears} PRE-FOUNDING YEAR(S) EXCLUDED AUTOMATICALLY FROM CAGR CALCULATIONS.
-          </p>
+        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-zinc-900 border border-white/10 text-xs text-zinc-300">
+          <Icon name="check" size={14} className="text-emerald-400 shrink-0" />
+          <span>
+            {excludedYears} pre-founding year(s) with zero revenue omitted from CAGR calculations.
+          </span>
         </div>
       )}
 
-      <div className="overflow-x-auto -mx-2 mb-6">
-        <table className="w-full text-xs min-w-[720px]">
+      <div className="overflow-x-auto -mx-2 mb-5">
+        <table className="w-full text-xs min-w-[700px]">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-widest text-neutral-400 sticky left-0 bg-[#111111] z-10">
-                METRIC LINE
+            <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
+              <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+                Line Item
               </th>
               {fcfSeries.map((y, i) => (
-                <th key={i} className="px-2 py-2 text-center min-w-[95px]">
+                <th key={i} className="px-2 py-2 text-center min-w-[90px]">
                   <input
                     value={y.year}
                     onChange={(e) => updateYear(i, "year", e.target.value)}
-                    className="w-16 bg-neutral-900 border border-white/10 rounded-full text-center text-white font-mono text-xs py-0.5 focus:outline-none focus:border-white"
+                    className="w-16 bg-zinc-900 border border-white/10 rounded text-center text-zinc-200 font-semibold py-0.5 focus:outline-none focus:border-white/30"
                   />
                 </th>
               ))}
@@ -154,30 +152,30 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
           </thead>
           <tbody>
             {fields.map((f) => (
-              <tr key={f.key} className="border-b border-white/5 hover:bg-white/[0.02]">
-                <td className="px-3 py-2 font-mono text-neutral-400 sticky left-0 bg-[#111111] z-10 whitespace-nowrap">
+              <tr key={f.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10 whitespace-nowrap">
                   {f.label}
                 </td>
                 {fcfSeries.map((y, i) => (
-                  <td key={i} className="px-1.5 py-1.5 text-center">
+                  <td key={i} className="px-1.5 py-1 text-center">
                     <input
                       type="number"
                       step={f.step}
                       value={y[f.key]}
                       onChange={(e) => updateYear(i, f.key, parseFloat(e.target.value) || 0)}
-                      className="w-full bg-neutral-900/80 border border-white/5 rounded-full px-2 py-1 text-white font-mono text-xs text-center focus:outline-none focus:border-white transition-all"
+                      className="w-full bg-zinc-900/80 border border-white/5 rounded px-2 py-1 text-zinc-200 text-xs text-center focus:outline-none focus:border-white/30 tabular-nums transition-all"
                     />
                   </td>
                 ))}
               </tr>
             ))}
-            <tr className="bg-white/[0.03] border-t border-white/10">
-              <td className="px-3 py-3 font-mono font-bold text-white uppercase sticky left-0 bg-[#161616] z-10">
-                COMPUTED FREE CASH FLOW
+            <tr className="bg-white/[0.03] border-t border-white/10 font-semibold">
+              <td className="px-3 py-2.5 text-zinc-100 sticky left-0 bg-[#151518] z-10">
+                Computed Free Cash Flow
               </td>
               {fcfSeries.map((y, i) => (
-                <td key={i} className="px-2 py-3 text-center">
-                  <span className={`font-mono text-xs font-bold ${i === fcfSeries.length - 1 ? "text-white underline decoration-white/40" : "text-neutral-300"}`}>
+                <td key={i} className="px-2 py-2.5 text-center">
+                  <span className={`text-xs tabular-nums ${i === fcfSeries.length - 1 ? "text-emerald-400 font-bold" : "text-zinc-200"}`}>
                     {formatMoney(y.fcf)}
                   </span>
                 </td>
@@ -187,22 +185,22 @@ export default function FcfHistoryBuilder({ years, onYearsChange, onBaseFcfChang
         </table>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-5 border-t border-white/10">
-        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Revenue Historical CAGR</p>
-          <p className="font-syne font-bold text-2xl text-white">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+        <div className="p-3.5 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+          <p className="text-xs text-zinc-400 mb-1">Revenue Historical CAGR</p>
+          <p className="text-lg font-semibold text-zinc-100 tabular-nums">
             {revenueCagr !== null ? `${revenueCagr.toFixed(1)}%` : "—"}
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-white/[0.04] border border-white/15">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-white mb-1">FCF Historical CAGR (Baseline Growth)</p>
-          <p className="font-syne font-bold text-2xl text-white">
+        <div className="p-3.5 rounded-lg bg-white/[0.04] border border-white/10">
+          <p className="text-xs text-zinc-200 font-medium mb-1">FCF Historical CAGR (Suggested Baseline)</p>
+          <p className="text-lg font-bold text-emerald-400 tabular-nums">
             {fcfCagr !== null ? `${fcfCagr.toFixed(1)}%` : "—"}
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Base Year Free Cash Flow</p>
-          <p className="font-syne font-bold text-2xl text-neutral-200">{formatMoney(baseFcf)}</p>
+        <div className="p-3.5 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+          <p className="text-xs text-zinc-400 mb-1">Base Year Free Cash Flow</p>
+          <p className="text-lg font-semibold text-zinc-100 tabular-nums">{formatMoney(baseFcf)}</p>
         </div>
       </div>
     </div>

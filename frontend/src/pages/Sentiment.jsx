@@ -5,31 +5,31 @@ import Icon from "../components/Icon.jsx";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 const LABEL_STYLES = {
-  Positive: { bg: "bg-[#22c55e]/10", text: "text-[#22c55e]", border: "border-[#22c55e]/30", dot: "bg-[#22c55e]" },
-  Negative: { bg: "bg-[#ef4444]/10", text: "text-[#ef4444]", border: "border-[#ef4444]/30", dot: "bg-[#ef4444]" },
-  Neutral: { bg: "bg-[#eab308]/10", text: "text-[#eab308]", border: "border-[#eab308]/30", dot: "bg-[#eab308]" },
+  Positive: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/25", dot: "bg-emerald-400" },
+  Negative: { bg: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/25", dot: "bg-rose-400" },
+  Neutral: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/25", dot: "bg-amber-400" },
 };
 
 function ExcerptCard({ excerpt }) {
   const normLabel = excerpt.label.charAt(0).toUpperCase() + excerpt.label.slice(1).toLowerCase();
   const style = LABEL_STYLES[normLabel] || LABEL_STYLES.Neutral;
   return (
-    <div className={`card p-6 bg-[#111111] border ${style.border} transition-all`}>
-      <div className="flex items-center justify-between mb-3 font-mono">
-        <span className={`inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider ${style.text}`}>
+    <div className={`card p-5 border ${style.border} transition-all`}>
+      <div className="flex items-center justify-between mb-3">
+        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${style.text}`}>
           <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
-          [ {normLabel} ]
+          <span>{normLabel}</span>
         </span>
-        <span className="text-[11px] text-neutral-400 px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10">
-          {(excerpt.score * 100).toFixed(0)}% CONFIDENCE
+        <span className="text-[11px] text-zinc-400 px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10 font-medium">
+          {(excerpt.score * 100).toFixed(0)}% Confidence
         </span>
       </div>
-      <p className="text-sm text-neutral-200 leading-relaxed font-sans italic">
+      <p className="text-sm text-zinc-200 leading-relaxed italic">
         "{excerpt.text}"
       </p>
-      <div className="flex items-center gap-2 font-mono text-[11px] text-neutral-500 mt-4 pt-3 border-t border-white/[0.06]">
-        <span className="uppercase">SOURCE:</span>
-        <span className="text-neutral-300">{excerpt.source_file}</span>
+      <div className="flex items-center gap-2 text-xs text-zinc-500 mt-3 pt-3 border-t border-white/[0.06]">
+        <span>Source:</span>
+        <span className="text-zinc-400 font-medium truncate">{excerpt.source_file}</span>
       </div>
     </div>
   );
@@ -89,153 +89,165 @@ export default function Sentiment() {
   const overallStyle = result ? (LABEL_STYLES[result.overall_label] || LABEL_STYLES.Neutral) : null;
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <PageHeader
-        title="SENTIMENT"
-        subtitle="05 // 10-K NLP ANALYSIS"
-        description="FinBERT sentence-level polarity scoring on uploaded annual reports. Scans MD&A and Risk Factors to detect tone shifts, management hesitation, and consistency across filings."
+        title="10-K Filing Sentiment Analysis"
+        subtitle="FinBERT NLP Transformer"
+        description="Sentence-level financial sentiment analysis on uploaded annual reports. Scans MD&amp;A and Risk Factors disclosures to detect tone shifts, hedging, and executive consistency."
       />
 
-      {/* Neozen Control Strip */}
-      <div className="flex flex-wrap gap-4 items-end p-4 rounded-xl bg-[#111111] border border-white/10">
-        <label className="flex flex-col gap-1.5">
-          <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">MARKET</span>
-          <select
-            value={market}
-            onChange={(e) => setMarket(e.target.value)}
-            className="bg-black/60 border border-white/10 rounded-lg px-3.5 py-2 font-mono text-sm text-white focus:outline-none focus:border-white"
-          >
-            <option value="US">US EQUITIES</option>
-            <option value="India">INDIA EQUITIES</option>
-          </select>
-        </label>
+      {/* Control Strip */}
+      <div className="card p-4 sm:p-5 flex flex-wrap gap-4 items-end justify-between">
+        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-zinc-400">Market</span>
+            <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => setMarket("US")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  market === "US"
+                    ? "bg-white/[0.12] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                US Equities
+              </button>
+              <button
+                type="button"
+                onClick={() => setMarket("India")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  market === "India"
+                    ? "bg-white/[0.12] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                India Equities
+              </button>
+            </div>
+          </div>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">TARGET COMPANY</span>
-          <select
-            value={companyId}
-            onChange={(e) => setCompanyId(e.target.value)}
-            className="bg-black/60 border border-white/10 rounded-lg px-3.5 py-2 font-mono text-sm text-white min-w-[260px] focus:outline-none focus:border-white"
-          >
-            <option value="">Select target company…</option>
-            {companies.map((c) => (
-              <option key={c.id} value={c.id} disabled={c.filings_count === 0}>
-                {c.ticker} {c.name ? `— ${c.name}` : ""} ({c.filings_count} filings)
-              </option>
-            ))}
-          </select>
-        </label>
+          <div className="flex flex-col gap-1.5">
+            <span className="text-xs font-medium text-zinc-400">Selected Stock</span>
+            <select
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-1.5 text-xs text-zinc-200 min-w-[260px] focus:outline-none focus:border-white/30 cursor-pointer"
+            >
+              <option value="">Select a stock from Watchlist…</option>
+              {companies.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.ticker} {c.name ? `— ${c.name}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
         <button
           onClick={runAnalysis}
-          disabled={!companyId || loading || (selectedCompany && selectedCompany.filings_count === 0)}
-          className="neo-btn-primary h-10"
+          disabled={!companyId || loading}
+          className="btn-primary text-xs disabled:opacity-40"
         >
           {loading ? (
             <>
-              <Icon name="refresh" size={13} className="animate-spin" />
-              <span>RUNNING FINBERT…</span>
-            </>
-          ) : result ? (
-            <>
-              <Icon name="refresh" size={13} />
-              <span>RE-ANALYZE FILINGS</span>
+              <div className="w-3.5 h-3.5 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+              <span>Analyzing 10-K Filings…</span>
             </>
           ) : (
-            <>
-              <Icon name="sparkles" size={13} />
-              <span>ANALYZE FILINGS</span>
-            </>
+            <span>Run FinBERT Analysis</span>
           )}
         </button>
       </div>
 
-      {selectedCompany && selectedCompany.filings_count === 0 && (
-        <div className="card border-[#eab308]/30 bg-[#eab308]/10 p-5 rounded-xl flex items-center gap-3">
-          <Icon name="warn" size={16} className="text-[#eab308] shrink-0" />
-          <p className="font-mono text-xs text-[#eab308]">
-            No annual reports uploaded for this company. Add 10-K filings on the Watchlist page first.
-          </p>
-        </div>
-      )}
-
       {error && (
-        <div className="card border-[#ef4444]/30 bg-[#ef4444]/10 p-5 rounded-xl font-mono text-xs text-[#ef4444]">
+        <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
           {error}
         </div>
       )}
 
-      {loading && (
-        <div className="card p-12 text-center bg-[#111111] border border-white/10 space-y-4 font-mono">
-          <div className="w-8 h-8 rounded-full border-2 border-t-white border-white/20 animate-spin mx-auto" />
-          <h4 className="font-syne font-bold text-lg uppercase text-white">RUNNING TRANSFORMER MODEL</h4>
-          <p className="text-xs text-neutral-400 max-w-sm mx-auto">
-            Extracting management disclosure statements and generating multi-year polarity tensors…
+      {!companyId && (
+        <div className="card p-12 text-center border-dashed border-white/15">
+          <h4 className="text-base font-semibold text-zinc-200 mb-1">
+            Select a Stock to Inspect 10-K Sentiment
+          </h4>
+          <p className="text-zinc-400 text-sm max-w-md mx-auto leading-relaxed">
+            Choose an asset from your active watchlist above to review executive tone trajectories and sentence-level sentiment scores.
           </p>
         </div>
       )}
 
-      {result && !loading && (
-        <div className="space-y-8">
-          {/* Overall Sentiment Glass Card */}
-          <div className={`card p-8 bg-[#111111] border ${overallStyle.border}`}>
-            <div className="flex items-center justify-between flex-wrap gap-6">
+      {companyId && !result && !loading && (
+        <div className="card p-12 text-center border-dashed border-white/15">
+          <h4 className="text-base font-semibold text-zinc-200 mb-2">
+            No Sentiment Analysis Run Yet
+          </h4>
+          <p className="text-zinc-400 text-sm max-w-md mx-auto mb-4 leading-relaxed">
+            Upload 10-K annual report PDFs in the Watchlist module, then click "Run FinBERT Analysis" above.
+          </p>
+          <button onClick={runAnalysis} className="btn-primary text-xs">
+            Run Analysis Now
+          </button>
+        </div>
+      )}
+
+      {result && (
+        <div className="space-y-6">
+          {/* Overall Score Banner */}
+          <div className="card p-6 border border-white/15">
+            <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-white/[0.08]">
               <div>
-                <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 block mb-1">
-                  [ OVERALL FILING TONE ]
-                </span>
-                <p className={`font-syne font-extrabold text-4xl sm:text-5xl uppercase tracking-tight ${overallStyle.text}`}>
-                  {result.overall_label}
-                </p>
-                <p className="font-mono text-xs text-neutral-400 mt-2">
-                  SCORE: <strong className="text-white">{result.overall_score.toFixed(2)}</strong> • {result.filings_analyzed} FILING(S) PROCESSED
-                </p>
-              </div>
-
-              {/* Three Stat Cards */}
-              <div className="flex gap-4">
-                <div className="p-4 rounded-xl bg-black/60 border border-white/10 text-center min-w-[90px]">
-                  <p className="font-syne font-extrabold text-2xl text-[#22c55e]">{result.positive_pct}%</p>
-                  <p className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest mt-1">POSITIVE</p>
-                </div>
-                <div className="p-4 rounded-xl bg-black/60 border border-white/10 text-center min-w-[90px]">
-                  <p className="font-syne font-extrabold text-2xl text-[#eab308]">{result.neutral_pct}%</p>
-                  <p className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest mt-1">NEUTRAL</p>
-                </div>
-                <div className="p-4 rounded-xl bg-black/60 border border-white/10 text-center min-w-[90px]">
-                  <p className="font-syne font-extrabold text-2xl text-[#ef4444]">{result.negative_pct}%</p>
-                  <p className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest mt-1">NEGATIVE</p>
+                <span className="text-xs text-zinc-400 block mb-1">Composite Tone Score</span>
+                <div className="flex items-center gap-3">
+                  <span className={`text-3xl sm:text-4xl font-bold tracking-tight ${overallStyle?.text}`}>
+                    {result.overall_label}
+                  </span>
+                  <span className="text-xs font-medium text-zinc-400 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 tabular-nums">
+                    {(result.overall_score * 100).toFixed(0)}% Confidence
+                  </span>
                 </div>
               </div>
+
+              <div className="flex items-center gap-6">
+                <div>
+                  <span className="text-xs text-zinc-500 block mb-1">Total Sentences</span>
+                  <span className="text-xl font-bold text-white tabular-nums">{result.sentences_analyzed}</span>
+                </div>
+                <div>
+                  <span className="text-xs text-zinc-500 block mb-1">Positive Ratio</span>
+                  <span className="text-xl font-bold text-emerald-400 tabular-nums">
+                    {result.positive_pct ? `${result.positive_pct.toFixed(0)}%` : "—"}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-xs text-zinc-500 block mb-1">Negative Ratio</span>
+                  <span className="text-xl font-bold text-rose-400 tabular-nums">
+                    {result.negative_pct ? `${result.negative_pct.toFixed(0)}%` : "—"}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Tri-color Progress Bar */}
-            <div className="w-full h-2 rounded-full overflow-hidden flex mt-8 bg-white/10">
-              <div className="bg-[#22c55e] h-full" style={{ width: `${result.positive_pct}%` }} />
-              <div className="bg-[#eab308] h-full" style={{ width: `${result.neutral_pct}%` }} />
-              <div className="bg-[#ef4444] h-full" style={{ width: `${result.negative_pct}%` }} />
-            </div>
+            {result.summary && (
+              <p className="text-sm text-zinc-300 leading-relaxed pt-5 max-w-3xl">
+                {result.summary}
+              </p>
+            )}
           </div>
 
-          {/* Highlighted Excerpts */}
-          <div className="space-y-4">
-            <span className="section-index">[ KEY DISCLOSURE STATEMENTS ]</span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {result.excerpts.map((excerpt, idx) => (
-                <ExcerptCard key={idx} excerpt={excerpt} />
-              ))}
+          {/* Excerpts Grid */}
+          {result.excerpts && result.excerpts.length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-zinc-300">
+                Key Sentence Excerpts from Filings
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {result.excerpts.map((ex, i) => (
+                  <ExcerptCard key={i} excerpt={ex} />
+                ))}
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {!result && !loading && companyId && !error && (
-        <div className="card p-12 text-center bg-[#111111] border border-white/10 space-y-3 font-mono">
-          <Icon name="sentiment" size={22} className="text-neutral-500 mx-auto" />
-          <h4 className="font-syne font-bold text-base text-white uppercase">No Sentiment Computed</h4>
-          <p className="text-xs text-neutral-500 max-w-sm mx-auto">
-            Click "Analyze Filings" above to run FinBERT on this company’s uploaded reports.
-          </p>
+          )}
         </div>
       )}
     </div>

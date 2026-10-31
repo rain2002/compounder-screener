@@ -20,7 +20,7 @@ function cagr(years, key) {
 
 const STATEMENTS = {
   income: {
-    label: "INCOME STATEMENT",
+    label: "Income Statement",
     metrics: [
       { key: "revenue", label: "Revenue", step: 10 },
       { key: "grossProfit", label: "Gross Profit", step: 10 },
@@ -32,7 +32,7 @@ const STATEMENTS = {
     ],
   },
   balance: {
-    label: "BALANCE SHEET",
+    label: "Balance Sheet",
     metrics: [
       { key: "totalDebt", label: "Total Debt", step: 10 },
       { key: "cash", label: "Cash & Equivalents", step: 10 },
@@ -44,10 +44,10 @@ const STATEMENTS = {
     ],
   },
   cashflow: {
-    label: "CASH FLOW STATEMENT",
+    label: "Cash Flow Statement",
     metrics: [
       { key: "operatingCashFlow", label: "Operating Cash Flow", step: 10 },
-      { key: "capex", label: "Capital Expenditures (CapEx)", step: 5 },
+      { key: "capex", label: "CapEx", step: 5 },
     ],
   },
 };
@@ -128,47 +128,45 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
   const activeMetrics = STATEMENTS[activeTab].metrics;
 
   return (
-    <div className="card p-6 mb-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+    <div className="card p-6 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="section-index text-[10px] mb-1 block">[ 01 // FINANCIAL STATEMENTS ]</span>
-          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-            10-YEAR HISTORICAL FUNDAMENTALS
+          <h3 className="text-base font-semibold text-white">
+            10-Year Historical Fundamentals
           </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Normalized statements from SEC EDGAR / BSE filings. Values entered in $M.
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={removeYear} className="neo-btn-ghost text-xs py-1.5 px-3">
-            − REMOVE YEAR
+          <button onClick={removeYear} className="btn-secondary text-xs py-1 px-3">
+            − Remove Year
           </button>
-          <button onClick={addYear} className="neo-btn-primary text-xs py-1.5 px-4">
-            + ADD YEAR
+          <button onClick={addYear} className="btn-primary text-xs py-1 px-3">
+            + Add Year
           </button>
         </div>
       </div>
 
-      <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed max-w-3xl">
-        Buffett and Lynch compounder framework across 10 fiscal cycles. Ingests EDGAR 10-K / 10-Q reports, normalizes working capital, and auto-calculates ROE, ROIC, and Cash Conversion.
-      </p>
-
       {excludedYears > 0 && (
-        <div className="flex items-center gap-2 mb-4 p-3 rounded-xl bg-white/5 border border-white/10">
-          <Icon name="check" size={14} className="text-white shrink-0" />
-          <p className="font-mono text-xs text-neutral-300">
-            {excludedYears} PRE-FOUNDING REPORTING YEAR(S) OMITTED FROM COMPOUND ANNUAL GROWTH RATES.
-          </p>
+        <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-zinc-900 border border-white/10 text-xs text-zinc-300">
+          <Icon name="check" size={14} className="text-emerald-400 shrink-0" />
+          <span>
+            {excludedYears} pre-founding reporting year(s) omitted from compound annual growth rates.
+          </span>
         </div>
       )}
 
       {/* Statement Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex flex-wrap gap-2 mb-4">
         {Object.entries(STATEMENTS).map(([key, s]) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`font-mono text-xs uppercase px-4 py-2 rounded-full transition-all ${
+            className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-all ${
               activeTab === key
-                ? "bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.15)]"
-                : "border border-white/10 bg-transparent text-neutral-400 hover:text-white hover:border-white/30"
+                ? "bg-white/[0.12] text-white shadow-sm border border-white/15"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
             }`}
           >
             {s.label}
@@ -177,19 +175,19 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
       </div>
 
       {/* Statement Table */}
-      <div className="overflow-x-auto -mx-2 mb-6">
-        <table className="w-full text-xs min-w-[720px]">
+      <div className="overflow-x-auto -mx-2 mb-5">
+        <table className="w-full text-xs min-w-[700px]">
           <thead>
-            <tr className="border-b border-white/10">
-              <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-widest text-neutral-400 sticky left-0 bg-[#111111] z-10">
-                LINE ITEM
+            <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
+              <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+                Line Item
               </th>
               {years.map((y, i) => (
-                <th key={i} className="px-2 py-2 text-center min-w-[95px]">
+                <th key={i} className="px-2 py-2 text-center min-w-[90px]">
                   <input
                     value={y.year}
                     onChange={(e) => updateYear(i, "year", e.target.value)}
-                    className="w-16 bg-neutral-900 border border-white/10 rounded-full text-center text-white font-mono text-xs py-0.5 focus:outline-none focus:border-white"
+                    className="w-16 bg-zinc-900 border border-white/10 rounded text-center text-zinc-200 font-semibold py-0.5 focus:outline-none focus:border-white/30"
                   />
                 </th>
               ))}
@@ -197,31 +195,31 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
           </thead>
           <tbody>
             {activeMetrics.map((m) => (
-              <tr key={m.key} className="border-b border-white/5 hover:bg-white/[0.02]">
-                <td className="px-3 py-2 font-mono text-neutral-400 sticky left-0 bg-[#111111] z-10 whitespace-nowrap">
-                  {m.label} {!m.noScale && <span className="text-neutral-500">($M)</span>}
+              <tr key={m.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10 whitespace-nowrap">
+                  {m.label} {!m.noScale && <span className="text-zinc-500">($M)</span>}
                 </td>
                 {years.map((y, i) => (
-                  <td key={i} className="px-1.5 py-1.5 text-center">
+                  <td key={i} className="px-1.5 py-1 text-center">
                     <input
                       type="number"
                       step={m.step}
                       value={y[m.key]}
                       onChange={(e) => updateYear(i, m.key, parseFloat(e.target.value) || 0)}
-                      className="w-full bg-neutral-900/80 border border-white/5 rounded-full px-2 py-1 text-white font-mono text-xs text-center focus:outline-none focus:border-white transition-all"
+                      className="w-full bg-zinc-900/80 border border-white/5 rounded px-2 py-1 text-zinc-200 text-xs text-center focus:outline-none focus:border-white/30 tabular-nums transition-all"
                     />
                   </td>
                 ))}
               </tr>
             ))}
             {activeTab === "cashflow" && (
-              <tr className="bg-white/[0.03] border-t border-white/10">
-                <td className="px-3 py-3 font-mono font-bold text-white uppercase sticky left-0 bg-[#161616] z-10">
-                  FREE CASH FLOW (OCF − CAPEX)
+              <tr className="bg-white/[0.03] border-t border-white/10 font-semibold">
+                <td className="px-3 py-2.5 text-zinc-100 sticky left-0 bg-[#151518] z-10">
+                  Free Cash Flow (OCF − CapEx)
                 </td>
                 {derived.map((d, i) => (
-                  <td key={i} className="px-2 py-3 text-center">
-                    <span className="font-mono text-xs font-bold text-white">
+                  <td key={i} className="px-2 py-2.5 text-center">
+                    <span className="text-xs text-emerald-400 font-semibold tabular-nums">
                       {formatMoney(d.fcf)}
                     </span>
                   </td>
@@ -233,11 +231,11 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
       </div>
 
       {/* CAGR Highlights */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 pt-5 border-t border-white/10">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5 pt-4 border-t border-white/[0.06]">
         {activeMetrics.slice(0, 4).map((m) => (
-          <div key={m.key} className="p-3.5 rounded-xl bg-black/40 border border-white/5">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">{m.label} CAGR</p>
-            <p className="font-syne font-bold text-xl text-white">
+          <div key={m.key} className="p-3 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+            <p className="text-xs text-zinc-400 mb-1">{m.label} CAGR</p>
+            <p className="text-lg font-semibold text-zinc-100 tabular-nums">
               {cagrs[m.key] !== null ? `${cagrs[m.key].toFixed(1)}%` : "—"}
             </p>
           </div>
@@ -245,8 +243,10 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
       </div>
 
       {/* Buffett + Lynch Checklist */}
-      <div className="pt-6 border-t border-white/10">
-        <span className="section-index text-[10px] mb-3 block">[ 01.1 // MOAT &amp; CAPITAL ALLOCATION CHECKLIST ]</span>
+      <div className="pt-4 border-t border-white/[0.06]">
+        <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-3">
+          Buffett &amp; Lynch Quality Moat Checklist (Latest Year)
+        </h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           <RatioCell label="ROE (>15%)" value={`${lastDerived.roe.toFixed(1)}%`} good={lastDerived.roe >= 15} />
           <RatioCell label="ROIC (>15%)" value={`${lastDerived.roic.toFixed(1)}%`} good={lastDerived.roic >= 15} />
@@ -258,7 +258,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
           <RatioCell label="Operating Margin" value={`${lastDerived.operatingMargin.toFixed(1)}%`} good={lastDerived.operatingMargin >= firstDerived.operatingMargin} />
           <RatioCell label="Net Margin Trend" value={`${lastDerived.netMargin.toFixed(1)}%`} good={lastDerived.netMargin >= firstDerived.netMargin} />
           <RatioCell label="Cash Conversion (>1.0x)" value={`${lastDerived.cashConversion.toFixed(2)}x`} good={lastDerived.cashConversion >= 1} />
-          <RatioCell label="FCF Generative" value={formatMoney(lastDerived.fcf)} good={lastDerived.fcf > 0} />
+          <RatioCell label="FCF Positive" value={formatMoney(lastDerived.fcf)} good={lastDerived.fcf > 0} />
           <RatioCell label="FCF 10-Yr CAGR" value={cagrs.fcf !== null ? `${cagrs.fcf.toFixed(1)}%` : "—"} good={cagrs.fcf > 0} />
         </div>
       </div>
@@ -268,12 +268,12 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
 
 function RatioCell({ label, value, good }) {
   return (
-    <div className={`p-3 rounded-xl border ${good ? "border-buy/20 bg-buy/[0.04]" : "border-watch/20 bg-watch/[0.04]"}`}>
-      <div className="flex items-center justify-between mb-1">
-        <span className="font-mono text-[9px] uppercase tracking-widest text-neutral-400">{label}</span>
-        <span className={`w-1.5 h-1.5 rounded-full ${good ? "bg-buy" : "bg-watch"}`} />
+    <div className={`p-2.5 rounded-lg border ${good ? "border-emerald-500/20 bg-emerald-500/[0.04]" : "border-amber-500/20 bg-amber-500/[0.04]"}`}>
+      <div className="flex items-center justify-between mb-0.5">
+        <span className="text-[11px] text-zinc-400">{label}</span>
+        <span className={`w-1.5 h-1.5 rounded-full ${good ? "bg-emerald-400" : "bg-amber-400"}`} />
       </div>
-      <p className={`font-syne font-bold text-base ${good ? "text-buy" : "text-watch"}`}>{value}</p>
+      <p className={`text-sm font-semibold tabular-nums ${good ? "text-emerald-400" : "text-amber-400"}`}>{value}</p>
     </div>
   );
 }

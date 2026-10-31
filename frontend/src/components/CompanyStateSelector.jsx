@@ -3,9 +3,9 @@ import { useState, useEffect, useCallback } from "react";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 /**
- * Neozen Architectural Company State Selector
- * Allows switching between US / India equites and company profiles with
- * persistent auto-saving and JetBrains Mono indicators.
+ * Clean, smooth Company State Selector
+ * Allows switching between US / India equities and company profiles with
+ * persistent auto-saving.
  */
 export default function CompanyStateSelector({ pageName, children }) {
   const [market, setMarket] = useState("US");
@@ -62,10 +62,10 @@ export default function CompanyStateSelector({ pageName, children }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ state: stateValue }),
         });
-        setStatus("STATE SYNCED");
+        setStatus("Saved");
         setTimeout(() => setStatus(""), 1600);
       } catch {
-        setStatus("SYNC FAILED");
+        setStatus("Save failed");
       }
     },
     [companyId, pageName]
@@ -79,25 +79,41 @@ export default function CompanyStateSelector({ pageName, children }) {
       <div className="card p-4 sm:p-5 mb-8 flex flex-wrap gap-4 sm:gap-6 items-end justify-between">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex flex-col gap-1.5">
-            <span className="section-index text-[10px]">MARKET DOMAIN</span>
-            <select
-              value={market}
-              onChange={(e) => setMarket(e.target.value)}
-              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-pointer"
-            >
-              <option value="US">US EQUITIES (NASDAQ / NYSE)</option>
-              <option value="India">INDIA EQUITIES (NSE / BSE)</option>
-            </select>
+            <span className="text-xs font-medium text-zinc-400">Market</span>
+            <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => setMarket("US")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  market === "US"
+                    ? "bg-white/[0.12] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                US Equities
+              </button>
+              <button
+                type="button"
+                onClick={() => setMarket("India")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  market === "India"
+                    ? "bg-white/[0.12] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                India Equities
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="section-index text-[10px]">ACTIVE ENTITY</span>
+            <span className="text-xs font-medium text-zinc-400">Selected Stock</span>
             <select
               value={companyId}
               onChange={(e) => setCompanyId(e.target.value)}
-              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white min-w-[260px] focus:outline-none focus:border-white focus:ring-1 focus:ring-white transition-all cursor-pointer"
+              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-1.5 text-xs text-zinc-200 min-w-[260px] focus:outline-none focus:border-white/30 transition-all cursor-pointer"
             >
-              <option value="">SELECT TARGET FROM WATCHLIST…</option>
+              <option value="">Select a stock from Watchlist…</option>
               {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.ticker} {c.name ? `— ${c.name}` : ""}
@@ -109,13 +125,14 @@ export default function CompanyStateSelector({ pageName, children }) {
 
         <div className="flex items-center gap-3">
           {status && (
-            <span className="font-mono text-[10px] tracking-widest text-buy uppercase px-3 py-1 rounded-full border border-buy/30 bg-buy/10">
-              ● {status}
+            <span className="text-xs font-medium text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>{status}</span>
             </span>
           )}
           {selectedCompany && (
-            <span className="neo-tag">
-              PROFILE: {selectedCompany.ticker}
+            <span className="text-xs font-medium text-zinc-400 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10">
+              {selectedCompany.ticker}
             </span>
           )}
         </div>
@@ -123,21 +140,20 @@ export default function CompanyStateSelector({ pageName, children }) {
 
       {!companyId && (
         <div className="card p-12 text-center border-dashed border-white/15 my-6">
-          <p className="section-index text-xs mb-2">TARGET UNASSIGNED</p>
-          <h4 className="font-syne font-bold text-lg text-white uppercase mb-2">
-            SELECT A WATCHLIST ENTITY TO INITIALIZE TELEMETRY
+          <h4 className="text-base font-semibold text-zinc-200 mb-2">
+            Select a Stock to Load Financials
           </h4>
-          <p className="text-neutral-400 font-sans text-xs max-w-md mx-auto leading-relaxed">
-            Choose an asset from the active universe above to synchronize {pageName === "dcf" ? "discounted cash flow trajectories, Monte Carlo simulations, and WACC matrices" : "10-year historical statements, multi-scenario CAGRs, and guardrailed forecasts"}.
+          <p className="text-zinc-400 text-sm max-w-md mx-auto leading-relaxed">
+            Choose an asset from your active watchlist above to synchronize {pageName === "dcf" ? "discounted cash flow projections, WACC hurdle rate, and Monte Carlo simulations" : "10-year historical statements, multi-scenario CAGRs, and guardrailed forecasts"}.
           </p>
         </div>
       )}
 
       {companyId && isLoading && (
         <div className="card p-12 text-center border-white/10 my-6">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-          <p className="font-mono text-xs uppercase tracking-widest text-neutral-400">
-            LOADING MODEL TELEMETRY &amp; PROJECTIONS…
+          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-zinc-400">
+            Loading company data &amp; projections…
           </p>
         </div>
       )}

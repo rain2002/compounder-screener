@@ -11,9 +11,9 @@ function makeScenarios(baseGrowth, gm, ebitda, ebit, net, ocf) {
 
 export const SECTORS = {
   general: { label: "General Industrial / Mixed", maxGrowthCap: 40, minGrowthFloor: -20, note: "Standard cross-industry guardrails applied.", templateScenarios: makeScenarios(10, 50, 20, 15, 10, 15) },
-  software: { label: "Software / Cloud / SaaS", maxGrowthCap: 45, minGrowthFloor: -15, note: "Recurring revenue dampens short-term swings but watch for deceleration.", templateScenarios: makeScenarios(15, 75, 25, 20, 15, 25) },
-  retail: { label: "Retail & Consumer Discretionary", maxGrowthCap: 30, minGrowthFloor: -25, note: "Working capital turnover and inventory inventory cycles dominate.", templateScenarios: makeScenarios(5, 35, 10, 7, 4, 8) },
-  industrials: { label: "Heavy Industrials & Capital Goods", maxGrowthCap: 25, minGrowthFloor: -30, note: "Backlog conversion and fixed-asset capacity drive margins.", templateScenarios: makeScenarios(6, 40, 15, 10, 7, 12) },
+  software: { label: "Software & Cloud Services", maxGrowthCap: 45, minGrowthFloor: -15, note: "Recurring revenue dampens short-term swings but watch for growth deceleration.", templateScenarios: makeScenarios(15, 75, 25, 20, 15, 25) },
+  retail: { label: "Retail & Consumer Goods", maxGrowthCap: 30, minGrowthFloor: -25, note: "Working capital turnover and inventory cycles dominate margin swings.", templateScenarios: makeScenarios(5, 35, 10, 7, 4, 8) },
+  industrials: { label: "Industrials & Manufacturing", maxGrowthCap: 25, minGrowthFloor: -30, note: "Backlog conversion and fixed-asset capacity drive margins.", templateScenarios: makeScenarios(6, 40, 15, 10, 7, 12) },
   healthcare: { label: "Healthcare & Pharmaceuticals", maxGrowthCap: 35, minGrowthFloor: -20, note: "Patent expiration curves and pipeline milestones dictate long-term ROIC.", templateScenarios: makeScenarios(8, 65, 25, 20, 15, 20) },
   semiconductors: { label: "Semiconductors & Equipment", maxGrowthCap: 50, minGrowthFloor: -35, note: "High cyclicality: silicon capex waves cause massive margin swings.", templateScenarios: makeScenarios(12, 55, 30, 25, 20, 25) },
   energy: { label: "Energy & Commodity Materials", maxGrowthCap: 40, minGrowthFloor: -40, note: "Topline is heavily tied to underlying benchmark pricing.", templateScenarios: makeScenarios(4, 30, 20, 15, 10, 15) },
@@ -162,18 +162,20 @@ export default function FinancialForecast({
   const activeForecast = forecasts[displayScenario];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Weighted CAGR Overview Card */}
       <div className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
           <div>
-            <span className="section-index text-[10px] mb-1 block">[ 02 // FORWARD PROJECTIONS ]</span>
-            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-              MULTI-HORIZON REVENUE WEIGHTING
+            <h3 className="text-base font-semibold text-white">
+              Multi-Horizon Revenue Weighting
             </h3>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Blends 3Y (45%), 5Y (30%), 10Y (15%) CAGRs plus recent momentum (10%).
+            </p>
           </div>
           <div className="flex flex-col gap-1">
-            <span className="section-index text-[10px]">SECTOR MATRIX TEMPLATE</span>
+            <span className="text-xs font-medium text-zinc-400">Sector Template</span>
             <select
               value={sector}
               onChange={(e) => {
@@ -183,7 +185,7 @@ export default function FinancialForecast({
                   onScenariosChange(SECTORS[newSector].templateScenarios);
                 }
               }}
-              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-white cursor-pointer"
+              className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-white/30 cursor-pointer"
             >
               {Object.entries(SECTORS).map(([key, s]) => (
                 <option key={key} value={key}>{s.label}</option>
@@ -192,86 +194,73 @@ export default function FinancialForecast({
           </div>
         </div>
 
-        <p className="text-neutral-400 font-sans text-xs mb-4 leading-relaxed max-w-3xl">
-          Blends 3Y (45%), 5Y (30%), 10Y (15%) CAGRs plus recent momentum (10%) to estimate base revenue expansion before asymptotic growth decay.
-        </p>
-
-        <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/10 mb-6">
-          <Icon name="check" size={14} className="text-white shrink-0" />
-          <p className="font-mono text-xs text-neutral-300">{sectorConfig.note}</p>
+        <div className="flex items-center gap-2 p-3 rounded-lg bg-zinc-900/60 border border-white/[0.06] mb-5 text-xs text-zinc-300">
+          <Icon name="check" size={14} className="text-emerald-400 shrink-0" />
+          <span>{sectorConfig.note}</span>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/5">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">3Y Revenue CAGR</p>
-            <p className="font-syne font-bold text-xl text-white">
+          <div className="p-3 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+            <p className="text-xs text-zinc-400 mb-1">3Y Revenue CAGR</p>
+            <p className="text-lg font-semibold text-zinc-200 tabular-nums">
               {weighted.cagr3 !== null ? `${weighted.cagr3.toFixed(1)}%` : "—"}
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/5">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">5Y Revenue CAGR</p>
-            <p className="font-syne font-bold text-xl text-white">
+          <div className="p-3 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+            <p className="text-xs text-zinc-400 mb-1">5Y Revenue CAGR</p>
+            <p className="text-lg font-semibold text-zinc-200 tabular-nums">
               {weighted.cagr5 !== null ? `${weighted.cagr5.toFixed(1)}%` : "—"}
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-black/40 border border-white/5">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">10Y Revenue CAGR</p>
-            <p className="font-syne font-bold text-xl text-white">
+          <div className="p-3 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+            <p className="text-xs text-zinc-400 mb-1">10Y Revenue CAGR</p>
+            <p className="text-lg font-semibold text-zinc-200 tabular-nums">
               {weighted.cagr10 !== null ? `${weighted.cagr10.toFixed(1)}%` : "—"}
             </p>
           </div>
-          <div className="p-3.5 rounded-xl bg-white/[0.04] border border-white/15">
-            <p className="font-mono text-[10px] uppercase tracking-widest text-white mb-1">Weighted Target</p>
-            <p className="font-syne font-bold text-xl text-white">{weighted.weighted.toFixed(1)}%</p>
+          <div className="p-3 rounded-lg bg-white/[0.04] border border-white/10">
+            <p className="text-xs text-zinc-200 font-medium mb-1">Weighted Target</p>
+            <p className="text-lg font-bold text-emerald-400 tabular-nums">{weighted.weighted.toFixed(1)}%</p>
           </div>
         </div>
       </div>
 
       {/* Scenario Assumptions Matrix */}
       <div className="card p-6">
-        <div className="flex items-center justify-between mb-2 pb-3 border-b border-white/5">
-          <div>
-            <span className="section-index text-[10px] mb-1 block">[ 02.1 // SCENARIO MARGIN MATRIX ]</span>
-            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-              PROJECTION MARGIN ASSUMPTIONS
-            </h3>
-          </div>
+        <div className="mb-4 pb-3 border-b border-white/[0.06]">
+          <h3 className="text-base font-semibold text-white">
+            Forward Margin Assumptions
+          </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Latest reporting margins: Gross {currentMargins.grossMargin.toFixed(1)}% · EBITDA {currentMargins.ebitdaMargin.toFixed(1)}% · EBIT {currentMargins.ebitMargin.toFixed(1)}% · Net {currentMargins.netMargin.toFixed(1)}% · OCF {currentMargins.ocfMargin.toFixed(1)}%.
+          </p>
         </div>
-        <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed">
-          Latest historical reporting margins: Gross {currentMargins.grossMargin.toFixed(1)}% · EBITDA {currentMargins.ebitdaMargin.toFixed(1)}% · EBIT {currentMargins.ebitMargin.toFixed(1)}% · Net {currentMargins.netMargin.toFixed(1)}% · OCF {currentMargins.ocfMargin.toFixed(1)}%.
-        </p>
 
-        <div className="overflow-x-auto -mx-2 mb-6">
-          <table className="w-full text-xs min-w-[640px]">
+        <div className="overflow-x-auto -mx-2 mb-5">
+          <table className="w-full text-xs min-w-[600px]">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-widest text-neutral-400 sticky left-0 bg-[#111111] z-10">
-                  VARIABLE
+              <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
+                <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+                  Assumption
                 </th>
-                <th className="px-2 py-2 text-center font-mono text-[10px] uppercase tracking-widest text-neutral-400">
-                  CONSERVATIVE
-                </th>
-                <th className="px-2 py-2 text-center font-mono text-[10px] uppercase tracking-widest text-neutral-400">
-                  NORMAL BASELINE
-                </th>
-                <th className="px-2 py-2 text-center font-mono text-[10px] uppercase tracking-widest text-neutral-400">
-                  OPTIMISTIC
-                </th>
+                <th className="px-2 py-2 text-center font-medium text-zinc-300">Conservative</th>
+                <th className="px-2 py-2 text-center font-medium text-zinc-300">Normal Baseline</th>
+                <th className="px-2 py-2 text-center font-medium text-zinc-300">Optimistic</th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b border-white/5">
-                <td className="px-3 py-2 font-mono text-neutral-400 sticky left-0 bg-[#111111] z-10">
+              <tr className="border-b border-white/[0.04]">
+                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10">
                   Revenue Growth (%)
                 </td>
                 {["conservative", "normal", "optimistic"].map((key) => (
-                  <td key={key} className="px-2 py-1.5 text-center">
+                  <td key={key} className="px-2 py-1 text-center">
                     <input
                       type="number"
                       step="0.5"
                       value={scenarios[key].growth}
                       onChange={(e) => updateScenario(key, "growth", parseFloat(e.target.value) || 0)}
-                      className="w-24 bg-neutral-900 border border-white/10 rounded-full px-2 py-1 text-white font-mono text-xs text-center focus:outline-none focus:border-white"
+                      className="w-24 bg-zinc-900 border border-white/10 rounded px-2 py-1 text-zinc-200 text-xs text-center focus:outline-none focus:border-white/30 tabular-nums"
                     />
                   </td>
                 ))}
@@ -283,18 +272,18 @@ export default function FinancialForecast({
                 { key: "netMargin", label: "Net Margin (%)" },
                 { key: "ocfMargin", label: "OCF Margin (%)" },
               ].map((m) => (
-                <tr key={m.key} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-3 py-2 font-mono text-neutral-400 sticky left-0 bg-[#111111] z-10">
+                <tr key={m.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                  <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10">
                     {m.label}
                   </td>
                   {["conservative", "normal", "optimistic"].map((key) => (
-                    <td key={key} className="px-2 py-1.5 text-center">
+                    <td key={key} className="px-2 py-1 text-center">
                       <input
                         type="number"
                         step="0.5"
                         value={scenarios[key].margins[m.key]}
                         onChange={(e) => updateScenarioMargin(key, m.key, parseFloat(e.target.value) || 0)}
-                        className="w-24 bg-neutral-900 border border-white/10 rounded-full px-2 py-1 text-white font-mono text-xs text-center focus:outline-none focus:border-white"
+                        className="w-24 bg-zinc-900 border border-white/10 rounded px-2 py-1 text-zinc-200 text-xs text-center focus:outline-none focus:border-white/30 tabular-nums"
                       />
                     </td>
                   ))}
@@ -305,9 +294,9 @@ export default function FinancialForecast({
         </div>
 
         {/* Global Controls */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-5 border-t border-white/10">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">FORECAST HORIZON</span>
+            <span className="text-xs font-medium text-zinc-400">Forecast Horizon</span>
             <div className="relative">
               <input
                 type="number"
@@ -316,14 +305,14 @@ export default function FinancialForecast({
                 max="5"
                 value={forecastYears}
                 onChange={(e) => onForecastYearsChange(Math.max(1, Math.min(5, parseInt(e.target.value) || 1)))}
-                className="w-full bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-white font-mono text-xs focus:outline-none focus:border-white"
+                className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-zinc-100 text-xs focus:outline-none focus:border-white/30 tabular-nums"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-neutral-400 text-xs pointer-events-none">YEARS</span>
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-xs pointer-events-none">years</span>
             </div>
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">GROWTH FADE FACTOR</span>
+            <span className="text-xs font-medium text-zinc-400">Growth Fade Factor</span>
             <input
               type="number"
               step="0.05"
@@ -331,20 +320,20 @@ export default function FinancialForecast({
               max="1"
               value={fadeFactor}
               onChange={(e) => onFadeFactorChange(Math.max(0, Math.min(1, parseFloat(e.target.value) || 0)))}
-              className="w-full bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-white font-mono text-xs focus:outline-none focus:border-white"
+              className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-zinc-100 text-xs focus:outline-none focus:border-white/30 tabular-nums"
             />
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">ACTIVE SCENARIO VIEW</span>
+            <span className="text-xs font-medium text-zinc-400">Display Scenario</span>
             <select
               value={displayScenario}
               onChange={(e) => onDisplayScenarioChange(e.target.value)}
-              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-white cursor-pointer"
+              className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-white/30 cursor-pointer"
             >
-              <option value="conservative">CONSERVATIVE CASE</option>
-              <option value="normal">NORMAL BASELINE</option>
-              <option value="optimistic">OPTIMISTIC CASE</option>
+              <option value="conservative">Conservative Case</option>
+              <option value="normal">Normal Baseline</option>
+              <option value="optimistic">Optimistic Case</option>
             </select>
           </label>
         </div>
@@ -352,55 +341,50 @@ export default function FinancialForecast({
 
       {/* Projection Table */}
       <div className="card p-6">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-white/5">
-          <div>
-            <span className="section-index text-[10px] mb-1 block">[ 02.2 // PRO FORMA OUTPUT ]</span>
-            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-              {displayScenario.toUpperCase()} CASE — FORWARD STATEMENTS ($M)
-            </h3>
-          </div>
+        <div className="mb-4 pb-3 border-b border-white/[0.06]">
+          <h3 className="text-base font-semibold text-white capitalize">
+            {displayScenario} Scenario — Pro Forma Forecast ($M)
+          </h3>
         </div>
 
         <div className="overflow-x-auto -mx-2">
-          <table className="w-full text-xs min-w-[640px]">
+          <table className="w-full text-xs min-w-[600px]">
             <thead>
-              <tr className="border-b border-white/10">
-                <th className="px-3 py-2 text-left font-mono text-[10px] uppercase tracking-widest text-neutral-400 sticky left-0 bg-[#111111] z-10">
-                  STATEMENT METRIC ($M)
+              <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
+                <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+                  Metric ($M)
                 </th>
-                <th className="px-2 py-2 text-center font-mono text-[10px] uppercase tracking-widest text-neutral-400">
-                  LATEST ACTUAL
-                </th>
+                <th className="px-2 py-2 text-center text-zinc-300">Latest Actual</th>
                 {activeForecast.map((f) => (
-                  <th key={f.year} className="px-2 py-2 text-center font-mono text-[10px] uppercase tracking-widest text-white">
-                    YEAR +{f.year}
+                  <th key={f.year} className="px-2 py-2 text-center text-zinc-200 font-semibold">
+                    Year +{f.year}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {METRIC_ROWS.map((m) => (
-                <tr key={m.key} className="border-b border-white/5 hover:bg-white/[0.02]">
-                  <td className="px-3 py-2 font-mono text-neutral-400 sticky left-0 bg-[#111111] z-10 whitespace-nowrap">
+                <tr key={m.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
+                  <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10 whitespace-nowrap">
                     {m.label}
                   </td>
-                  <td className="px-2 py-2 text-center font-mono text-neutral-300">
+                  <td className="px-2 py-2 text-center text-zinc-300 tabular-nums">
                     ${years[years.length - 1][m.key].toFixed(0)}
                   </td>
                   {activeForecast.map((f, i) => (
-                    <td key={i} className="px-2 py-2 text-center font-mono font-bold text-white">
+                    <td key={i} className="px-2 py-2 text-center font-medium text-zinc-100 tabular-nums">
                       ${f[m.key].toFixed(0)}
                     </td>
                   ))}
                 </tr>
               ))}
-              <tr className="bg-white/[0.03] border-t border-white/10">
-                <td className="px-3 py-2.5 font-mono font-bold text-white uppercase sticky left-0 bg-[#161616] z-10">
-                  REVENUE FADE VELOCITY (%)
+              <tr className="bg-white/[0.03] border-t border-white/10 font-medium">
+                <td className="px-3 py-2 text-zinc-200 sticky left-0 bg-[#151518] z-10">
+                  Revenue Growth Used (%)
                 </td>
-                <td className="px-2 py-2.5 text-center font-mono text-neutral-500">—</td>
+                <td className="px-2 py-2 text-center text-zinc-500">—</td>
                 {activeForecast.map((f, i) => (
-                  <td key={i} className="px-2 py-2.5 text-center font-mono font-bold text-neutral-300">
+                  <td key={i} className="px-2 py-2 text-center text-zinc-300 tabular-nums">
                     {f.growthUsed.toFixed(1)}%
                   </td>
                 ))}

@@ -1,25 +1,25 @@
 const styles = {
-  Buy: "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/30 dot-[#22c55e]",
-  Watch: "bg-[#eab308]/10 text-[#eab308] border-[#eab308]/30 dot-[#eab308]",
-  Caution: "bg-[#f97316]/10 text-[#f97316] border-[#f97316]/30 dot-[#f97316]",
-  Avoid: "bg-[#ef4444]/10 text-[#ef4444] border-[#ef4444]/30 dot-[#ef4444]",
+  Buy: "bg-emerald-500/10 text-emerald-400 border-emerald-500/25",
+  Watch: "bg-amber-500/10 text-amber-400 border-amber-500/25",
+  Caution: "bg-orange-500/10 text-orange-400 border-orange-500/25",
+  Avoid: "bg-rose-500/10 text-rose-400 border-rose-500/25",
 };
 
 const dotColors = {
-  Buy: "bg-[#22c55e]",
-  Watch: "bg-[#eab308]",
-  Caution: "bg-[#f97316]",
-  Avoid: "bg-[#ef4444]",
+  Buy: "bg-emerald-400",
+  Watch: "bg-amber-400",
+  Caution: "bg-orange-400",
+  Avoid: "bg-rose-400",
 };
 
 export default function RatingBadge({ rating }) {
-  if (!rating) return <span className="font-mono text-neutral-600 text-xs">—</span>;
-  const style = styles[rating] || "bg-white/5 text-neutral-300 border-white/10";
-  const dot = dotColors[rating] || "bg-white";
+  if (!rating) return <span className="text-zinc-500 text-xs">—</span>;
+  const style = styles[rating] || "bg-zinc-800 text-zinc-300 border-zinc-700";
+  const dot = dotColors[rating] || "bg-zinc-400";
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono uppercase tracking-wider border ${style}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${style}`}
     >
       <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
       <span>{rating}</span>

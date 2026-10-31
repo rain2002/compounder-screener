@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import PageHeader from "../components/PageHeader.jsx";
 import Icon from "../components/Icon.jsx";
 import { api } from "../api/client.js";
@@ -163,79 +164,74 @@ export default function Watchlist() {
   const slots = Array.from({ length: MAX_SLOTS }, (_, i) => companies[i] || null);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <PageHeader
-        title="WATCHLIST"
-        subtitle="02 // PORTFOLIO UNIVERSE"
-        description="Curated high-conviction universe tracking. Company financials and real-time quotes are synchronized automatically. Each slot stores up to 10 annual reports for NLP sentiment extraction."
+        title="Watchlist Universe"
+        subtitle="Portfolio Assets"
+        description="Curated high-conviction universe tracking. Company financials and real-time market prices are synchronized automatically. Each company stores up to 10 annual reports for NLP sentiment extraction."
       />
 
-      {/* Neozen Control Strip */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-[#111111] border border-white/10">
-        <div className="flex items-center gap-3">
-          <div className="inline-flex rounded-full bg-black border border-white/10 p-1">
+      {/* Control Strip */}
+      <div className="card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
             <button
               onClick={() => setMarket("US")}
-              className={`px-5 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-all ${
+              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
                 market === "US"
-                  ? "bg-white text-black font-bold"
-                  : "text-neutral-400 hover:text-white"
+                  ? "bg-white/[0.12] text-white shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              US EQUITIES
+              US Equities
             </button>
             <button
               onClick={() => setMarket("India")}
-              className={`px-5 py-1.5 rounded-full font-mono text-xs uppercase tracking-wider transition-all ${
+              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
                 market === "India"
-                  ? "bg-white text-black font-bold"
-                  : "text-neutral-400 hover:text-white"
+                  ? "bg-white/[0.12] text-white shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200"
               }`}
             >
-              INDIA EQUITIES
+              India Equities
             </button>
           </div>
 
-          <span className="font-mono text-xs text-neutral-500 pl-2">
-            [ {companies.length} / {MAX_SLOTS} SLOTS ]
+          <span className="text-xs text-zinc-400">
+            {companies.length} of {MAX_SLOTS} slots used
           </span>
         </div>
 
         <button
           onClick={() => refreshLivePrices(companies)}
           disabled={refreshing || companies.length === 0}
-          className="neo-btn-ghost text-xs disabled:opacity-40"
+          className="btn-secondary text-xs disabled:opacity-40"
         >
           <Icon name="refresh" size={13} className={refreshing ? "animate-spin" : ""} />
-          <span>{refreshing ? "UPDATING..." : "REFRESH QUOTES"}</span>
+          <span>{refreshing ? "Updating..." : "Refresh Prices"}</span>
         </button>
       </div>
 
-      {/* Neozen Add Stock Module */}
-      <div className="card p-7 bg-[#111111] border border-white/10">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500 block">
-              ACTION // ADD TARGET
-            </span>
-            <h3 className="font-syne font-extrabold text-xl uppercase tracking-tight text-white mt-1">
-              Add Company to Universe
-            </h3>
-            <p className="font-mono text-xs text-neutral-400 mt-1">
-              {market === "US"
-                ? "Enter US ticker (e.g. AAPL, MSFT, GOOGL, NVDA) to sync fundamentals."
-                : "Enter Indian NSE/BSE symbol (e.g. RELIANCE.NS, TCS.NS, INFY.NS)."}
-            </p>
-          </div>
+      {/* Add Stock Card */}
+      <div className="card p-6">
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-white">
+            Add Stock to Universe
+          </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            {market === "US"
+              ? "Enter a US stock ticker (e.g. AAPL, MSFT, GOOGL, NVDA) to sync financials."
+              : "Enter an Indian NSE/BSE symbol (e.g. RELIANCE.NS, TCS.NS, INFY.NS)."}
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-4 items-end pt-3">
+        <div className="flex flex-wrap gap-4 items-end">
           <label className="flex flex-col gap-1.5 min-w-[160px]">
-            <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">TICKER SYMBOL</span>
+            <span className="text-xs font-medium text-zinc-400">Ticker Symbol</span>
             <input
               value={ticker}
               onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              className="bg-black/60 border border-white/10 rounded-lg px-3.5 py-2.5 font-mono text-white text-sm focus:outline-none focus:border-white transition-all uppercase placeholder:normal-case placeholder:text-neutral-600"
+              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-white/30 uppercase placeholder:normal-case placeholder:text-zinc-600"
               placeholder={market === "US" ? "AAPL" : "RELIANCE.NS"}
             />
           </label>
@@ -243,40 +239,40 @@ export default function Watchlist() {
           {market === "India" && (
             <>
               <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">COMPANY NAME</span>
+                <span className="text-xs font-medium text-zinc-400">Company Name</span>
                 <input
                   value={indiaForm.name}
                   onChange={(e) => setIndiaForm({ ...indiaForm, name: e.target.value })}
-                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm focus:outline-none focus:border-white transition-all"
+                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-white/30"
                   placeholder="e.g. Infosys Ltd"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">PRICE ₹</span>
+                <span className="text-xs font-medium text-zinc-400">Price (₹)</span>
                 <input
                   type="number"
                   value={indiaForm.price}
                   onChange={(e) => setIndiaForm({ ...indiaForm, price: e.target.value })}
-                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm w-28 focus:outline-none focus:border-white transition-all"
+                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm w-28 focus:outline-none focus:border-white/30"
                   placeholder="0.00"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">MKT CAP ₹</span>
+                <span className="text-xs font-medium text-zinc-400">Market Cap (₹)</span>
                 <input
                   type="number"
                   value={indiaForm.market_cap}
                   onChange={(e) => setIndiaForm({ ...indiaForm, market_cap: e.target.value })}
-                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm w-32 focus:outline-none focus:border-white transition-all"
+                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm w-32 focus:outline-none focus:border-white/30"
                   placeholder="0"
                 />
               </label>
               <label className="flex flex-col gap-1.5">
-                <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest">SECTOR</span>
+                <span className="text-xs font-medium text-zinc-400">Sector</span>
                 <input
                   value={indiaForm.sector}
                   onChange={(e) => setIndiaForm({ ...indiaForm, sector: e.target.value })}
-                  className="bg-black/60 border border-white/10 rounded-lg px-3 py-2.5 font-mono text-white text-sm focus:outline-none focus:border-white transition-all"
+                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-white/30"
                   placeholder="Technology"
                 />
               </label>
@@ -286,15 +282,15 @@ export default function Watchlist() {
           <button
             onClick={addCompany}
             disabled={loading}
-            className="neo-btn-primary h-11"
+            className="btn-primary h-9.5 px-4"
           >
-            <span>{loading ? "ADDING..." : "ADD TARGET"}</span>
+            <span>{loading ? "Adding..." : "Add to Watchlist"}</span>
             <Icon name="arrowRight" size={13} />
           </button>
         </div>
 
         {error && (
-          <div className="mt-4 p-3 rounded-lg bg-[#ef4444]/10 border border-[#ef4444]/20 font-mono text-xs text-[#ef4444]">
+          <div className="mt-4 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-xs text-rose-300">
             {error}
           </div>
         )}
@@ -305,69 +301,77 @@ export default function Watchlist() {
         {slots.map((company, idx) => (
           <div
             key={idx}
-            className={`card p-6 min-h-[190px] transition-all bg-[#111111] border ${
-              company ? "border-white/10 hover:border-white/30" : "border-white/[0.04] opacity-50"
+            className={`card p-5 min-h-[190px] transition-all ${
+              company ? "hover:border-zinc-700/80" : "border-dashed border-white/10 opacity-40"
             }`}
           >
             {company ? (
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-syne font-extrabold text-2xl uppercase tracking-tight text-white">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl font-bold text-white tracking-tight">
                         {company.ticker}
                       </span>
-                      <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest px-2 py-0.5 rounded-full border border-white/10 bg-white/[0.04]">
-                        SLOT 0{company.slot}
+                      <span className="text-[11px] font-medium text-zinc-400 px-2 py-0.5 rounded-full bg-white/[0.04] border border-white/10">
+                        Slot {company.slot}
                       </span>
                     </div>
-                    <p className="font-mono text-xs text-neutral-400 mt-1 uppercase">
+                    <p className="text-xs text-zinc-400 mt-0.5">
                       {company.name || "—"}
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => deleteCompany(company)}
-                    className="font-mono text-[11px] uppercase tracking-wider text-[#ef4444] hover:text-white px-2.5 py-1 rounded-full border border-[#ef4444]/30 hover:bg-[#ef4444] transition-all"
-                  >
-                    REMOVE
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      to="/dcf"
+                      className="text-xs font-medium text-zinc-300 hover:text-white px-2.5 py-1 rounded-md bg-white/[0.04] hover:bg-white/[0.08] transition-colors"
+                    >
+                      DCF
+                    </Link>
+                    <button
+                      onClick={() => deleteCompany(company)}
+                      className="text-xs text-rose-400 hover:text-rose-300 px-2.5 py-1 rounded-md hover:bg-rose-500/10 transition-colors"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
 
                 {/* Metrics Bar */}
-                <div className="grid grid-cols-3 gap-2 p-3.5 rounded-xl bg-black/50 border border-white/[0.06] font-mono text-xs">
+                <div className="grid grid-cols-3 gap-2 p-3 rounded-lg bg-zinc-950/60 border border-white/[0.06] text-xs">
                   <div>
-                    <span className="text-neutral-500 text-[10px] uppercase tracking-widest block">PRICE</span>
-                    <span className="font-bold text-white mt-1 block font-syne text-sm">
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-wider block">Price</span>
+                    <span className="font-semibold text-white mt-0.5 block text-sm tabular-nums">
                       {formatPrice(livePrices[company.ticker] ?? company.price, company.market)}
                     </span>
                     {livePrices[company.ticker] !== undefined && (
-                      <span className="text-[#22c55e] text-[9px] uppercase tracking-wider">● LIVE</span>
+                      <span className="text-emerald-400 text-[10px] font-medium">● Live</span>
                     )}
                   </div>
                   <div>
-                    <span className="text-neutral-500 text-[10px] uppercase tracking-widest block">MKT CAP</span>
-                    <span className="font-bold text-white mt-1 block font-syne text-sm">
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-wider block">Market Cap</span>
+                    <span className="font-semibold text-white mt-0.5 block text-sm tabular-nums">
                       {formatMarketCap(company.market_cap, company.market)}
                     </span>
                   </div>
                   <div>
-                    <span className="text-neutral-500 text-[10px] uppercase tracking-widest block">SECTOR</span>
-                    <span className="font-bold text-white mt-1 block truncate text-xs" title={company.sector}>
-                      {company.sector ? company.sector.toUpperCase() : "GENERAL"}
+                    <span className="text-zinc-500 text-[10px] uppercase tracking-wider block">Sector</span>
+                    <span className="font-semibold text-white mt-0.5 block truncate text-xs" title={company.sector}>
+                      {company.sector ? company.sector : "General"}
                     </span>
                   </div>
                 </div>
 
                 {/* Annual Report Filings */}
-                <div className="pt-2">
+                <div className="pt-1">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-500">
-                      10-K FILINGS ({company.filings.length}/{MAX_FILINGS})
+                    <span className="text-xs font-medium text-zinc-400">
+                      10-K Filings ({company.filings.length}/{MAX_FILINGS})
                     </span>
-                    <label className="font-mono text-xs text-white hover:underline cursor-pointer uppercase tracking-wider inline-flex items-center gap-1">
+                    <label className="text-xs text-zinc-300 hover:text-white cursor-pointer inline-flex items-center gap-1 font-medium">
                       <Icon name="upload" size={12} />
-                      <span>UPLOAD PDF</span>
+                      <span>Upload PDF</span>
                       <input
                         type="file"
                         accept=".pdf"
@@ -379,18 +383,18 @@ export default function Watchlist() {
                   </div>
 
                   {company.filings.length > 0 ? (
-                    <ul className="space-y-2 mt-2">
+                    <ul className="space-y-1.5 mt-2">
                       {company.filings.map((filing) => (
                         <li
                           key={filing.id}
-                          className="flex items-center justify-between bg-black/40 border border-white/[0.06] rounded-lg px-3 py-2 text-xs font-mono"
+                          className="flex items-center justify-between bg-zinc-950/40 border border-white/[0.06] rounded-md px-3 py-1.5 text-xs"
                         >
-                          <span className="text-neutral-300 truncate max-w-[180px] text-[11px]" title={filing.file_name}>
-                            [PDF] {filing.file_name}
+                          <span className="text-zinc-300 truncate max-w-[200px]" title={filing.file_name}>
+                            {filing.file_name}
                           </span>
                           <div className="flex items-center gap-2 shrink-0">
-                            <label className="text-[10px] px-2 py-0.5 rounded-full border border-white/20 text-neutral-300 hover:text-white hover:border-white cursor-pointer uppercase tracking-wider transition-colors">
-                              REPLACE
+                            <label className="text-[11px] px-2 py-0.5 rounded border border-white/10 text-zinc-400 hover:text-white hover:border-white/30 cursor-pointer transition-colors">
+                              Replace
                               <input
                                 type="file"
                                 accept=".pdf"
@@ -400,24 +404,25 @@ export default function Watchlist() {
                             </label>
                             <button
                               onClick={() => deleteFiling(filing.id)}
-                              className="text-[10px] px-2 py-0.5 rounded-full border border-[#ef4444]/30 text-[#ef4444] hover:bg-[#ef4444] hover:text-white uppercase tracking-wider transition-colors"
+                              className="text-[11px] px-2 py-0.5 rounded border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-colors"
                             >
-                              DEL
+                              Delete
                             </button>
                           </div>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="font-mono text-[10px] text-neutral-600 uppercase">
-                      No 10-K PDFs attached. Upload filings for NLP sentiment extraction.
+                    <p className="text-xs text-zinc-500">
+                      No 10-K filings attached yet. Upload a PDF to run NLP sentiment analysis.
                     </p>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center py-8 text-center space-y-2 font-mono">
-                <span className="text-xs text-neutral-600">[ 0{idx + 1} AVAILABLE ]</span>
+              <div className="h-full flex flex-col items-center justify-center py-6 text-center space-y-1">
+                <span className="text-xs text-zinc-500 font-medium">Empty Slot {idx + 1}</span>
+                <span className="text-[11px] text-zinc-600">Add ticker above</span>
               </div>
             )}
           </div>

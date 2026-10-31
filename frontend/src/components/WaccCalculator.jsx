@@ -35,54 +35,52 @@ export default function WaccCalculator({ market, onWaccChange }) {
   }, [wacc, autoSync]);
 
   return (
-    <div className="card p-6 mb-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+    <div className="card p-6 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="section-index text-[10px] mb-1 block">[ 03 // DISCOUNT RATE ]</span>
-          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-            WACC CALCULATOR (CAPM MATRIX)
+          <h3 className="text-base font-semibold text-white">
+            Discount Rate Calculator (CAPM WACC)
           </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Calculates the hurdle rate using the Capital Asset Pricing Model and debt weighting.
+          </p>
         </div>
-        <label className="flex items-center gap-2 font-mono text-xs text-neutral-300 cursor-pointer select-none px-3 py-1.5 rounded-full border border-white/10 bg-white/5 hover:border-white/20 transition-all">
+        <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] hover:border-white/20 transition-all">
           <input
             type="checkbox"
             checked={autoSync}
             onChange={(e) => setAutoSync(e.target.checked)}
             className="rounded accent-white cursor-pointer"
           />
-          AUTO-SYNC TO DCF
+          <span>Auto-sync to DCF</span>
         </label>
       </div>
 
-      <p className="text-neutral-400 font-sans text-xs mb-6 leading-relaxed max-w-3xl">
-        Calculates the hurdle rate via CAPM (Risk-free benchmark + Beta × Equity Risk Premium) combined with tax-shielded cost of debt weighted by capital structure. The resulting WACC automatically seeds the DCF valuation engine below.
-      </p>
-
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
         <EditableField label="Risk-Free Rate" value={riskFreeRate} onChange={setRiskFreeRate} suffix="%" />
-        <EditableField label="Beta (Market Volatility)" value={beta} onChange={setBeta} step="0.05" />
+        <EditableField label="Beta (Volatility)" value={beta} onChange={setBeta} step="0.05" />
         <EditableField label="Equity Risk Premium" value={equityRiskPremium} onChange={setEquityRiskPremium} suffix="%" />
-        <EditableField label="Cost of Debt (Pre-Tax)" value={costOfDebt} onChange={setCostOfDebt} suffix="%" />
+        <EditableField label="Cost of Debt (Pre-tax)" value={costOfDebt} onChange={setCostOfDebt} suffix="%" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
         <EditableField label="Effective Tax Rate" value={taxRate} onChange={setTaxRate} suffix="%" />
         <EditableField label="Market Value of Equity" value={marketValueEquity} onChange={setMarketValueEquity} step="100" suffix="$M" />
         <EditableField label="Market Value of Debt" value={marketValueDebt} onChange={setMarketValueDebt} step="100" suffix="$M" />
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-5 border-t border-white/10">
-        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Cost of Equity (Ke)</p>
-          <p className="font-syne font-bold text-2xl text-white">{costOfEquity.toFixed(2)}%</p>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+        <div className="p-3.5 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+          <p className="text-xs text-zinc-400 mb-1">Cost of Equity (Ke)</p>
+          <p className="text-xl font-semibold text-zinc-100 tabular-nums">{costOfEquity.toFixed(2)}%</p>
         </div>
-        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">After-Tax Cost of Debt (Kd)</p>
-          <p className="font-syne font-bold text-2xl text-neutral-300">{afterTaxCostOfDebt.toFixed(2)}%</p>
+        <div className="p-3.5 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+          <p className="text-xs text-zinc-400 mb-1">After-Tax Cost of Debt (Kd)</p>
+          <p className="text-xl font-semibold text-zinc-300 tabular-nums">{afterTaxCostOfDebt.toFixed(2)}%</p>
         </div>
-        <div className="p-4 rounded-xl bg-white/[0.04] border border-white/15">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-white mb-1">Computed WACC (Hurdle)</p>
-          <p className="font-syne font-bold text-2xl text-white">{wacc.toFixed(2)}%</p>
+        <div className="p-3.5 rounded-lg bg-white/[0.04] border border-white/10">
+          <p className="text-xs text-zinc-200 font-medium mb-1">Computed WACC</p>
+          <p className="text-xl font-bold text-white tabular-nums">{wacc.toFixed(2)}%</p>
         </div>
       </div>
     </div>

@@ -71,12 +71,12 @@ function mapApiYearsToFundamentals(apiYears) {
 }
 
 const METRIC_OPTIONS = [
-  { key: "revenue", label: "REVENUE" },
-  { key: "grossProfit", label: "GROSS PROFIT" },
+  { key: "revenue", label: "Revenue" },
+  { key: "grossProfit", label: "Gross Profit" },
   { key: "ebitda", label: "EBITDA" },
   { key: "ebit", label: "EBIT" },
-  { key: "netIncome", label: "NET INCOME" },
-  { key: "operatingCashFlow", label: "OPERATING CASH FLOW" },
+  { key: "netIncome", label: "Net Income" },
+  { key: "operatingCashFlow", label: "Operating Cash Flow" },
 ];
 
 const GUARDRAILS = { maxGrowthCap: 40, minGrowthFloor: -20 };
@@ -232,22 +232,22 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
   }, [years, selectedMetric, guardrailedGrowth, std, forecastYears]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {!hydrated && (
-        <div className="card p-4 text-neutral-400 font-mono text-xs">
-          SYNCING AUDITED FINANCIAL STATEMENTS FROM EDGAR…
+        <div className="card p-4 text-zinc-400 text-xs">
+          Loading company financials from SEC EDGAR / BSE…
         </div>
       )}
 
-      {/* Target Asset Banner */}
-      <div className="card p-6 flex flex-wrap items-center justify-between gap-4">
+      {/* Ticker Banner */}
+      <div className="card p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <span className="section-index text-[10px] mb-1 block">[ CURRENT ASSET SYMBOL ]</span>
-          <p className="font-syne font-extrabold text-4xl text-white tracking-tight">{ticker || "—"}</p>
+          <span className="text-xs text-zinc-400 block mb-0.5">Active Company Symbol</span>
+          <p className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{ticker || "—"}</p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="neo-tag">10 FISCAL YEARS RECORDED</span>
-        </div>
+        <span className="text-xs text-zinc-400 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10">
+          10 Fiscal Years Loaded
+        </span>
       </div>
 
       <FundamentalsBuilder years={years} onYearsChange={setYears} />
@@ -268,14 +268,15 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
 
       {/* Single-Metric Selection Shelf */}
       <div className="card p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/5">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
           <div>
-            <span className="section-index text-[10px] mb-1 block">[ 03 // STATISTICAL PROJECTION ]</span>
-            <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-              SINGLE-METRIC DECOMPOSITION
+            <h3 className="text-base font-semibold text-white">
+              Single-Metric Statistical Decomposition
             </h3>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Select a metric to evaluate historical trend, volatility, and ±1σ dispersion bounds.
+            </p>
           </div>
-          <span className="neo-tag">DISPERSION ENVELOPE</span>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -283,10 +284,10 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
             <button
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
-              className={`font-mono text-xs uppercase px-4 py-2 rounded-full transition-all ${
+              className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-all ${
                 selectedMetric === m.key
-                  ? "bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.15)]"
-                  : "border border-white/10 bg-transparent text-neutral-400 hover:text-white hover:border-white/30"
+                  ? "bg-white/[0.12] text-white border border-white/20 shadow-sm"
+                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
               }`}
             >
               {m.label}
@@ -321,19 +322,19 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
       />
 
       {/* Methodological Guardrails Footer */}
-      <div className="card p-6 sm:p-8 border border-white/15">
-        <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/10">
-          <span className="w-2.5 h-2.5 rounded-full bg-white" />
-          <h3 className="font-syne font-extrabold text-lg text-white uppercase tracking-tight">
-            METHODOLOGICAL GUARDRAILS &amp; CONSTRAINTS
+      <div className="card p-6 border border-white/[0.08]">
+        <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/[0.06]">
+          <Icon name="check" size={16} className="text-emerald-400" />
+          <h3 className="text-sm font-semibold text-white">
+            Forecasting Guardrails &amp; Methodological Rules
           </h3>
         </div>
-        <ul className="text-neutral-400 font-sans text-xs space-y-2.5 leading-relaxed">
-          <li>• <strong className="text-white">EDGAR Ingestion:</strong> Revenue, Operating Income (EBIT), Net Income, Operating Cash Flow, and CapEx are ingested from SEC filings across up to 10 reporting periods.</li>
-          <li>• <strong className="text-white">Asymptotic Deceleration:</strong> Topline growth is computed via weighted multi-cycle CAGRs and decayed toward a statutory steady state using exponential fading.</li>
-          <li>• <strong className="text-white">Volatility Bounds:</strong> Single-metric velocity is bounded between −20% and +40% per year to eliminate anomalous non-operating windfall distortion.</li>
-          <li>• <strong className="text-white">Minimum History Requirement:</strong> Entities with fewer than 3 reporting years produce an "Insufficient Data" flag to prevent spurious confidence scores.</li>
-          <li>• <strong className="text-white">Widening Confidence Envelopes:</strong> Dispersion spreads naturally expand as the forecast horizon extends, enforcing discipline against false distant precision.</li>
+        <ul className="text-zinc-400 text-xs space-y-2 leading-relaxed">
+          <li>• <strong className="text-zinc-200">Financial Forecast (Stage 1):</strong> Blends 3Y (45%), 5Y (30%), 10Y (15%) CAGRs plus recent momentum, forecasts margins directly, and decays growth toward steady state.</li>
+          <li>• <strong className="text-zinc-200">Historical EDGAR Data:</strong> Revenue, Operating Income (EBIT), Net Income, Operating Cash Flow, and CapEx are ingested directly from audited filings.</li>
+          <li>• <strong className="text-zinc-200">Single-Metric Clipping:</strong> Annual growth is bounded between −20% and +40% to eliminate non-operating anomalous spikes.</li>
+          <li>• <strong className="text-zinc-200">Data Sufficiency:</strong> Fewer than 3 reporting years triggers an "Insufficient Data" flag to prevent spurious confidence scores.</li>
+          <li>• <strong className="text-zinc-200">Expanding Uncertainty:</strong> The ±1σ range widens as the forecast horizon extends, enforcing discipline against distant overconfidence.</li>
         </ul>
       </div>
     </div>
@@ -344,9 +345,9 @@ export default function Financial() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="FINANCIAL ANALYSIS"
-        subtitle="10-Yr Statement Telemetry"
-        description="Rule-based pro forma statement generator combining weighted revenue CAGR, margin scenario matrices, and asymptotic growth decay with Buffett & Lynch quality metrics."
+        title="Financial Statements &amp; Forecast"
+        subtitle="10-Year Statement Projections"
+        description="Rule-based financial statement modeling blending historical CAGRs, sector margin templates, and exponential growth fade alongside Buffett &amp; Lynch quality metrics."
       />
       <CompanyStateSelector pageName="financial">
         {({ companyId, selectedCompany, loadedState, saveState }) => (

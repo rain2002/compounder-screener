@@ -119,34 +119,50 @@ export default function Variance() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="VARIANCE &amp; UNCERTAINTY"
-        subtitle="Cross-Model Risk Envelope"
-        description="Fuses DCF Monte Carlo probabilistic dispersion with Financial pro forma forecast confidence. An excessively wide valuation spread or low model confidence automatically caps the final recommendation at Watch to preserve margin of safety."
+        title="Variance &amp; Uncertainty Envelope"
+        subtitle="Cross-Model Risk Analysis"
+        description="Fuses DCF Monte Carlo distribution spread with financial statement forecast confidence. An excessively wide valuation spread or low model confidence automatically caps the final recommendation at Watch to preserve margin of safety."
       />
 
       {/* Selector Console */}
-      <div className="card p-4 sm:p-5 mb-8 flex flex-wrap gap-4 sm:gap-6 items-end justify-between">
+      <div className="card p-4 sm:p-5 flex flex-wrap gap-4 sm:gap-6 items-end justify-between">
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex flex-col gap-1.5">
-            <span className="section-index text-[10px]">MARKET DOMAIN</span>
-            <select
-              value={market}
-              onChange={(e) => setMarket(e.target.value)}
-              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white focus:outline-none focus:border-white cursor-pointer"
-            >
-              <option value="US">US EQUITIES (NASDAQ / NYSE)</option>
-              <option value="India">INDIA EQUITIES (NSE / BSE)</option>
-            </select>
+            <span className="text-xs font-medium text-zinc-400">Market</span>
+            <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
+              <button
+                type="button"
+                onClick={() => setMarket("US")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  market === "US"
+                    ? "bg-white/[0.12] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                US Equities
+              </button>
+              <button
+                type="button"
+                onClick={() => setMarket("India")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                  market === "India"
+                    ? "bg-white/[0.12] text-white shadow-sm"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                India Equities
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="section-index text-[10px]">EVALUATION TARGET</span>
+            <span className="text-xs font-medium text-zinc-400">Selected Stock</span>
             <select
               value={companyId}
               onChange={(e) => setCompanyId(e.target.value)}
-              className="bg-neutral-900 border border-white/10 rounded-full px-4 py-2 text-xs font-mono text-white min-w-[260px] focus:outline-none focus:border-white cursor-pointer"
+              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-1.5 text-xs text-zinc-200 min-w-[260px] focus:outline-none focus:border-white/30 cursor-pointer"
             >
-              <option value="">SELECT TARGET FROM WATCHLIST…</option>
+              <option value="">Select a stock from Watchlist…</option>
               {companies.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.ticker} {c.name ? `— ${c.name}` : ""}
@@ -157,29 +173,28 @@ export default function Variance() {
         </div>
 
         {selectedCompany && (
-          <div className="flex items-center gap-2">
-            <span className="neo-tag">ANALYZING: {selectedCompany.ticker}</span>
-          </div>
+          <span className="text-xs font-medium text-zinc-300 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10">
+            {selectedCompany.ticker}
+          </span>
         )}
       </div>
 
       {!companyId && (
         <div className="card p-12 text-center border-dashed border-white/15 my-6">
-          <p className="section-index text-xs mb-2">TARGET UNASSIGNED</p>
-          <h4 className="font-syne font-bold text-lg text-white uppercase mb-2">
-            SELECT A WATCHLIST ENTITY TO INSPECT CROSS-MODEL UNCERTAINTY
+          <h4 className="text-base font-semibold text-zinc-200 mb-1">
+            Select a Stock to Review Uncertainty Bounds
           </h4>
-          <p className="text-neutral-400 font-sans text-xs max-w-md mx-auto leading-relaxed">
-            Choose an asset from your active universe above to cross-reference Monte Carlo distributions, financial dispersion bounds, and margin-of-safety rating caps.
+          <p className="text-zinc-400 text-sm max-w-md mx-auto leading-relaxed">
+            Choose an asset from your active watchlist above to review its Monte Carlo distribution spread, forecast confidence, and rating cap status.
           </p>
         </div>
       )}
 
       {companyId && loading && (
         <div className="card p-12 text-center border-white/10 my-6">
-          <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-          <p className="font-mono text-xs uppercase tracking-widest text-neutral-400">
-            LOADING SAVED DCF DISTRIBUTIONS &amp; FINANCIAL FORECASTS…
+          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-zinc-400">
+            Loading saved DCF distributions and financial forecasts…
           </p>
         </div>
       )}
@@ -187,19 +202,19 @@ export default function Variance() {
       {companyId && !loading && (
         <div className="space-y-6">
           {(!dcfState || !isMonteCarloValid) && (
-            <div className="p-4 rounded-xl bg-watch/10 border border-watch/30 flex items-start gap-3">
-              <Icon name="warn" size={18} className="text-watch shrink-0 mt-0.5" />
-              <p className="font-mono text-xs text-watch leading-relaxed">
-                NO COMPLETED DCF SIMULATION RECORDED FOR <strong>{selectedCompany?.ticker || "THIS ENTITY"}</strong> YET. OPEN THE DCF ENGINE, SELECT THIS ASSET, AND LET THE MONTE CARLO ITERATIONS COMPLETE TO POPULATE THE SPREAD.
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+              <Icon name="warn" size={18} className="text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-300 leading-relaxed">
+                No completed DCF simulation recorded for <strong>{selectedCompany?.ticker || "this stock"}</strong> yet. Open the DCF model page, select this stock, and let the Monte Carlo model run to populate the spread.
               </p>
             </div>
           )}
 
           {(!technicalState || !isGrowthStatsValid) && (
-            <div className="p-4 rounded-xl bg-watch/10 border border-watch/30 flex items-start gap-3">
-              <Icon name="warn" size={18} className="text-watch shrink-0 mt-0.5" />
-              <p className="font-mono text-xs text-watch leading-relaxed">
-                NO SAVED FINANCIAL STATEMENT FORECAST FOR <strong>{selectedCompany?.ticker || "THIS ENTITY"}</strong> YET. OPEN THE FINANCIALS MODULE TO GENERATE BASELINE GROWTH STATS.
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+              <Icon name="warn" size={18} className="text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-300 leading-relaxed">
+                No saved financial statements forecast for <strong>{selectedCompany?.ticker || "this stock"}</strong> yet. Open the Financials page to generate baseline growth stats.
               </p>
             </div>
           )}
@@ -214,51 +229,51 @@ export default function Variance() {
             />
             <StatCard
               label="Forecast Model Confidence"
-              value={technicalConfidence ? technicalConfidence.toUpperCase() : "—"}
+              value={technicalConfidence || "—"}
               tone={confidenceTone(technicalConfidence)}
               sublabel="Derived from Statement Variance"
             />
             <StatCard
-              label="Qualitative NLP Confidence"
-              value="VERIFIED"
+              label="Qualitative NLP Sentiment"
+              value="Verified"
               tone="good"
-              sublabel="10-K Sentiment Aligned"
+              sublabel="10-K Filings Aligned"
             />
           </div>
 
           {hasBothInputs && (
-            <div className="card p-6 sm:p-8 border-2 border-white/20">
-              <div className="flex items-center gap-2 mb-6 pb-4 border-b border-white/10">
-                <span className={`w-2.5 h-2.5 rounded-full ${cappedAtWatch ? "bg-watch" : "bg-buy"} animate-pulse`} />
-                <h3 className="font-syne font-extrabold text-xl text-white uppercase tracking-tight">
-                  UNCERTAINTY ENVELOPE SYNTHESIS
+            <div className="card p-6 border border-white/15">
+              <div className="flex items-center gap-2 mb-5 pb-3 border-b border-white/[0.08]">
+                <span className={`w-2.5 h-2.5 rounded-full ${cappedAtWatch ? "bg-amber-400" : "bg-emerald-400"} animate-pulse`} />
+                <h3 className="text-base font-semibold text-white">
+                  Uncertainty Envelope Synthesis
                 </h3>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-black/40 border border-white/5 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 rounded-xl bg-zinc-950/60 border border-white/[0.06] mb-5">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">DCF Median Target</p>
-                  <p className="font-syne font-bold text-2xl text-white">
+                  <p className="text-xs text-zinc-400 mb-1">DCF Median Target</p>
+                  <p className="text-xl font-bold text-white tabular-nums">
                     {monteCarlo && typeof monteCarlo.p50 === "number" ? `$${monteCarlo.p50.toFixed(2)}` : "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">DCF 80% Range</p>
-                  <p className="font-syne font-bold text-base text-neutral-200 mt-1">
+                  <p className="text-xs text-zinc-400 mb-1">DCF 80% Range</p>
+                  <p className="text-sm font-semibold text-zinc-200 mt-1 tabular-nums">
                     {monteCarlo && typeof monteCarlo.p10 === "number" && typeof monteCarlo.p90 === "number"
                       ? `$${monteCarlo.p10.toFixed(2)} – $${monteCarlo.p90.toFixed(2)}`
                       : "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Tracked Metric</p>
-                  <p className="font-syne font-bold text-base text-white mt-1">
-                    {growthStats?.metricLabel || "REVENUE"}
+                  <p className="text-xs text-zinc-400 mb-1">Tracked Metric</p>
+                  <p className="text-sm font-semibold text-white mt-1">
+                    {growthStats?.metricLabel || "Revenue"}
                   </p>
                 </div>
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Guardrailed Velocity</p>
-                  <p className="font-syne font-bold text-2xl text-white">
+                  <p className="text-xs text-zinc-400 mb-1">Guardrailed Velocity</p>
+                  <p className="text-xl font-bold text-white tabular-nums">
                     {growthStats && typeof growthStats.guardrailedGrowth === "number"
                       ? `${growthStats.guardrailedGrowth.toFixed(1)}%`
                       : "—"}
@@ -266,17 +281,17 @@ export default function Variance() {
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-white/10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="pt-4 border-t border-white/[0.06] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                  <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">FINAL RATING CONSTRAINT</p>
-                  <p className={`font-syne font-extrabold text-2xl uppercase ${cappedAtWatch ? "text-watch" : "text-buy"}`}>
-                    {cappedAtWatch ? "CAPPED AT WATCH (SAFETY PROTOCOL)" : "UNCAPPED (BASE QUALITY SCORE STANDS)"}
+                  <p className="text-xs text-zinc-400 mb-1">Final Rating Constraint</p>
+                  <p className={`text-xl font-bold ${cappedAtWatch ? "text-amber-400" : "text-emerald-400"}`}>
+                    {cappedAtWatch ? "Capped at Watch (Risk Protocol)" : "Uncapped (Full Quality Rating Stands)"}
                   </p>
                 </div>
-                <div className="max-w-md text-xs font-sans text-neutral-300 leading-relaxed bg-black/40 p-4 rounded-xl border border-white/5">
+                <div className="max-w-md text-xs text-zinc-400 leading-relaxed bg-zinc-950/40 p-3.5 rounded-lg border border-white/[0.06]">
                   {cappedAtWatch
-                    ? `Relative spread (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%) or historical growth dispersion indicates substantial forecast variance. Rating safely capped at Watch.`
-                    : `Monte Carlo dispersion (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%) and pro forma confidence fall squarely within strict certainty thresholds. Full compounder score validated.`}
+                    ? `Relative spread (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%) or historical growth dispersion indicates substantial valuation uncertainty. Final recommendation is safely constrained to Watch.`
+                    : `Monte Carlo dispersion (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%) and pro forma confidence fall squarely within strict safety thresholds. Base rating proceeds uncapped.`}
                 </div>
               </div>
             </div>

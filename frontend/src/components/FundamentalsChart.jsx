@@ -55,43 +55,45 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
   const dividerX = padding.left + years.length * barSlot;
 
   return (
-    <div className="card p-6 mb-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+    <div className="card p-6 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="section-index text-[10px] mb-1 block">[ 03.1 // TRAJECTORY VISUALIZER ]</span>
-          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-            {metricLabel} — HISTORICAL SPREAD &amp; FORWARD BAND
+          <h3 className="text-base font-semibold text-white">
+            {metricLabel} — History &amp; Forecast Trajectory
           </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Historical reported levels paired with forward projection and dispersion envelope.
+          </p>
         </div>
-        <div className="flex items-center gap-4 font-mono text-[10px] text-neutral-400">
+        <div className="flex items-center gap-4 text-xs text-zinc-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-2 bg-neutral-700 inline-block rounded-xs" /> HISTORICAL
+            <span className="w-2.5 h-2.5 bg-zinc-700 inline-block rounded-sm" /> Historical
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-white inline-block" /> PROJECTION
+            <span className="w-2.5 h-0.5 bg-sky-400 inline-block" /> Forecast
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-3 h-2 bg-white/10 inline-block rounded-xs" /> ±1σ UNCERTAINTY
+            <span className="w-2.5 h-2.5 bg-sky-400/20 inline-block rounded-sm" /> ±1σ Uncertainty
           </span>
         </div>
       </div>
 
-      <div className="p-2 rounded-2xl bg-black/40 border border-white/5">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-72">
-          {/* Base Grid & Axis Lines */}
-          <line x1={padding.left} y1={zeroY} x2={width - padding.right} y2={zeroY} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+      <div className="p-2 rounded-xl bg-zinc-950/60 border border-white/[0.06]">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-64 sm:h-72">
+          {/* Base Grid Line */}
+          <line x1={padding.left} y1={zeroY} x2={width - padding.right} y2={zeroY} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
           <line
             x1={dividerX}
             y1={padding.top}
             x2={dividerX}
             y2={height - padding.bottom}
-            stroke="rgba(255,255,255,0.2)"
+            stroke="rgba(255,255,255,0.15)"
             strokeDasharray="4 4"
             strokeWidth="1"
           />
 
           {/* Uncertainty Envelope */}
-          <polygon points={bandPoints.join(" ")} fill="rgba(255, 255, 255, 0.08)" />
+          <polygon points={bandPoints.join(" ")} fill="rgba(56, 189, 248, 0.12)" />
 
           {/* Historical Bars */}
           {years.map((y, i) => {
@@ -106,20 +108,20 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
                 y={barY}
                 width={barWidth}
                 height={Math.max(barH, 1)}
-                fill="#262626"
-                stroke="rgba(255,255,255,0.15)"
+                fill="#27272a"
+                stroke="rgba(255,255,255,0.1)"
                 strokeWidth="1"
-                rx="3"
+                rx="2"
               />
             );
           })}
 
           {/* Forecast Path */}
-          <path d={linePath} fill="none" stroke="#ffffff" strokeWidth="2" />
+          <path d={linePath} fill="none" stroke="#38bdf8" strokeWidth="2" />
           {forecast.map((f, i) => {
             const x = xForIndex(years.length + i);
             const y = yFor(f.value);
-            return <circle key={i} cx={x} cy={y} r="3.5" fill="#ffffff" />;
+            return <circle key={i} cx={x} cy={y} r="3" fill="#38bdf8" />;
           })}
 
           {/* X Axis Labels */}
@@ -127,11 +129,11 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
             <text
               key={i}
               x={xForIndex(i)}
-              y={height - padding.bottom + 18}
+              y={height - padding.bottom + 16}
               textAnchor="middle"
               fontSize="10"
-              fontFamily="monospace"
-              fill="#737373"
+              fontFamily="sans-serif"
+              fill="#71717a"
             >
               {y.year}
             </text>
@@ -140,21 +142,18 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
             <text
               key={`f-${i}`}
               x={xForIndex(years.length + i)}
-              y={height - padding.bottom + 18}
+              y={height - padding.bottom + 16}
               textAnchor="middle"
               fontSize="10"
-              fontFamily="monospace"
-              fill="#ffffff"
+              fontFamily="sans-serif"
+              fill="#38bdf8"
+              fontWeight="bold"
             >
               +{f.year}
             </text>
           ))}
         </svg>
       </div>
-
-      <p className="font-mono text-[10px] text-neutral-400 mt-3 uppercase tracking-wider">
-        Monochrome bars depict audited 10-K filings. White line shows the rule-based mean trajectory with ±1σ dispersion bounds widening with distance.
-      </p>
     </div>
   );
 }

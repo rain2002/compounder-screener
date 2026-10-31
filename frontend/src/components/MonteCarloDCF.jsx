@@ -81,7 +81,7 @@ export default function MonteCarloDCF({
   const spreadWidth = hasResults ? sim.p90 - sim.p10 : 0;
   const relativeSpread = hasResults && sim.p50 ? (spreadWidth / sim.p50) * 100 : 0;
   const confidence = !hasResults ? "Unavailable" : relativeSpread < 40 ? "High" : relativeSpread < 80 ? "Moderate" : "Low";
-  const confidenceColor = !hasResults ? "text-neutral-500" : relativeSpread < 40 ? "text-buy" : relativeSpread < 80 ? "text-watch" : "text-avoid";
+  const confidenceColor = !hasResults ? "text-zinc-500" : relativeSpread < 40 ? "text-emerald-400" : relativeSpread < 80 ? "text-amber-400" : "text-rose-400";
 
   useEffect(() => {
     if (onMedianChange) onMedianChange(hasResults ? sim.p50 : null);
@@ -114,24 +114,20 @@ export default function MonteCarloDCF({
   const currentPct = currentPrice ? toPct(currentPrice) : null;
 
   return (
-    <div className="card p-6 mb-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
+    <div className="card p-6 mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
         <div>
-          <span className="section-index text-[10px] mb-1 block">[ 05 // PROBABILISTIC DCF ]</span>
-          <h3 className="font-syne font-bold text-lg text-white uppercase tracking-tight">
-            MONTE CARLO UNCERTAINTY DISTRIBUTION
+          <h3 className="text-base font-semibold text-white">
+            Monte Carlo Uncertainty Distribution
           </h3>
+          <p className="text-xs text-zinc-400 mt-0.5">
+            Runs {trials.toLocaleString()} randomized trials varying growth and WACC to produce a probability curve of intrinsic value.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="neo-tag">
-            {trials.toLocaleString()} RANDOMIZED TRIALS
-          </span>
-        </div>
+        <span className="text-xs font-medium text-zinc-400 px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/10">
+          {trials.toLocaleString()} Trials
+        </span>
       </div>
-
-      <p className="text-neutral-400 font-sans text-xs mb-5 leading-relaxed max-w-3xl">
-        Eliminates single-point-estimate bias by varying growth velocity and discount hurdle across a normal distribution. Yields a statistical probability curve (P10–P90) rather than an overly confident static target.
-      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <EditableField label="Growth Std Dev (σ)" value={growthStd} onChange={setGrowthStd} suffix="%" />
@@ -140,77 +136,77 @@ export default function MonteCarloDCF({
       </div>
 
       {!hasResults && (
-        <div className="flex items-center gap-2 mb-6 p-4 rounded-xl bg-watch/10 border border-watch/30">
-          <Icon name="warn" size={16} className="text-watch shrink-0" />
-          <p className="font-mono text-xs text-watch">
-            BASE YEAR FCF AND SHARES OUTSTANDING MUST BE POSITIVE TO COMMENCE MONTE CARLO RUN.
-          </p>
+        <div className="flex items-center gap-2 mb-6 p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300">
+          <Icon name="warn" size={16} className="text-amber-400 shrink-0" />
+          <span>
+            Base year FCF and shares outstanding must both be non-zero to execute Monte Carlo trials.
+          </span>
         </div>
       )}
 
       {/* Distribution Track */}
-      <div className="relative h-12 mb-14 mt-12 rounded-full bg-neutral-900 border border-white/10 px-4">
+      <div className="relative h-11 mb-12 mt-10 rounded-xl bg-zinc-950 border border-white/10 px-4">
         {hasResults && (
           <div
-            className="absolute inset-y-1.5 rounded-full bg-gradient-to-r from-avoid/30 via-white/20 to-buy/30 border border-white/10"
+            className="absolute inset-y-1.5 rounded-lg bg-gradient-to-r from-rose-500/20 via-zinc-200/20 to-emerald-500/20 border border-white/10"
             style={{ left: `${p10Pct}%`, width: `${Math.max(1, p90Pct - p10Pct)}%` }}
           />
         )}
         
         {hasResults && (
-          <div className="absolute top-0 bottom-0 w-0.5 bg-neutral-400 z-10" style={{ left: `${p10Pct}%` }}>
-            <div className="absolute top-full mt-2 -translate-x-1/2 text-center w-28">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-500">P10 (BEAR)</p>
-              <p className="font-syne font-bold text-xs text-neutral-300">{cur}{sim.p10.toFixed(2)}</p>
+          <div className="absolute top-0 bottom-0 w-0.5 bg-zinc-400 z-10" style={{ left: `${p10Pct}%` }}>
+            <div className="absolute top-full mt-1.5 -translate-x-1/2 text-center w-24">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">P10 (Bear)</p>
+              <p className="text-xs font-semibold text-zinc-300 tabular-nums">{cur}{sim.p10.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {hasResults && (
-          <div className="absolute top-0 bottom-0 w-0.5 bg-white z-10 shadow-[0_0_12px_rgba(255,255,255,0.8)]" style={{ left: `${p50Pct}%` }}>
-            <div className="absolute top-full mt-2 -translate-x-1/2 text-center w-28">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-white">MEDIAN (P50)</p>
-              <p className="font-syne font-bold text-sm text-white">{cur}{sim.p50.toFixed(2)}</p>
+          <div className="absolute top-0 bottom-0 w-0.5 bg-white z-10 shadow-[0_0_8px_rgba(255,255,255,0.7)]" style={{ left: `${p50Pct}%` }}>
+            <div className="absolute top-full mt-1.5 -translate-x-1/2 text-center w-24">
+              <p className="text-[10px] text-white uppercase tracking-wider font-semibold">Median (P50)</p>
+              <p className="text-xs font-bold text-white tabular-nums">{cur}{sim.p50.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {hasResults && (
-          <div className="absolute top-0 bottom-0 w-0.5 bg-buy z-10" style={{ left: `${p90Pct}%` }}>
-            <div className="absolute top-full mt-2 -translate-x-1/2 text-center w-28">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-500">P90 (BULL)</p>
-              <p className="font-syne font-bold text-xs text-neutral-300">{cur}{sim.p90.toFixed(2)}</p>
+          <div className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-10" style={{ left: `${p90Pct}%` }}>
+            <div className="absolute top-full mt-1.5 -translate-x-1/2 text-center w-24">
+              <p className="text-[10px] text-zinc-500 uppercase tracking-wider font-medium">P90 (Bull)</p>
+              <p className="text-xs font-semibold text-emerald-400 tabular-nums">{cur}{sim.p90.toFixed(2)}</p>
             </div>
           </div>
         )}
 
         {currentPct !== null && (
-          <div className="absolute top-0 bottom-0 w-0.5 bg-white z-20" style={{ left: `${currentPct}%` }}>
-            <div className="absolute bottom-full mb-2 -translate-x-1/2 text-center w-32">
-              <p className="font-mono text-[9px] uppercase tracking-widest text-neutral-400">MARKET PRICE</p>
-              <p className="font-syne font-bold text-xs text-white">{cur}{currentPrice != null ? Number(currentPrice).toFixed(2) : "—"}</p>
+          <div className="absolute top-0 bottom-0 w-0.5 bg-blue-400 z-20" style={{ left: `${currentPct}%` }}>
+            <div className="absolute bottom-full mb-1.5 -translate-x-1/2 text-center w-28">
+              <p className="text-[10px] text-blue-300 uppercase tracking-wider font-medium">Market Price</p>
+              <p className="text-xs font-bold text-white tabular-nums">{cur}{currentPrice != null ? Number(currentPrice).toFixed(2) : "—"}</p>
             </div>
-            <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2.5 h-2.5 bg-white rotate-45" />
+            <div className="absolute top-0 -translate-x-1/2 -mt-1 w-2 h-2 bg-blue-400 rotate-45" />
           </div>
         )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-5 border-t border-white/10">
-        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">80% Confidence Interval</p>
-          <p className="font-syne font-bold text-lg text-white">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-white/[0.06]">
+        <div className="p-3.5 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+          <p className="text-xs text-zinc-400 mb-1">80% Confidence Interval</p>
+          <p className="text-base font-semibold text-zinc-200 tabular-nums">
             {hasResults ? `${cur}${sim.p10.toFixed(2)} – ${cur}${sim.p90.toFixed(2)}` : "—"}
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-black/40 border border-white/5">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-neutral-400 mb-1">Median Intrinsic Upside</p>
-          <p className={`font-syne font-bold text-2xl ${upsideAtMedian !== null && upsideAtMedian >= 0 ? "text-buy" : "text-avoid"}`}>
+        <div className="p-3.5 rounded-lg bg-zinc-950/40 border border-white/[0.06]">
+          <p className="text-xs text-zinc-400 mb-1">Median Intrinsic Upside</p>
+          <p className={`text-xl font-bold tabular-nums ${upsideAtMedian !== null && upsideAtMedian >= 0 ? "text-emerald-400" : "text-rose-400"}`}>
             {upsideAtMedian !== null ? `${upsideAtMedian >= 0 ? "+" : ""}${upsideAtMedian.toFixed(1)}%` : "—"}
           </p>
         </div>
-        <div className="p-4 rounded-xl bg-white/[0.04] border border-white/15">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-white mb-1">Model Precision Tier</p>
-          <p className={`font-syne font-bold text-2xl ${confidenceColor}`}>{confidence.toUpperCase()}</p>
+        <div className="p-3.5 rounded-lg bg-white/[0.04] border border-white/10">
+          <p className="text-xs text-zinc-300 font-medium mb-1">Forecast Precision</p>
+          <p className={`text-xl font-bold ${confidenceColor}`}>{confidence}</p>
         </div>
       </div>
     </div>
