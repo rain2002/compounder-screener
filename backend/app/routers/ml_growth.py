@@ -4,15 +4,12 @@ company's saved DCF page-state (historyYears) and returns predictions from
 the pooled US FCF-growth models.
 """
 
-
 from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import List, Optional
 from app.services import ml_growth_service
 
-
 router = APIRouter(prefix="/ml-growth", tags=["ml-growth"])
-
 
 # Sane bounds for each feature -- real companies essentially never exceed
 # these. Values outside this range are almost always caused by bad input
@@ -20,20 +17,21 @@ router = APIRouter(prefix="/ml-growth", tags=["ml-growth"])
 # genuinely extreme company, and feeding them to the models -- especially
 # Ridge, which has no bounds -- produces meaningless extrapolated output
 # like "1428% growth".
+# Note: growth rates and CAGRs are in percentage points (-100 to 300),
+# while margins, ROIC, and CapEx/Revenue are in fractional ratios (-1.0 to 1.0).
 FEATURE_BOUNDS = {
     "fcf_growth_1y": (-100, 300),
     "revenue_growth_1y": (-100, 300),
     "net_income_growth_1y": (-100, 300),
-    "fcf_margin": (-100, 100),
-    "net_margin": (-100, 100),
-    "operating_margin": (-100, 100),
-    "roic": (-100, 150),
+    "fcf_margin": (-1.0, 1.0),
+    "net_margin": (-1.0, 1.0),
+    "operating_margin": (-1.0, 1.0),
+    "roic": (-1.0, 1.5),
     "net_debt_to_ebit": (-50, 50),
-    "capex_to_revenue": (0, 100),
+    "capex_to_revenue": (0, 1.0),
     "fcf_cagr_3y": (-100, 200),
     "revenue_cagr_3y": (-100, 200),
 }
-
 
 
 class HistoryYear(BaseModel):
@@ -46,13 +44,13 @@ class HistoryYear(BaseModel):
     deltaWorkingCapital: float
 
 
-
 class PredictGrowthIn(BaseModel):
     historyYears: List[HistoryYear]
     totalDebt: Optional[float] = None
     cash: Optional[float] = None
     totalEquity: Optional[float] = None
     targetMetric: Optional[str] = "fcf"
+
 
 def _compute_fcf(row: HistoryYear) -> float:
     ebit = row.revenue * (row.ebitMargin / 100)
@@ -132,32 +130,31 @@ def predict_growth(payload: PredictGrowthIn):
         invested_capital = payload.totalEquity + payload.totalDebt - payload.cash
         last_ebit = ebit_series[-1]
         if invested_capital and invested_capital != 0:
-            roic = (last_ebit * 0.79 / invested_capital) * 100
+            roic = (last_ebit * 0.79 / invested_capital)
         if last_ebit and last_ebit != 0:
             net_debt_to_ebit = (payload.totalDebt - payload.cash) / last_ebit
 
-    # We reuse the FCF model architecture but pass the target metric's growth
+    # We reuse the FCF model architecture but pass the target metric's growth.
+    # Growth rates and CAGRs are percentages; margins, ROIC, and capex_to_revenue
+    # are ratios (0.0 to 1.0) matching training/scripts/build_features.py.
     raw_features = {
         "fcf_growth_1y": _safe_pct(last_target, prev_target),
         "revenue_growth_1y": _safe_pct(last_rev, prev_rev),
         "net_income_growth_1y": _safe_pct(last_ni, prev_ni),
-        "fcf_margin": (last_target / last_rev * 100) if last_rev else None,
-        "net_margin": (last_ni / last_rev * 100) if last_rev else None,
-        "operating_margin": (ebit_series[-1] / last_rev * 100) if last_rev else None,
+        "fcf_margin": (last_target / last_rev) if last_rev else None,
+        "net_margin": (last_ni / last_rev) if last_rev else None,
+        "operating_margin": (ebit_series[-1] / last_rev) if last_rev else None,
         "roic": roic,
         "net_debt_to_ebit": net_debt_to_ebit,
-        "capex_to_revenue": (years[-1].capex / last_rev * 100) if last_rev else None,
+        "capex_to_revenue": (years[-1].capex / last_rev) if last_rev else None,
         "fcf_cagr_3y": target_cagr_3y,
         "revenue_cagr_3y": revenue_cagr_3y,
     }
 
-
     features, flagged = _clamp_features(raw_features)
-
 
     result = ml_growth_service.predict_growth(features)
     result["features_used"] = features
-
 
     if flagged:
         flagged_note = (
@@ -172,9 +169,7 @@ def predict_growth(payload: PredictGrowthIn):
         if result.get("confidence") not in (None, "Unavailable"):
             result["confidence"] = "Low"
 
-
     return result
-
 
 
 @router.get("/status")
