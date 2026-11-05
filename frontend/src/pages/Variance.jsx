@@ -29,6 +29,7 @@ export default function Variance() {
   const [companyId, setCompanyId] = useState("");
   const [dcfState, setDcfState] = useState(null);
   const [technicalState, setTechnicalState] = useState(null);
+  const [sentimentState, setSentimentState] = useState(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function Variance() {
     setCompanyId("");
     setDcfState(null);
     setTechnicalState(null);
+    setSentimentState(null);
   }, [market]);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function Variance() {
     else {
       setDcfState(null);
       setTechnicalState(null);
+      setSentimentState(null);
     }
   }, [companyId]);
 
@@ -59,23 +62,28 @@ export default function Variance() {
   async function loadStates(id) {
     setLoading(true);
     try {
-      const [dcfRes, techRes] = await Promise.all([
+      const [dcfRes, techRes, sentRes] = await Promise.all([
         fetch(`${BASE_URL}/page-state/${id}/dcf`),
         fetch(`${BASE_URL}/page-state/${id}/technical`),
+        fetch(`${BASE_URL}/sentiment/${id}`).catch(() => null),
       ]);
-      const dcfData = await dcfRes.json();
-      const techData = await techRes.json();
+      const dcfData = dcfRes.ok ? await dcfRes.json().catch(() => null) : null;
+      const techData = techRes.ok ? await techRes.json().catch(() => null) : null;
+      const sentData = sentRes && sentRes.ok ? await sentRes.json().catch(() => null) : null;
       setDcfState(dcfData?.state || null);
       setTechnicalState(techData?.state || null);
+      setSentimentState(sentData || null);
     } catch {
       setDcfState(null);
       setTechnicalState(null);
+      setSentimentState(null);
     } finally {
       setLoading(false);
     }
   }
 
   const selectedCompany = companies.find((c) => String(c.id) === String(companyId));
+  const cur = selectedCompany?.market?.toUpperCase() === "INDIA" || market === "India" ? "₹" : "$";
 
   const monteCarlo = dcfState?.monteCarlo || null;
   // Robust check: valid simulation requires non-null numeric percentiles
@@ -102,8 +110,17 @@ export default function Variance() {
 
   const confidenceValues = [dcfConfidence, technicalConfidence].filter(Boolean);
   const worstConfidence = confidenceValues.length
-    ? confidenceValues.reduce((worst, c) => ((CONFIDENCE_RANK[c] ?? 0) < (CONFIDENCE_RANK[worst] ?? 0) ? c : worst))
+    ? confidenceValues.reduce(
+        (worst, c) => ((CONFIDENCE_RANK[c] ?? 0) < (CONFIDENCE_RANK[worst] ?? 0) ? c : worst),
+        confidenceValues[0]
+      )
     : null;
+
+  const sentimentLabel = sentimentState?.overall_label || null;
+  const sentimentTone = sentimentLabel === "Positive" ? "good" : sentimentLabel === "Negative" ? "bad" : "neutral";
+  const sentimentSublabel = sentimentState
+    ? `${sentimentState.positive_pct}% Pos · ${sentimentState.filings_analyzed} 10-K${sentimentState.filings_analyzed > 1 ? "s" : ""}`
+    : "No 10-K analysis recorded";
 
   const hasBothInputs = Boolean(dcfState && technicalState && isMonteCarloValid && isGrowthStatsValid);
   const cappedAtWatch = Boolean(
@@ -112,7 +129,8 @@ export default function Variance() {
       (dcfSpread !== null && dcfSpread >= 80) ||
       worstConfidence === "Low" ||
       worstConfidence === "Insufficient Data" ||
-      worstConfidence === "Unavailable"
+      worstConfidence === "Unavailable" ||
+      sentimentLabel === "Negative"
     )
   );
 
@@ -121,7 +139,7 @@ export default function Variance() {
       <PageHeader
         title="Variance &amp; Uncertainty Envelope"
         subtitle="Cross-Model Risk Analysis"
-        description="Fuses DCF Monte Carlo distribution spread with financial statement forecast confidence. An excessively wide valuation spread or low model confidence automatically caps the final recommendation at Watch to preserve margin of safety."
+        description="Fuses DCF Monte Carlo distribution spread with financial statement forecast confidence and 10-K sentiment. An excessively wide valuation spread, adverse sentiment tone, or low model confidence automatically caps the final recommendation at Watch to preserve margin of safety."
       />
 
       {/* Selector Console */}
@@ -235,9 +253,9 @@ export default function Variance() {
             />
             <StatCard
               label="Qualitative NLP Sentiment"
-              value="Verified"
-              tone="good"
-              sublabel="10-K Filings Aligned"
+              value={sentimentLabel || "Unanalyzed"}
+              tone={sentimentTone}
+              sublabel={sentimentSublabel}
             />
           </div>
 
@@ -254,14 +272,14 @@ export default function Variance() {
                 <div>
                   <p className="text-xs text-zinc-400 mb-1">DCF Median Target</p>
                   <p className="text-xl font-bold text-white tabular-nums">
-                    {monteCarlo && typeof monteCarlo.p50 === "number" ? `$${monteCarlo.p50.toFixed(2)}` : "—"}
+                    {monteCarlo && typeof monteCarlo.p50 === "number" ? `${cur}${monteCarlo.p50.toFixed(2)}` : "—"}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-zinc-400 mb-1">DCF 80% Range</p>
                   <p className="text-sm font-semibold text-zinc-200 mt-1 tabular-nums">
                     {monteCarlo && typeof monteCarlo.p10 === "number" && typeof monteCarlo.p90 === "number"
-                      ? `$${monteCarlo.p10.toFixed(2)} – $${monteCarlo.p90.toFixed(2)}`
+                      ? `${cur}${monteCarlo.p10.toFixed(2)} – ${cur}${monteCarlo.p90.toFixed(2)}`
                       : "—"}
                   </p>
                 </div>
@@ -290,7 +308,7 @@ export default function Variance() {
                 </div>
                 <div className="max-w-md text-xs text-zinc-400 leading-relaxed bg-zinc-950/40 p-3.5 rounded-lg border border-white/[0.06]">
                   {cappedAtWatch
-                    ? `Relative spread (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%) or historical growth dispersion indicates substantial valuation uncertainty. Final recommendation is safely constrained to Watch.`
+                    ? `Relative spread (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%), forecast confidence (${technicalConfidence || "Low"}), or adverse 10-K sentiment (${sentimentLabel || "Neutral"}) indicates substantial valuation uncertainty. Final recommendation is safely constrained to Watch.`
                     : `Monte Carlo dispersion (${dcfSpread !== null ? dcfSpread.toFixed(0) : "—"}%) and pro forma confidence fall squarely within strict safety thresholds. Base rating proceeds uncapped.`}
                 </div>
               </div>

@@ -106,6 +106,8 @@ def add_filing(db: Session, company_id: int, file_name: str, file_bytes: bytes, 
         file_path=file_path,
     )
     db.add(filing)
+    from app.services import sentiment_service
+    sentiment_service.delete_result_for_company(db, company_id)
     db.commit()
     db.refresh(filing)
     return filing
@@ -115,9 +117,12 @@ def delete_filing(db: Session, filing_id: int) -> bool:
     filing = db.query(TenKFiling).filter(TenKFiling.id == filing_id).first()
     if not filing:
         return False
+    company_id = filing.company_id
     if filing.file_path and os.path.exists(filing.file_path):
         os.remove(filing.file_path)
     db.delete(filing)
+    from app.services import sentiment_service
+    sentiment_service.delete_result_for_company(db, company_id)
     db.commit()
     return True
 
@@ -142,6 +147,9 @@ def replace_filing(db: Session, filing_id: int, file_name: str, file_bytes: byte
     filing.file_path = new_path
     if fiscal_year is not None:
         filing.fiscal_year = fiscal_year
+
+    from app.services import sentiment_service
+    sentiment_service.delete_result_for_company(db, filing.company_id)
 
     db.commit()
     db.refresh(filing)

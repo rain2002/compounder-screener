@@ -19,6 +19,7 @@ class WatchlistCompany(Base):
     added_at = Column(DateTime, default=datetime.utcnow)
 
     filings = relationship("TenKFiling", back_populates="company", cascade="all, delete-orphan")
+    sentiment = relationship("SentimentResult", back_populates="company", cascade="all, delete-orphan", uselist=False)
 
 
 class TenKFiling(Base):

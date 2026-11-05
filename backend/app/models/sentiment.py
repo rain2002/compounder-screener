@@ -12,7 +12,7 @@ class SentimentResult(Base):
     __tablename__ = "sentiment_results"
 
     id = Column(Integer, primary_key=True, index=True)
-    company_id = Column(Integer, ForeignKey("watchlist_companies.id"), unique=True, nullable=False)
+    company_id = Column(Integer, ForeignKey("watchlist_companies.id", ondelete="CASCADE"), unique=True, nullable=False)
     positive_pct = Column(Float, nullable=False)
     neutral_pct = Column(Float, nullable=False)
     negative_pct = Column(Float, nullable=False)
@@ -22,4 +22,4 @@ class SentimentResult(Base):
     excerpts_json = Column(Text, nullable=False)     # small JSON list of {text, label, score, source_file}
     analyzed_at = Column(DateTime, default=datetime.utcnow)
 
-    company = relationship("WatchlistCompany")
+    company = relationship("WatchlistCompany", back_populates="sentiment")

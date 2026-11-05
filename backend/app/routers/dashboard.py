@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -42,7 +41,7 @@ def get_dashboard_aggregation(db: Session = Depends(get_db)):
         relative_spread = monte_carlo.get("relativeSpread")
         
         mos_pct = None
-        if p50 and c.price and c.price > 0:
+        if p50 and p50 > 0 and c.price and c.price > 0:
             mos_pct = ((p50 - c.price) / p50) * 100
 
         # Technical/Financial State
@@ -73,7 +72,7 @@ def get_dashboard_aggregation(db: Session = Depends(get_db)):
         if confidence in ["Low", "Insufficient Data"]:
             capped_at_watch = True
             
-        if capped_at_watch and TIERS.index(final_rating) > TIERS.index("Watch"):
+        if capped_at_watch and final_rating in TIERS and TIERS.index(final_rating) > TIERS.index("Watch"):
             final_rating = "Watch"
 
         results.append({
@@ -92,4 +91,3 @@ def get_dashboard_aggregation(db: Session = Depends(get_db)):
         })
 
     return results
-

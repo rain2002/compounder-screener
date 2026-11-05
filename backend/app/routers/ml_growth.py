@@ -123,30 +123,37 @@ def predict_growth(payload: PredictGrowthIn):
     target_cagr_3y = _cagr(metric_series[n - 4], last_target, 3) if n >= 4 else None
     revenue_cagr_3y = _cagr(revenue_series[n - 4], last_rev, 3) if n >= 4 else None
 
+    last_ebit = ebit_series[-1]
     invested_capital = None
     roic = None
     net_debt_to_ebit = None
+
+    # Compute Net Debt to EBIT whenever debt and cash are supplied and last EBIT is positive
+    if payload.totalDebt is not None and payload.cash is not None:
+        if last_ebit and last_ebit > 0:
+            net_debt_to_ebit = (payload.totalDebt - payload.cash) / last_ebit
+
+    # Compute ROIC whenever equity, debt, and cash are supplied and invested capital is positive
     if payload.totalEquity is not None and payload.totalDebt is not None and payload.cash is not None:
         invested_capital = payload.totalEquity + payload.totalDebt - payload.cash
-        last_ebit = ebit_series[-1]
-        if invested_capital and invested_capital != 0:
+        if invested_capital and invested_capital > 0 and last_ebit is not None:
             roic = (last_ebit * 0.79 / invested_capital)
-        if last_ebit and last_ebit != 0:
-            net_debt_to_ebit = (payload.totalDebt - payload.cash) / last_ebit
 
     # We reuse the FCF model architecture but pass the target metric's growth.
     # Growth rates and CAGRs are percentages; margins, ROIC, and capex_to_revenue
     # are ratios (0.0 to 1.0) matching training/scripts/build_features.py.
+    has_positive_rev = last_rev is not None and last_rev > 0
+
     raw_features = {
         "fcf_growth_1y": _safe_pct(last_target, prev_target),
         "revenue_growth_1y": _safe_pct(last_rev, prev_rev),
         "net_income_growth_1y": _safe_pct(last_ni, prev_ni),
-        "fcf_margin": (last_target / last_rev) if last_rev else None,
-        "net_margin": (last_ni / last_rev) if last_rev else None,
-        "operating_margin": (ebit_series[-1] / last_rev) if last_rev else None,
+        "fcf_margin": (last_target / last_rev) if (has_positive_rev and last_target is not None) else None,
+        "net_margin": (last_ni / last_rev) if (has_positive_rev and last_ni is not None) else None,
+        "operating_margin": (ebit_series[-1] / last_rev) if (has_positive_rev and ebit_series[-1] is not None) else None,
         "roic": roic,
         "net_debt_to_ebit": net_debt_to_ebit,
-        "capex_to_revenue": (years[-1].capex / last_rev) if last_rev else None,
+        "capex_to_revenue": (years[-1].capex / last_rev) if (has_positive_rev and years[-1].capex is not None) else None,
         "fcf_cagr_3y": target_cagr_3y,
         "revenue_cagr_3y": revenue_cagr_3y,
     }
