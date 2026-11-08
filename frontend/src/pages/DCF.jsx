@@ -210,7 +210,7 @@ function DcfCalculator({ initialState, onStateChange, ticker, selectedCompany })
               setMarket(e.target.value);
               setTerminalGrowth(GDP_CAPS[e.target.value]);
             }}
-            className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-white/30 cursor-pointer"
+            className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-1.5 text-xs text-zinc-100 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 cursor-pointer"
           >
             <option value="US">US Market (2.5% Long-Term GDP Cap)</option>
             <option value="INDIA">India Market (7.0% Long-Term GDP Cap)</option>

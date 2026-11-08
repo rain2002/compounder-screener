@@ -179,7 +179,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
         <table className="w-full text-xs min-w-[700px]">
           <thead>
             <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
-              <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+              <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#090d1a] z-10 text-zinc-300">
                 Line Item
               </th>
               {years.map((y, i) => (
@@ -187,7 +187,7 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
                   <input
                     value={y.year}
                     onChange={(e) => updateYear(i, "year", e.target.value)}
-                    className="w-16 bg-zinc-900 border border-white/10 rounded text-center text-zinc-200 font-semibold py-0.5 focus:outline-none focus:border-white/30"
+                    className="w-16 bg-[#05070f] border border-blue-500/20 rounded text-center text-zinc-200 font-semibold py-0.5 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
                   />
                 </th>
               ))}
@@ -195,8 +195,8 @@ export default function FundamentalsBuilder({ years, onYearsChange }) {
           </thead>
           <tbody>
             {activeMetrics.map((m) => (
-              <tr key={m.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10 whitespace-nowrap">
+              <tr key={m.key} className="border-b border-white/[0.04] hover:bg-blue-500/[0.03]">
+                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#090d1a] z-10 whitespace-nowrap">
                   {m.label} {!m.noScale && <span className="text-zinc-500">($M)</span>}
                 </td>
                 {years.map((y, i) => (

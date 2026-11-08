@@ -45,12 +45,12 @@ export default function WaccCalculator({ market, onWaccChange }) {
             Calculates the hurdle rate using the Capital Asset Pricing Model and debt weighting.
           </p>
         </div>
-        <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] hover:border-white/20 transition-all">
+        <label className="flex items-center gap-2 text-xs text-blue-200 cursor-pointer select-none px-3 py-1.5 rounded-lg border border-blue-500/25 bg-blue-500/10 hover:border-blue-500/40 transition-all">
           <input
             type="checkbox"
             checked={autoSync}
             onChange={(e) => setAutoSync(e.target.checked)}
-            className="rounded accent-white cursor-pointer"
+            className="rounded accent-blue-600 cursor-pointer"
           />
           <span>Auto-sync to DCF</span>
         </label>
@@ -78,9 +78,9 @@ export default function WaccCalculator({ market, onWaccChange }) {
           <p className="text-xs text-zinc-400 mb-1">After-Tax Cost of Debt (Kd)</p>
           <p className="text-xl font-semibold text-zinc-300 tabular-nums">{afterTaxCostOfDebt.toFixed(2)}%</p>
         </div>
-        <div className="p-3.5 rounded-lg bg-white/[0.04] border border-white/10">
-          <p className="text-xs text-zinc-200 font-medium mb-1">Computed WACC</p>
-          <p className="text-xl font-bold text-white tabular-nums">{wacc.toFixed(2)}%</p>
+        <div className="p-3.5 rounded-lg bg-blue-500/10 border border-blue-500/25 shadow-[0_0_15px_rgba(0,102,255,0.15)]">
+          <p className="text-xs text-blue-300 font-medium mb-1">Computed WACC</p>
+          <p className="text-xl font-bold text-blue-400 tabular-nums">{wacc.toFixed(2)}%</p>
         </div>
       </div>
     </div>

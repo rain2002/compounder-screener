@@ -284,10 +284,10 @@ function FinancialCalculator({ initialState, onStateChange, ticker }) {
             <button
               key={m.key}
               onClick={() => setSelectedMetric(m.key)}
-              className={`text-xs font-medium px-3.5 py-1.5 rounded-lg transition-all ${
+              className={`text-xs font-semibold px-3.5 py-1.5 rounded-lg transition-all ${
                 selectedMetric === m.key
-                  ? "bg-white/[0.12] text-white border border-white/20 shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.04]"
+                  ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                  : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
               }`}
             >
               {m.label}

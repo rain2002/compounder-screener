@@ -147,14 +147,14 @@ export default function Variance() {
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-zinc-400">Market</span>
-            <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
+            <div className="flex bg-[#05070f] border border-blue-500/20 rounded-lg p-0.5">
               <button
                 type="button"
                 onClick={() => setMarket("US")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                   market === "US"
-                    ? "bg-white/[0.12] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                    : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
                 }`}
               >
                 US Equities
@@ -162,10 +162,10 @@ export default function Variance() {
               <button
                 type="button"
                 onClick={() => setMarket("India")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                   market === "India"
-                    ? "bg-white/[0.12] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                    : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
                 }`}
               >
                 India Equities
@@ -178,7 +178,7 @@ export default function Variance() {
             <select
               value={companyId}
               onChange={(e) => setCompanyId(e.target.value)}
-              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-1.5 text-xs text-zinc-200 min-w-[260px] focus:outline-none focus:border-white/30 cursor-pointer"
+              className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-1.5 text-xs text-zinc-100 min-w-[260px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 cursor-pointer"
             >
               <option value="">Select a stock from Watchlist…</option>
               {companies.map((c) => (

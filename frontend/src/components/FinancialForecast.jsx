@@ -240,7 +240,7 @@ export default function FinancialForecast({
           <table className="w-full text-xs min-w-[600px]">
             <thead>
               <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
-                <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+                <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#090d1a] z-10 text-zinc-300">
                   Assumption
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-zinc-300">Conservative</th>
@@ -250,7 +250,7 @@ export default function FinancialForecast({
             </thead>
             <tbody>
               <tr className="border-b border-white/[0.04]">
-                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10">
+                <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#090d1a] z-10">
                   Revenue Growth (%)
                 </td>
                 {["conservative", "normal", "optimistic"].map((key) => (
@@ -260,7 +260,7 @@ export default function FinancialForecast({
                       step="0.5"
                       value={scenarios[key].growth}
                       onChange={(e) => updateScenario(key, "growth", parseFloat(e.target.value) || 0)}
-                      className="w-24 bg-zinc-900 border border-white/10 rounded px-2 py-1 text-zinc-200 text-xs text-center focus:outline-none focus:border-white/30 tabular-nums"
+                      className="w-24 bg-[#05070f] border border-blue-500/20 rounded px-2 py-1 text-zinc-200 text-xs text-center focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 tabular-nums"
                     />
                   </td>
                 ))}
@@ -272,8 +272,8 @@ export default function FinancialForecast({
                 { key: "netMargin", label: "Net Margin (%)" },
                 { key: "ocfMargin", label: "OCF Margin (%)" },
               ].map((m) => (
-                <tr key={m.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                  <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10">
+                <tr key={m.key} className="border-b border-white/[0.04] hover:bg-blue-500/[0.03]">
+                  <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#090d1a] z-10">
                     {m.label}
                   </td>
                   {["conservative", "normal", "optimistic"].map((key) => (
@@ -351,7 +351,7 @@ export default function FinancialForecast({
           <table className="w-full text-xs min-w-[600px]">
             <thead>
               <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
-                <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+                <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#090d1a] z-10 text-zinc-300">
                   Metric ($M)
                 </th>
                 <th className="px-2 py-2 text-center text-zinc-300">Latest Actual</th>
@@ -364,8 +364,8 @@ export default function FinancialForecast({
             </thead>
             <tbody>
               {METRIC_ROWS.map((m) => (
-                <tr key={m.key} className="border-b border-white/[0.04] hover:bg-white/[0.02]">
-                  <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10 whitespace-nowrap">
+                <tr key={m.key} className="border-b border-white/[0.04] hover:bg-blue-500/[0.03]">
+                  <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#090d1a] z-10 whitespace-nowrap">
                     {m.label}
                   </td>
                   <td className="px-2 py-2 text-center text-zinc-300 tabular-nums">

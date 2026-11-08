@@ -24,8 +24,8 @@ export default function Dashboard() {
       <section className="pt-2">
         <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-2">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-xs font-medium text-zinc-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-blue-500/30 bg-blue-500/10 text-xs font-semibold text-blue-300 shadow-[0_0_12px_rgba(0,102,255,0.2)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_8px_#0066FF] animate-pulse" />
               <span>Fundamental Equity Research</span>
             </div>
 
@@ -114,9 +114,9 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {/* Card 1: Buffett Quality */}
-          <div className="card p-6 flex flex-col justify-between hover:border-zinc-700 transition-all">
+          <div className="card p-6 flex flex-col justify-between hover:border-blue-500/40 transition-all">
             <div className="space-y-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider block">
                 Pillar 01
               </span>
               <h3 className="text-lg font-bold text-white tracking-tight">
@@ -136,9 +136,9 @@ export default function Dashboard() {
           </div>
 
           {/* Card 2: ML Growth Prediction */}
-          <div className="card p-6 flex flex-col justify-between hover:border-zinc-700 transition-all">
+          <div className="card p-6 flex flex-col justify-between hover:border-blue-500/40 transition-all">
             <div className="space-y-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider block">
                 Pillar 02
               </span>
               <h3 className="text-lg font-bold text-white tracking-tight">
@@ -158,9 +158,9 @@ export default function Dashboard() {
           </div>
 
           {/* Card 3: 10-K NLP Sentiment */}
-          <div className="card p-6 flex flex-col justify-between hover:border-zinc-700 transition-all">
+          <div className="card p-6 flex flex-col justify-between hover:border-blue-500/40 transition-all">
             <div className="space-y-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider block">
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider block">
                 Pillar 03
               </span>
               <h3 className="text-lg font-bold text-white tracking-tight">
@@ -198,7 +198,7 @@ export default function Dashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-white/[0.08] text-left text-zinc-400 text-xs font-semibold bg-white/[0.02]">
+                  <tr className="border-b border-blue-500/15 text-left text-zinc-400 text-xs font-semibold bg-blue-500/[0.03]">
                     <th className="px-6 py-3.5">Ticker</th>
                     <th className="px-6 py-3.5">Base Rating</th>
                     <th className="px-6 py-3.5">10-K Sentiment</th>
@@ -207,11 +207,11 @@ export default function Dashboard() {
                     <th className="px-6 py-3.5">Final Rating</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04] text-xs">
+                <tbody className="divide-y divide-blue-500/10 text-xs">
                   {results.map((r) => (
                     <tr
                       key={r.ticker}
-                      className="hover:bg-white/[0.02] transition-colors"
+                      className="hover:bg-blue-500/[0.04] transition-colors"
                     >
                       <td className="px-6 py-4 font-semibold text-white">
                         {r.ticker}

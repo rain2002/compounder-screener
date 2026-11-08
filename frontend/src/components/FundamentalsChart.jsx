@@ -56,7 +56,7 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
 
   return (
     <div className="card p-6 mb-6">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-white/[0.06]">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-blue-500/15">
         <div>
           <h3 className="text-base font-semibold text-white">
             {metricLabel} — History &amp; Forecast Trajectory
@@ -67,33 +67,34 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
         </div>
         <div className="flex items-center gap-4 text-xs text-zinc-400">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-zinc-700 inline-block rounded-sm" /> Historical
+            <span className="w-2.5 h-2.5 bg-blue-900/60 border border-blue-500/30 inline-block rounded-sm" /> Historical
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-0.5 bg-sky-400 inline-block" /> Forecast
+            <span className="w-2.5 h-0.5 bg-cyan-400 inline-block" /> Forecast
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 bg-sky-400/20 inline-block rounded-sm" /> ±1σ Uncertainty
+            <span className="w-2.5 h-2.5 bg-blue-500/20 border border-blue-500/40 inline-block rounded-sm" /> ±1σ Uncertainty
           </span>
         </div>
       </div>
 
-      <div className="p-2 rounded-xl bg-zinc-950/60 border border-white/[0.06]">
+      <div className="p-2 rounded-xl bg-[#05070f] border border-blue-500/20">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-64 sm:h-72">
           {/* Base Grid Line */}
-          <line x1={padding.left} y1={zeroY} x2={width - padding.right} y2={zeroY} stroke="rgba(255,255,255,0.08)" strokeWidth="1" />
+          <line x1={padding.left} y1={zeroY} x2={width - padding.right} y2={zeroY} stroke="rgba(0,102,255,0.12)" strokeWidth="1" />
           <line
             x1={dividerX}
             y1={padding.top}
             x2={dividerX}
             y2={height - padding.bottom}
-            stroke="rgba(255,255,255,0.15)"
+            stroke="#0066FF"
+            strokeOpacity="0.35"
             strokeDasharray="4 4"
             strokeWidth="1"
           />
 
           {/* Uncertainty Envelope */}
-          <polygon points={bandPoints.join(" ")} fill="rgba(56, 189, 248, 0.12)" />
+          <polygon points={bandPoints.join(" ")} fill="rgba(0, 102, 255, 0.15)" />
 
           {/* Historical Bars */}
           {years.map((y, i) => {
@@ -108,8 +109,8 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
                 y={barY}
                 width={barWidth}
                 height={Math.max(barH, 1)}
-                fill="#27272a"
-                stroke="rgba(255,255,255,0.1)"
+                fill="#0f172a"
+                stroke="rgba(0, 102, 255, 0.35)"
                 strokeWidth="1"
                 rx="2"
               />
@@ -117,11 +118,11 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
           })}
 
           {/* Forecast Path */}
-          <path d={linePath} fill="none" stroke="#38bdf8" strokeWidth="2" />
+          <path d={linePath} fill="none" stroke="#00d4ff" strokeWidth="2" />
           {forecast.map((f, i) => {
             const x = xForIndex(years.length + i);
             const y = yFor(f.value);
-            return <circle key={i} cx={x} cy={y} r="3" fill="#38bdf8" />;
+            return <circle key={i} cx={x} cy={y} r="3" fill="#00d4ff" />;
           })}
 
           {/* X Axis Labels */}
@@ -133,7 +134,7 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
               textAnchor="middle"
               fontSize="10"
               fontFamily="sans-serif"
-              fill="#71717a"
+              fill="#94a3b8"
             >
               {y.year}
             </text>
@@ -146,7 +147,7 @@ export default function FundamentalsChart({ years, metricKey, metricLabel, forec
               textAnchor="middle"
               fontSize="10"
               fontFamily="sans-serif"
-              fill="#38bdf8"
+              fill="#00d4ff"
               fontWeight="bold"
             >
               +{f.year}

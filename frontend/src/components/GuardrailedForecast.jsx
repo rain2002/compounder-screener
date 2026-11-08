@@ -148,7 +148,7 @@ export default function GuardrailedForecast({ years, metricKey, metricLabel, for
         <table className="w-full text-xs min-w-[500px]">
           <thead>
             <tr className="border-b border-white/[0.08] text-zinc-400 bg-white/[0.02]">
-              <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#111114] z-10">
+              <th className="px-3 py-2 text-left font-medium sticky left-0 bg-[#090d1a] z-10 text-zinc-300">
                 Projection Horizon
               </th>
               {forecast.map((f) => (
@@ -160,7 +160,7 @@ export default function GuardrailedForecast({ years, metricKey, metricLabel, for
           </thead>
           <tbody>
             <tr className="border-b border-white/[0.04]">
-              <td className="px-3 py-2 text-zinc-200 sticky left-0 bg-[#111114] z-10 font-medium">
+              <td className="px-3 py-2 text-zinc-200 sticky left-0 bg-[#090d1a] z-10 font-medium">
                 Baseline Estimate
               </td>
               {forecast.map((f, i) => (
@@ -170,7 +170,7 @@ export default function GuardrailedForecast({ years, metricKey, metricLabel, for
               ))}
             </tr>
             <tr className="bg-white/[0.02]">
-              <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#111114] z-10">
+              <td className="px-3 py-2 text-zinc-400 sticky left-0 bg-[#090d1a] z-10">
                 Range (±1σ)
               </td>
               {forecastBand.map((f, i) => (

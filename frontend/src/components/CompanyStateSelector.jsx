@@ -80,14 +80,14 @@ export default function CompanyStateSelector({ pageName, children }) {
         <div className="flex flex-wrap items-center gap-4 sm:gap-6">
           <div className="flex flex-col gap-1.5">
             <span className="text-xs font-medium text-zinc-400">Market</span>
-            <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
+            <div className="flex bg-[#05070f] border border-blue-500/20 rounded-lg p-0.5">
               <button
                 type="button"
                 onClick={() => setMarket("US")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                   market === "US"
-                    ? "bg-white/[0.12] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                    : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
                 }`}
               >
                 US Equities
@@ -95,10 +95,10 @@ export default function CompanyStateSelector({ pageName, children }) {
               <button
                 type="button"
                 onClick={() => setMarket("India")}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
                   market === "India"
-                    ? "bg-white/[0.12] text-white shadow-sm"
-                    : "text-zinc-400 hover:text-zinc-200"
+                    ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                    : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
                 }`}
               >
                 India Equities
@@ -111,7 +111,7 @@ export default function CompanyStateSelector({ pageName, children }) {
             <select
               value={companyId}
               onChange={(e) => setCompanyId(e.target.value)}
-              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-1.5 text-xs text-zinc-200 min-w-[260px] focus:outline-none focus:border-white/30 transition-all cursor-pointer"
+              className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-1.5 text-xs text-zinc-100 min-w-[260px] focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all cursor-pointer"
             >
               <option value="">Select a stock from Watchlist…</option>
               {companies.map((c) => (
@@ -125,40 +125,47 @@ export default function CompanyStateSelector({ pageName, children }) {
 
         <div className="flex items-center gap-3">
           {status && (
-            <span className="text-xs font-medium text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="text-xs font-semibold text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               <span>{status}</span>
             </span>
           )}
           {selectedCompany && (
-            <span className="text-xs font-medium text-zinc-400 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10">
+            <span className="text-xs font-semibold text-blue-300 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 shadow-[0_0_10px_rgba(0,102,255,0.2)]">
               {selectedCompany.ticker}
             </span>
           )}
         </div>
       </div>
 
-      {!companyId && (
-        <div className="card p-12 text-center border-dashed border-white/15 my-6">
-          <h4 className="text-base font-semibold text-zinc-200 mb-2">
-            Select a Stock to Load Financials
+      {isLoading && (
+        <div className="card p-12 text-center my-6">
+          <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-xs text-blue-300">Loading company page state…</p>
+        </div>
+      )}
+
+      {!companyId && !isLoading && (
+        <div className="card p-12 text-center border-dashed border-blue-500/20 my-6">
+          <h4 className="text-base font-semibold text-white mb-1">
+            Select a Stock to Access Financial Models
           </h4>
           <p className="text-zinc-400 text-sm max-w-md mx-auto leading-relaxed">
-            Choose an asset from your active watchlist above to synchronize {pageName === "dcf" ? "discounted cash flow projections, WACC hurdle rate, and Monte Carlo simulations" : "10-year historical statements, multi-scenario CAGRs, and guardrailed forecasts"}.
+            Choose an active company from your watchlist above. Your projections, DCF iterations, and financial statements are saved automatically.
           </p>
         </div>
       )}
 
-      {companyId && isLoading && (
-        <div className="card p-12 text-center border-white/10 my-6">
-          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-xs text-zinc-400">
-            Loading company data &amp; projections…
-          </p>
+      {companyId && !isLoading && (
+        <div>
+          {children({
+            companyId,
+            selectedCompany,
+            loadedState,
+            saveState,
+          })}
         </div>
       )}
-
-      {companyId && !isLoading && children({ companyId, selectedCompany, loadedState, saveState })}
     </div>
   );
 }

@@ -101,9 +101,9 @@ export default function MLGrowthSuggestion({ historyYears, totalDebt, cash, tota
             {result.xgb_growth !== null && result.xgb_growth !== undefined ? `${result.xgb_growth.toFixed(1)}%` : "—"}
           </p>
         </div>
-        <div className="p-3.5 rounded-lg bg-white/[0.04] border border-white/10">
-          <p className="text-xs text-zinc-200 font-medium mb-1">Ensemble Output</p>
-          <p className="text-lg font-bold text-emerald-400 tabular-nums">{result.ensemble_growth.toFixed(1)}%</p>
+        <div className="p-3.5 rounded-lg bg-blue-500/10 border border-blue-500/25 shadow-[0_0_15px_rgba(0,102,255,0.15)]">
+          <p className="text-xs text-blue-300 font-medium mb-1">Ensemble Output</p>
+          <p className="text-lg font-bold text-blue-400 tabular-nums">{result.ensemble_growth.toFixed(1)}%</p>
         </div>
       </div>
 

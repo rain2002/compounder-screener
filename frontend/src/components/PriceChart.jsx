@@ -56,21 +56,22 @@ export default function PriceChart({ prices, smaSeries, regression, horizonDays 
 
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-64">
-      <polygon points={bandPoints.join(" ")} fill="rgba(129, 140, 248, 0.12)" />
+      <polygon points={bandPoints.join(" ")} fill="rgba(0, 102, 255, 0.15)" />
       <line
         x1={dividerX}
         y1={padding}
         x2={dividerX}
         y2={height - padding}
-        stroke="#364268"
+        stroke="#0066FF"
+        strokeOpacity="0.4"
         strokeDasharray="4 4"
         strokeWidth="1"
       />
-      <path d={pricePath} fill="none" stroke="#e2e8f0" strokeWidth="1.75" />
+      <path d={pricePath} fill="none" stroke="#f1f5f9" strokeWidth="2" />
       <path d={smaPath} fill="none" stroke="#eab308" strokeWidth="1.5" strokeDasharray="3 3" />
-      <path d={forecastPath} fill="none" stroke="#818cf8" strokeWidth="1.75" />
-      <path d={forecastHighPath} fill="none" stroke="#818cf8" strokeWidth="0.75" opacity="0.5" />
-      <path d={forecastLowPath} fill="none" stroke="#818cf8" strokeWidth="0.75" opacity="0.5" />
+      <path d={forecastPath} fill="none" stroke="#00d4ff" strokeWidth="2" />
+      <path d={forecastHighPath} fill="none" stroke="#38bdf8" strokeWidth="1" opacity="0.6" strokeDasharray="2 2" />
+      <path d={forecastLowPath} fill="none" stroke="#38bdf8" strokeWidth="1" opacity="0.6" strokeDasharray="2 2" />
     </svg>
   );
 }

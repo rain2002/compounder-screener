@@ -174,23 +174,23 @@ export default function Watchlist() {
       {/* Control Strip */}
       <div className="card p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="flex bg-zinc-900 border border-white/10 rounded-lg p-0.5">
+          <div className="flex bg-[#05070f] border border-blue-500/20 rounded-lg p-0.5">
             <button
               onClick={() => setMarket("US")}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
                 market === "US"
-                  ? "bg-white/[0.12] text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                  : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
               }`}
             >
               US Equities
             </button>
             <button
               onClick={() => setMarket("India")}
-              className={`px-4 py-1.5 rounded-md text-xs font-medium transition-all ${
+              className={`px-4 py-1.5 rounded-md text-xs font-semibold transition-all ${
                 market === "India"
-                  ? "bg-white/[0.12] text-white shadow-sm"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  ? "bg-blue-600 text-white shadow-[0_0_12px_rgba(0,102,255,0.45)]"
+                  : "text-zinc-400 hover:text-blue-300 hover:bg-blue-500/10"
               }`}
             >
               India Equities
@@ -231,7 +231,7 @@ export default function Watchlist() {
             <input
               value={ticker}
               onChange={(e) => setTicker(e.target.value.toUpperCase())}
-              className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-white/30 uppercase placeholder:normal-case placeholder:text-zinc-600"
+              className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 uppercase placeholder:normal-case placeholder:text-zinc-600"
               placeholder={market === "US" ? "AAPL" : "RELIANCE.NS"}
             />
           </label>
@@ -243,7 +243,7 @@ export default function Watchlist() {
                 <input
                   value={indiaForm.name}
                   onChange={(e) => setIndiaForm({ ...indiaForm, name: e.target.value })}
-                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-white/30"
+                  className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
                   placeholder="e.g. Infosys Ltd"
                 />
               </label>
@@ -253,7 +253,7 @@ export default function Watchlist() {
                   type="number"
                   value={indiaForm.price}
                   onChange={(e) => setIndiaForm({ ...indiaForm, price: e.target.value })}
-                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm w-28 focus:outline-none focus:border-white/30"
+                  className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-2 text-white text-sm w-28 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
                   placeholder="0.00"
                 />
               </label>
@@ -263,7 +263,7 @@ export default function Watchlist() {
                   type="number"
                   value={indiaForm.market_cap}
                   onChange={(e) => setIndiaForm({ ...indiaForm, market_cap: e.target.value })}
-                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm w-32 focus:outline-none focus:border-white/30"
+                  className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-2 text-white text-sm w-32 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
                   placeholder="0"
                 />
               </label>
@@ -272,7 +272,7 @@ export default function Watchlist() {
                 <input
                   value={indiaForm.sector}
                   onChange={(e) => setIndiaForm({ ...indiaForm, sector: e.target.value })}
-                  className="bg-zinc-900 border border-white/10 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-white/30"
+                  className="bg-[#05070f] border border-blue-500/20 rounded-lg px-3.5 py-2 text-white text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
                   placeholder="Technology"
                 />
               </label>
